@@ -29,12 +29,23 @@ export function SocialProofToast({ onOpenOffer }) {
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 400);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   useEffect(() => {
     if (dismissed) return;
 
     const initialTimer = setTimeout(() => {
       setVisible(true);
-    }, 6000);
+    }, 4000);
 
     const interval = setInterval(() => {
       setVisible(false);
@@ -50,7 +61,7 @@ export function SocialProofToast({ onOpenOffer }) {
     };
   }, [dismissed]);
 
-  if (dismissed || !visible) return null;
+  if (dismissed || !visible || !scrolled) return null;
 
   const item = WORKFLOW_TIPS[currentIndex];
   const Icon = item.icon;

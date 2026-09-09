@@ -828,49 +828,48 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
       <div className="relative mx-auto grid w-full max-w-[1140px] grid-cols-1 items-center gap-10 px-4 sm:px-6 lg:grid-cols-2">
         {/* Left column */}
         <div>
-          {/* Top Badges / Pre-headline */}
+          {/* Top Badge */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-300 border border-blue-500/25">
               <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-ping" />
-              ⭐ 100% Free & Open Source · Ambient AI Desktop Utility for Windows
+              ⚡ Local-First AI Engine • Native for Windows 10 &amp; 11
             </span>
           </div>
 
-          {/* H1 Headline — Outcome-driven */}
           {/* H1 Headline — Outcome-driven & perfectly balanced */}
-          <h1 className="mt-4 text-3xl sm:text-4xl lg:text-[38px] xl:text-[46px] font-extrabold leading-[1.18] tracking-tight text-white">
+          <h1 className="mt-3 text-3xl sm:text-4xl lg:text-[42px] xl:text-[48px] font-black leading-[1.12] tracking-tight text-white">
             Stop Wasting Hours Tweaking AI Output.{" "}
-            <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent block mt-1">
+            <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent block mt-1 break-normal">
               Get Flawless, Client&#8209;Grade Results in 2 Seconds.
             </span>
           </h1>
 
-          {/* Punchy Subheadline */}
-          <p className="mt-4 max-w-xl text-sm sm:text-base text-zinc-200 leading-relaxed font-normal">
-            Refinzi is the local-first AI workflow engine for freelancers, agencies, and ops leaders. Highlight your rough notes anywhere in Windows, click the Orb, and instantly enforce your exact formatting, tone, and rules. Zero tab switching. 100% local privacy.
+          {/* Crisp Subheadline */}
+          <p className="mt-3 max-w-lg text-sm sm:text-base text-zinc-200 leading-relaxed font-normal">
+            Highlight rough notes anywhere in Windows, click the Orb, and instantly enforce your exact formatting, tone, and rules. Zero tab switching. 100% local privacy.
           </p>
 
           {/* Action Buttons */}
-          <div className="mt-6 flex flex-col items-start gap-3.5">
-            <div className="flex flex-wrap items-center gap-3">
+          <div className="mt-5 flex flex-col items-start gap-3">
+            <div className="flex flex-wrap items-center gap-2.5">
               <Button
                 size="lg"
                 variant="deal"
                 onClick={onOpenOffer}
-                className="font-bold text-sm sm:text-base shadow-xl shadow-purple-500/30 px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white border border-purple-400/40 cursor-pointer"
+                className="font-bold text-sm sm:text-base shadow-xl shadow-purple-500/25 px-5 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white border border-purple-400/40 cursor-pointer"
               >
-                <Sparkles className="h-4 w-4 mr-2" />
-                🚀 Download Refinzi Pro (Zero Setup) — {currency.currencyCode === "INR" ? "₹999" : currency.formattedPrice} Lifetime
+                <Sparkles className="h-4 w-4 mr-1.5" />
+                Download Refinzi Pro — {currency.currencyCode === "INR" ? "₹999" : currency.formattedPrice} Lifetime
               </Button>
 
               <Button
                 size="lg"
                 variant="secondary"
                 onClick={onDownload}
-                className="font-semibold text-sm sm:text-base px-5 py-3.5 border border-white/10 hover:bg-white/5"
+                className="font-semibold text-sm sm:text-base px-4 py-3 border border-white/15 hover:bg-white/10 text-zinc-100"
               >
-                <Download className="h-4 w-4 mr-2" />
-                ⚙️ Developer? Use Free (.exe)
+                <Download className="h-4 w-4 mr-1.5" />
+                Developer Free (.exe)
               </Button>
 
               {/* Winget terminal copy pill */}
@@ -878,26 +877,26 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
                 type="button"
                 onClick={copyWinget}
                 title="Copy winget install command"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/80 px-3 py-2.5 text-xs font-mono text-zinc-300 hover:text-white hover:border-blue-500/40 transition-all cursor-pointer shadow-md"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-zinc-900/90 px-3 py-2 text-xs font-mono text-zinc-300 hover:text-white hover:border-blue-500/40 transition-all cursor-pointer"
               >
-                <span className="text-blue-400">$</span>
+                <span className="text-blue-400 font-bold">$</span>
                 <span>winget install refinzi</span>
                 {wingetCopied ? (
-                  <CheckCheck className="h-3.5 w-3.5 text-emerald-400 ml-1" />
+                  <CheckCheck className="h-3.5 w-3.5 text-emerald-400 ml-0.5" />
                 ) : (
-                  <Copy className="h-3.5 w-3.5 text-zinc-400 hover:text-white ml-1" />
+                  <Copy className="h-3.5 w-3.5 text-zinc-400 ml-0.5" />
                 )}
               </button>
             </div>
 
             {/* Trust Badge below buttons */}
-            <div className="w-full max-w-xl rounded-xl bg-emerald-950/20 border border-emerald-500/25 p-3 text-left text-xs text-zinc-300 space-y-1">
-              <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
+            <div className="w-full max-w-lg rounded-xl bg-emerald-950/25 border border-emerald-500/30 px-3.5 py-2 text-xs text-zinc-200 space-y-0.5">
+              <div className="flex items-center gap-1.5 text-emerald-400 font-semibold text-xs">
                 <ShieldCheck className="h-4 w-4 shrink-0" />
-                <span>🔒 100% Local Execution. Your data never touches our servers.</span>
+                <span>🔒 100% Local Execution • Zero Cloud Logging</span>
               </div>
-              <p className="text-[11px] text-zinc-400 leading-normal pl-6">
-                (Note: Windows may show an &apos;Unknown Publisher&apos; warning. This is proof we don’t route your data through a cloud server. Click &apos;More Info&apos; &gt; &apos;Run Anyway&apos;).
+              <p className="text-[11px] text-zinc-400 leading-snug">
+                Windows SmartScreen warning? That&apos;s proof Refinzi runs locally without cloud routing. Click &apos;More Info&apos; &gt; &apos;Run Anyway&apos;.
               </p>
             </div>
 
@@ -917,7 +916,7 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
           </div>
 
           {/* Authentic Trust & Security Badges */}
-          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/[0.06] pt-3 text-xs">
+          <div className="mt-3 flex flex-wrap items-center gap-2.5 text-xs">
             <a
               href="https://github.com/papada1472/refinzi/releases/tag/v2.0.0"
               target="_blank"
