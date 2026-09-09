@@ -837,29 +837,40 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
           </div>
 
           {/* H1 Headline — Outcome-driven */}
-          <h1 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.12] tracking-tight text-white">
+          {/* H1 Headline — Outcome-driven & perfectly balanced */}
+          <h1 className="mt-4 text-3xl sm:text-4xl lg:text-[38px] xl:text-[46px] font-extrabold leading-[1.18] tracking-tight text-white">
             Stop Wasting Hours Tweaking AI Output.{" "}
-            <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent block sm:inline">
-              Get Flawless, Client-Grade Results in 2 Seconds.
+            <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent block mt-1">
+              Get Flawless, Client&#8209;Grade Results in 2 Seconds.
             </span>
           </h1>
 
           {/* Punchy Subheadline */}
-          <p className="mt-4 max-w-lg text-base sm:text-lg font-medium text-zinc-200 leading-relaxed">
-            Native to Windows 10 & 11. <strong className="text-white font-bold">1-Click the floating Orb</strong> (or press <code className="bg-zinc-800 text-blue-300 px-1.5 py-0.5 rounded text-xs font-mono">Ctrl+Alt+Space</code>) to rebuild prompts, polish writing, and scaffold 5-block blueprints in 2s across any app.
+          <p className="mt-4 max-w-xl text-sm sm:text-base text-zinc-200 leading-relaxed font-normal">
+            Refinzi is the local-first AI workflow engine for freelancers, agencies, and ops leaders. Highlight your rough notes anywhere in Windows, click the Orb, and instantly enforce your exact formatting, tone, and rules. Zero tab switching. 100% local privacy.
           </p>
 
-          {/* Primary CTA + Winget command */}
-          <div className="mt-6 flex flex-col items-start gap-3">
+          {/* Action Buttons */}
+          <div className="mt-6 flex flex-col items-start gap-3.5">
             <div className="flex flex-wrap items-center gap-3">
               <Button
                 size="lg"
-                variant="primary"
+                variant="deal"
+                onClick={onOpenOffer}
+                className="font-bold text-sm sm:text-base shadow-xl shadow-purple-500/30 px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white border border-purple-400/40 cursor-pointer"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                🚀 Download Refinzi Pro (Zero Setup) — {currency.currencyCode === "INR" ? "₹999" : currency.formattedPrice} Lifetime
+              </Button>
+
+              <Button
+                size="lg"
+                variant="secondary"
                 onClick={onDownload}
-                className="font-bold text-sm sm:text-base shadow-xl shadow-blue-500/25 px-6 py-3"
+                className="font-semibold text-sm sm:text-base px-5 py-3.5 border border-white/10 hover:bg-white/5"
               >
                 <Download className="h-4 w-4 mr-2" />
-                Download Free (.exe)
+                ⚙️ Developer? Use Free (.exe)
               </Button>
 
               {/* Winget terminal copy pill */}
@@ -867,7 +878,7 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
                 type="button"
                 onClick={copyWinget}
                 title="Copy winget install command"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/80 px-3.5 py-2.5 text-xs font-mono text-zinc-300 hover:text-white hover:border-blue-500/40 transition-all cursor-pointer shadow-md"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/80 px-3 py-2.5 text-xs font-mono text-zinc-300 hover:text-white hover:border-blue-500/40 transition-all cursor-pointer shadow-md"
               >
                 <span className="text-blue-400">$</span>
                 <span>winget install refinzi</span>
@@ -877,24 +888,18 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
                   <Copy className="h-3.5 w-3.5 text-zinc-400 hover:text-white ml-1" />
                 )}
               </button>
-
-              <a
-                href="#pricing"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onOpenOffer();
-                }}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-zinc-300 hover:text-white px-3 py-2 rounded-xl transition-colors group"
-              >
-                <span>☕ Supporter Pro ({currency.formattedPrice})</span>
-                <ArrowRight className="h-3.5 w-3.5 text-amber-400 group-hover:translate-x-0.5 transition-transform" />
-              </a>
             </div>
 
-            {/* Secondary Value / Guarantee Line */}
-            <p className="text-xs text-emerald-300 font-medium flex items-center gap-1.5">
-              <span>✅ 100% Free BYOK Forever • Zero Cloud Logging • Windows DPAPI AES-256</span>
-            </p>
+            {/* Trust Badge below buttons */}
+            <div className="w-full max-w-xl rounded-xl bg-emerald-950/20 border border-emerald-500/25 p-3 text-left text-xs text-zinc-300 space-y-1">
+              <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
+                <ShieldCheck className="h-4 w-4 shrink-0" />
+                <span>🔒 100% Local Execution. Your data never touches our servers.</span>
+              </div>
+              <p className="text-[11px] text-zinc-400 leading-normal pl-6">
+                (Note: Windows may show an &apos;Unknown Publisher&apos; warning. This is proof we don’t route your data through a cloud server. Click &apos;More Info&apos; &gt; &apos;Run Anyway&apos;).
+              </p>
+            </div>
 
             {/* Mobile / Non-Windows Adaptive Notice */}
             {osType !== "windows" && (
@@ -912,7 +917,7 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
           </div>
 
           {/* Authentic Trust & Security Badges */}
-          <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-white/[0.06] pt-4 text-xs">
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/[0.06] pt-3 text-xs">
             <a
               href="https://github.com/papada1472/refinzi/releases/tag/v2.0.0"
               target="_blank"
