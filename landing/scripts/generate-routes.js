@@ -12,16 +12,104 @@ const ROUTE_METADATA = {
     title: "Documentation & User Manual — Refinzi 2.0",
     description: "Complete user manual, shortcuts, 5-block blueprint framework, BYOK API setup, and model configuration for Refinzi on Windows 10/11.",
     canonical: "https://refinzi.com/docs/",
+    schema: {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "TechArticle",
+          "headline": "Refinzi 2.0 Official Documentation & User Manual",
+          "url": "https://refinzi.com/docs/",
+          "description": "User guide covering 1-Click floating Orb, Ctrl+Alt+Space shortcuts, 5-Block Blueprint engine, and BYOK setup on Windows 10/11.",
+          "author": {
+            "@type": "Person",
+            "name": "Rahul Mangla"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://refinzi.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Documentation",
+              "item": "https://refinzi.com/docs/"
+            }
+          ]
+        }
+      ]
+    }
   },
   privacy: {
     title: "Privacy Policy — Refinzi 2.0",
     description: "Refinzi Privacy Policy. Learn about our local-first architecture, Windows DPAPI encryption, zero prompt logging, and data safety guarantees.",
     canonical: "https://refinzi.com/privacy/",
+    schema: {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "name": "Privacy Policy — Refinzi 2.0",
+          "url": "https://refinzi.com/privacy/",
+          "description": "Refinzi Privacy Policy explaining local-first architecture, zero prompt logs, and local key encryption."
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://refinzi.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Privacy Policy",
+              "item": "https://refinzi.com/privacy/"
+            }
+          ]
+        }
+      ]
+    }
   },
   terms: {
     title: "Terms of Service — Refinzi 2.0",
     description: "Refinzi Terms of Service, software licensing details, and Lifetime Pro access policy.",
     canonical: "https://refinzi.com/terms/",
+    schema: {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "name": "Terms of Service — Refinzi 2.0",
+          "url": "https://refinzi.com/terms/",
+          "description": "Refinzi Terms of Service and Software License Agreement."
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://refinzi.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Terms of Service",
+              "item": "https://refinzi.com/terms/"
+            }
+          ]
+        }
+      ]
+    }
   },
 };
 
@@ -49,6 +137,14 @@ if (fs.existsSync(indexPath)) {
         `<meta property="og:description" content="${meta.description}" />`
       )
       .replace(
+        /<meta\s+name="twitter:title"\s+content=".*?"\s*\/>/,
+        `<meta name="twitter:title" content="${meta.title}" />`
+      )
+      .replace(
+        /<meta\s+name="twitter:description"\s+content=".*?"\s*\/>/,
+        `<meta name="twitter:description" content="${meta.description}" />`
+      )
+      .replace(
         /<meta\s+property="og:url"\s+content=".*?"\s*\/>/,
         `<meta property="og:url" content="${meta.canonical}" />`
       )
@@ -56,6 +152,13 @@ if (fs.existsSync(indexPath)) {
         /<link\s+rel="canonical"\s+href=".*?"\s*\/>/,
         `<link rel="canonical" href="${meta.canonical}" />`
       );
+
+    if (meta.schema) {
+      customHtml = customHtml.replace(
+        /<script type="application\/ld\+json">[\s\S]*?<\/script>/,
+        `<script type="application/ld+json">\n${JSON.stringify(meta.schema, null, 2)}\n    </script>`
+      );
+    }
 
     fs.writeFileSync(path.join(routeDir, "index.html"), customHtml, "utf8");
     console.log(`Generated customized static route: /${route}/index.html`);

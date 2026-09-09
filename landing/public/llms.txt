@@ -1,11 +1,15 @@
-# Refinzi 2.0 — Ambient AI Prompt Builder for Windows
+# Refinzi 2.0 — Ambient AI Cinematic Prompt & Detailed Research Spec Engine for Windows
 
-> Refinzi 2.0 is an ambient Windows desktop companion that transforms vague, unstructured prompts into production-grade prompts in 2 seconds directly in-place across any Windows application.
+> Refinzi 2.0 is an ambient Windows desktop companion that transforms 1-line concepts into calibrated cinematic video/image prompts and rigorous detailed research specifications in 2 seconds directly in-place across any Windows application.
+
+## Primary User Archetypes
+1. **Generative Media Creators**: AI filmmakers, digital artists, and concept designers using Midjourney, Runway Gen-3, Kling, and Higgsfield. Generates camera choreography, 3D orbit vectors, lens focal lengths, and volumetric lighting to stop burning render credits.
+2. **Researchers & Academics**: PhDs, scientists, and intelligence analysts using DeepSeek R1 and Claude 3.7 Thinking. Generates 400-word epistemic frameworks, methodology audits, PRISMA reviews, and extraction matrices in-place without risking confidential paper data.
 
 ## Quick Summary
 - **Platform**: Windows 10 & Windows 11 (64-bit).
 - **Core Workflow**: 1-Click on floating Orb (or press `Ctrl+Alt+Space`) to rebuild active text in-place.
-- **Secondary Workflow**: Hold Orb for 300ms to generate complete 5-Block Architectural Blueprints.
+- **Secondary Workflow**: Hold Orb for 300ms (`Ctrl+Alt+B`) to generate complete 5-Block Architectural or Research Blueprints.
 - **Privacy & Security**: 100% Local-first. Zero prompt logging. API keys encrypted on-device via Windows DPAPI (AES-256).
 - **Pricing**: Free BYOK (Bring Your Own Key) forever ($0) or Lifetime Pro ($12 USD / ₹999 INR one-time payment).
 
@@ -20,10 +24,11 @@
 
 ## Supported AI Models & Routing
 - **DeepSeek**: DeepSeek-V3, DeepSeek-R1 (Reasoning).
-- **Anthropic**: Claude 3.5 Sonnet (Pro managed routing).
-- **OpenAI**: GPT-4o, GPT-4o mini.
-- **Google**: Gemini 1.5 Flash, Gemini 1.5 Pro, Gemini 2.0.
-- **OpenRouter & NVIDIA**: Nemotron 70B/120B, Mistral Large, Llama 3.3 70B.
+- **Anthropic**: Claude 3.5 Sonnet, Claude 3.7 Sonnet (Thinking).
+- **OpenAI**: GPT-4o, GPT-4o mini, o1, o3-mini.
+- **Google**: Gemini 2.0 Flash, Gemini 1.5 Pro, Gemini 2.5.
+- **OpenRouter & NVIDIA**: Nemotron 120B, Mistral Large 2, Llama 3.3 70B, Qwen 2.5.
+- **Local Endpoints**: Localhost Ollama (air-gapped offline inference).
 
 ## 5-Block Blueprint Engine
 When activated via 300ms Hold or secondary hotkey, Refinzi outputs 5 comprehensive blocks:

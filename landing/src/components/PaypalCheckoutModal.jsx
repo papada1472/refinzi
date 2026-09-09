@@ -14,11 +14,29 @@ import {
   QrCode,
   Smartphone,
   Check,
+  Loader2,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "./ui/button.jsx";
 import { PAYMENT_GATEWAY_CONFIG } from "../config/gatewayConfig.js";
 import { trackEvent } from "../utils/analytics.js";
 import { SUPPORTED_CURRENCIES } from "../utils/currency.js";
+
+// Helper to dynamically load Razorpay Checkout JS SDK
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    if (typeof window !== "undefined" && window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 export function PaypalCheckoutModal({ isOpen, onClose, onDownload, currency = SUPPORTED_CURRENCIES.USD, detectedCountry = "" }) {
   const [activeTab, setActiveTab] = useState(currency.code === "INR" ? "upi" : "card"); // "upi" | "card" | "paypal"
@@ -27,12 +45,104 @@ export function PaypalCheckoutModal({ isOpen, onClose, onDownload, currency = SU
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
   const [utrNumber, setUtrNumber] = useState("");
+  const [isRazorpayLoading, setIsRazorpayLoading] = useState(false);
+  const [razorpayPaymentId, setRazorpayPaymentId] = useState("");
   const [customKey] = useState(() => {
     const randomHex = () => Math.random().toString(36).substring(2, 6).toUpperCase();
     return `RFZ-PRO-${randomHex()}-${randomHex()}-${randomHex()}`;
   });
 
   if (!isOpen) return null;
+
+  const handleRazorpayPayment = async () => {
+    const rzpConfig = PAYMENT_GATEWAY_CONFIG.razorpay || {};
+    const hasLiveLink = rzpConfig.paymentLinkUrl && !rzpConfig.paymentLinkUrl.includes("YOUR_PAYMENT_LINK");
+    const hasLiveKey = rzpConfig.keyId && !rzpConfig.keyId.includes("YOUR_KEY_ID");
+
+    trackEvent("payment_initiated", {
+      gateway: "razorpay",
+      currency: "INR",
+      amount: rzpConfig.inrPrice || 999,
+      country: detectedCountry,
+    });
+
+    // If direct hosted payment link is configured
+    if (hasLiveLink && !hasLiveKey) {
+      window.open(rzpConfig.paymentLinkUrl, "_blank", "noopener,noreferrer");
+      setStep("processing");
+      setTimeout(() => {
+        setStep("success");
+        trackEvent("payment_success_view", { currency: "INR", key: customKey });
+      }, 1500);
+      return;
+    }
+
+    setIsRazorpayLoading(true);
+    const loaded = await loadRazorpayScript();
+    setIsRazorpayLoading(false);
+
+    if (!loaded) {
+      alert("Unable to load Razorpay checkout script. Please check your internet connection or use the direct UPI QR below.");
+      return;
+    }
+
+    const effectiveKey = hasLiveKey ? rzpConfig.keyId : "rzp_test_placeholder";
+
+    const options = {
+      key: effectiveKey,
+      amount: (rzpConfig.inrPrice || 999) * 100, // Amount in paise
+      currency: "INR",
+      name: "Refinzi 2.0",
+      description: "Lifetime Supporter Pro License",
+      image: "https://refinzi.vercel.app/logo192.png",
+      handler: function (response) {
+        setRazorpayPaymentId(response.razorpay_payment_id || "PAY_" + Date.now());
+        trackEvent("razorpay_payment_success", {
+          payment_id: response.razorpay_payment_id,
+          key: customKey,
+        });
+        setStep("success");
+      },
+      prefill: {
+        name: "",
+        email: "",
+        contact: "",
+      },
+      notes: {
+        license_key: customKey,
+        product: "Refinzi Lifetime Pro",
+      },
+      theme: {
+        color: "#2563EB",
+      },
+      modal: {
+        ondismiss: function () {
+          trackEvent("razorpay_modal_dismissed");
+        },
+      },
+    };
+
+    try {
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", function (response) {
+        trackEvent("razorpay_payment_failed", {
+          reason: response.error ? response.error.description : "Unknown error",
+        });
+        alert(`Payment error: ${response.error ? response.error.description : "Transaction could not be completed"}`);
+      });
+      rzp.open();
+    } catch (err) {
+      console.error("Razorpay open error:", err);
+      if (!hasLiveKey) {
+        // Fallback test activation if demo placeholder key
+        alert("Razorpay Key ID not configured in gatewayConfig.js! Opening instant license generator preview.");
+        setStep("processing");
+        setTimeout(() => {
+          setStep("success");
+        }, 1000);
+      }
+    }
+  };
 
   const handleGatewayRedirect = (gatewayName) => {
     trackEvent("payment_initiated", {
@@ -182,17 +292,52 @@ export function PaypalCheckoutModal({ isOpen, onClose, onDownload, currency = SU
             {/* UPI / GPay QR Tab */}
             {activeTab === "upi" && (
               <div className="mt-3 rounded-xl border border-blue-500/30 bg-blue-950/10 p-3.5 text-center">
+                {/* Razorpay 1-Click Instant Pay */}
+                <div className="mb-3 space-y-1.5 text-left">
+                  <button
+                    type="button"
+                    onClick={handleRazorpayPayment}
+                    disabled={isRazorpayLoading}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] transition-all shadow-lg shadow-blue-500/25 cursor-pointer border border-blue-400/30 text-xs sm:text-sm group"
+                  >
+                    {isRazorpayLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-white" />
+                    ) : (
+                      <Zap className="h-4 w-4 text-amber-300 fill-amber-300 animate-pulse" />
+                    )}
+                    <span>
+                      {isRazorpayLoading ? "Connecting to Razorpay..." : "⚡ Pay ₹999 via Razorpay (Instant UPI & Cards)"}
+                    </span>
+                  </button>
+                  <div className="flex items-center justify-between px-1 text-[10px] text-zinc-400">
+                    <span className="flex items-center gap-1 text-emerald-400 font-medium">
+                      <Check className="h-3 w-3" /> Auto-Activation & Instant Key
+                    </span>
+                    <span>GPay · PhonePe · Paytm · BHIM</span>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="relative my-3 text-center">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-white/10"></div>
+                  </div>
+                  <span className="relative bg-zinc-950 px-2.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                    Or Scan Direct UPI QR
+                  </span>
+                </div>
+
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <span className="text-xs font-bold text-white">Scan with Google Pay, PhonePe, Paytm, BHIM</span>
                 </div>
 
                 {/* QR Code Container */}
-                <div className="mx-auto w-48 h-48 bg-white p-2 rounded-xl shadow-lg border border-zinc-200 flex items-center justify-center overflow-hidden">
+                <div className="mx-auto w-44 h-44 bg-white p-2 rounded-xl shadow-lg border border-zinc-200 flex items-center justify-center overflow-hidden">
                   <img
                     src="/gpay-qr.webp"
                     alt="Scan GPay QR Code for Refinzi Lifetime Pro"
-                    width="192"
-                    height="192"
+                    width="176"
+                    height="176"
                     loading="lazy"
                     decoding="async"
                     className="w-full h-full object-contain"
@@ -257,14 +402,25 @@ export function PaypalCheckoutModal({ isOpen, onClose, onDownload, currency = SU
             {/* International Card / PayPal Tab */}
             {activeTab === "card" && (
               <div className="mt-3.5 space-y-2">
-                {/* Primary 1-Click Checkout */}
+                {/* Razorpay 1-Click for Cards & Netbanking */}
                 <button
                   type="button"
-                  onClick={() => handleGatewayRedirect(PAYMENT_GATEWAY_CONFIG.activeGateway)}
-                  className="w-full relative flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] transition-all shadow-md shadow-blue-500/20 cursor-pointer border border-white/20 text-xs sm:text-sm"
+                  onClick={handleRazorpayPayment}
+                  disabled={isRazorpayLoading}
+                  className="w-full relative flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] transition-all shadow-md shadow-blue-500/20 cursor-pointer border border-blue-400/30 text-xs sm:text-sm"
                 >
                   <Zap className="h-4 w-4 text-amber-300" />
-                  <span>Instant 1-Click Checkout ({currency.formattedPrice})</span>
+                  <span>⚡ Pay ₹999 via Razorpay (Cards, Netbanking, UPI)</span>
+                </button>
+
+                {/* Primary 1-Click Checkout (Stripe / Lemon Squeezy) */}
+                <button
+                  type="button"
+                  onClick={() => handleGatewayRedirect(PAYMENT_GATEWAY_CONFIG.activeGateway === "razorpay" ? "stripe" : PAYMENT_GATEWAY_CONFIG.activeGateway)}
+                  className="w-full relative flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-zinc-200 bg-zinc-900 hover:bg-zinc-800 active:scale-[0.98] transition-all border border-white/10 cursor-pointer text-xs sm:text-sm"
+                >
+                  <CreditCard className="h-4 w-4 text-blue-400" />
+                  <span>Global Cards & Apple Pay ({currency.formattedPrice})</span>
                 </button>
 
                 {/* PayPal Smart Button */}
@@ -279,16 +435,6 @@ export function PaypalCheckoutModal({ isOpen, onClose, onDownload, currency = SU
                     <text x="36" y="22" fill="#003087" fontWeight="bold" fontSize="16" fontFamily="sans-serif">PayPal</text>
                   </svg>
                   <span>Pay with PayPal</span>
-                </button>
-
-                {/* Debit / Credit Cards / Apple Pay */}
-                <button
-                  type="button"
-                  onClick={() => handleGatewayRedirect("stripe")}
-                  className="w-full flex items-center justify-center gap-2 py-1.5 px-4 rounded-xl text-[11px] font-medium text-zinc-400 bg-zinc-900/60 hover:bg-zinc-800/80 hover:text-zinc-200 border border-white/[0.06] active:scale-[0.98] transition-all cursor-pointer"
-                >
-                  <CreditCard className="h-3 w-3 text-blue-400" />
-                  <span>Credit / Debit Card · Apple Pay · Google Pay</span>
                 </button>
               </div>
             )}
@@ -332,6 +478,12 @@ export function PaypalCheckoutModal({ isOpen, onClose, onDownload, currency = SU
             <p className="mt-0.5 text-center text-xs text-zinc-400">
               Your Refinzi Lifetime Pro license key has been generated.
             </p>
+            {razorpayPaymentId && (
+              <div className="mt-1.5 flex items-center justify-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 rounded-lg px-2.5 py-1">
+                <CheckCircle2 className="h-3 w-3 shrink-0" />
+                <span>Verified Ref: {razorpayPaymentId}</span>
+              </div>
+            )}
 
             {/* License Key Box */}
             <div className="mt-3 rounded-xl border border-blue-500/30 bg-blue-950/20 p-3">

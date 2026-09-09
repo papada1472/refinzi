@@ -21,34 +21,49 @@
  * 4. Gumroad (Simple Software Storefront)
  *    - Fee: 10% flat per sale (No monthly fees)
  *    - Link: https://gumroad.com/
+ * 
+ * 5. Razorpay (Recommended for India - UPI, GPay, PhonePe, Cards, Netbanking):
+ *    - Fee: ~2% per successful sale (Zero setup fee, Zero AMC)
+ *    - Link: https://dashboard.razorpay.com/
  */
 
 export const PAYMENT_GATEWAY_CONFIG = {
-  // Set your active primary gateway: "lemonsqueezy" | "stripe" | "paypal" | "gumroad"
-  activeGateway: "paypal",
+  // Set your active primary gateway: "razorpay" | "lemonsqueezy" | "stripe" | "paypal" | "gumroad"
+  activeGateway: "razorpay",
 
-  // 1. Lemon Squeezy Checkout URL (e.g. "https://yourstore.lemonsqueezy.com/buy/product-id")
+  // 1. Razorpay Configuration (India UPI, Cards, Netbanking)
+  razorpay: {
+    enabled: true,
+    // Get your Key ID from: https://dashboard.razorpay.com/app/keys (e.g. "rzp_live_..." or "rzp_test_...")
+    keyId: "rzp_test_TZ3eSqn2pUwTRt",
+    // Optional: If you prefer a direct Razorpay Payment Page or Link (e.g. "https://rzp.io/l/...")
+    paymentLinkUrl: "",
+    inrPrice: 999,
+  },
+
+  // 2. Lemon Squeezy Checkout URL (e.g. "https://yourstore.lemonsqueezy.com/buy/product-id")
   lemonSqueezyUrl: "https://yourstore.lemonsqueezy.com/buy/YOUR_PRODUCT_ID",
 
-  // 2. Stripe Payment Link URL (e.g. "https://buy.stripe.com/YOUR_PAYMENT_LINK")
+  // 3. Stripe Payment Link URL (e.g. "https://buy.stripe.com/YOUR_PAYMENT_LINK")
   stripePaymentLink: "https://buy.stripe.com/YOUR_PAYMENT_LINK",
 
-  // 3. PayPal Configuration
+  // 4. PayPal Configuration
   paypal: {
-    paypalMeUrl: "https://paypal.me/yourusername/19USD",
+    paypalMeUrl: "https://paypal.me/yourusername/12USD",
     merchantEmail: "your-email@example.com",
     clientId: "YOUR_LIVE_PAYPAL_CLIENT_ID",
   },
 
-  // 4. Gumroad Checkout URL (e.g. "https://yourusername.gumroad.com/l/refinzi")
+  // 5. Gumroad Checkout URL (e.g. "https://yourusername.gumroad.com/l/refinzi")
   gumroadUrl: "https://yourusername.gumroad.com/l/refinzi",
 
-  // Base Product Details (in USD)
+  // Base Product Details
   product: {
     name: "Refinzi 2.0 Lifetime Pro License",
-    usdPrice: 19.00,
+    usdPrice: 12.00,
+    inrPrice: 999.00,
     usdRegularPrice: 79.00,
-    discountPercentage: 73,
+    discountPercentage: 85,
     description: "One-time payment for lifetime license & updates",
   },
 };

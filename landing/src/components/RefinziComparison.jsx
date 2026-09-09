@@ -37,8 +37,14 @@ const FRICTION_MATRIX = [
   {
     dimension: "Where it works",
     manual: "Copy-pasting between browser tabs",
-    extensions: "Locked to Chrome only",
-    refinzi: "Every Windows app (Discord, Cursor, Slack, Web)",
+    extensions: "Locked to Chrome / Edge only",
+    refinzi: "Every Windows app (Cursor, Discord, Slack, Web)",
+  },
+  {
+    dimension: "Trigger Friction",
+    manual: "Alt-Tab, copy, paste, copy back",
+    extensions: "Trapped in browser tabs",
+    refinzi: "1-Click Orb in-place (Ctrl+Alt+Space)",
   },
   {
     dimension: "API key markup",
@@ -50,19 +56,19 @@ const FRICTION_MATRIX = [
     dimension: "Your privacy",
     manual: "Stored on third-party cloud servers",
     extensions: "Logged on SaaS backends",
-    refinzi: "100% Local-first (Windows DPAPI encryption)",
+    refinzi: "100% Local-first (Windows DPAPI AES-256)",
   },
   {
-    dimension: "Speed",
+    dimension: "Execution Speed",
     manual: "30–60 seconds per prompt",
     extensions: "10–15 seconds",
-    refinzi: "2 seconds in-place (1-Click)",
+    refinzi: "< 2 seconds in-place (1-Click)",
   },
   {
-    dimension: "Cost",
+    dimension: "Pricing model",
     manual: "Wasted time & tokens",
     extensions: "$15–$30/month subscription",
-    refinzi: "Free BYOK / ₹999 ($12) One-Time Lifetime",
+    refinzi: "Free BYOK / ₹999 ($12) Lifetime Supporter",
   },
 ];
 

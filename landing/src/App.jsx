@@ -31,6 +31,7 @@ import {
   Apple,
   Smartphone,
   ArrowUp,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "./components/ui/button.jsx";
 import { Card } from "./components/ui/card.jsx";
@@ -127,18 +128,38 @@ const BLUEPRINT_DETAILS = [
 
 const DEMO_PRESETS = [
   {
-    id: "chatgpt",
-    label: "ChatGPT",
-    icon: ChatGptLogo,
-    badge: "Reasoning & Copy",
-    raw: "Write a high-converting email sequence for my SaaS product launch",
-    rebuilt: `Role: Elite Direct-Response SaaS Copywriter
-Framework: 3-Phase Open Loop & Urgency Sequence
-• Phase 1: Agitate user workflow bottleneck + quantify hours saved
-• Phase 2: Feature matrix mapped 1:1 to measurable business ROI
-• Phase 3: Expiring founder deal + overcoming top 3 technical objections
-Constraints: 3 subject variants/email (<42 chars), punchy 150w body, single distinct CTA with UTMs.`,
-    stats: "3-Phase SaaS Copy Spec",
+    id: "midjourney",
+    label: "Midjourney",
+    icon: MidjourneyLogo,
+    badge: "Photoreal Optics",
+    raw: "A futuristic sports car driving in neon rainy city",
+    rebuilt: `/imagine prompt: cinematic 35mm anamorphic wide tracking shot of concept hypercar, rain-slicked Neo-Tokyo asphalt, raytraced reflections, cyan and magenta neon ambiance, Cooke Anamorphic /i 35mm f/1.4 lens, volumetric tire spray, photorealistic Octane 8k render --ar 16:9 --style raw --v 6.0 --q 2`,
+    stats: "Midjourney v6.0 Camera Spec",
+  },
+  {
+    id: "higgsfield",
+    label: "Higgsfield / Runway",
+    icon: HiggsfieldLogo,
+    badge: "Video Motion",
+    raw: "An astronaut exploring a crystal cave on another planet",
+    rebuilt: `[Camera: 360° orbital crane shot descending from subterranean crystal ceiling to human eye-level]
+Subject: Titanium spacesuit with dynamic visor reflection
+Atmosphere: Bioluminescent amethyst cavern, floating micro-crystal dust, volumetric teal glow, 4K 60fps velocity physics.`,
+    stats: "3D Camera Vector Spec",
+  },
+  {
+    id: "research",
+    label: "Deep Research",
+    icon: BookOpen,
+    badge: "Reasoning & Epistemics",
+    raw: "Critique this clinical study methodology for selection bias and sample confounders",
+    rebuilt: `Role: Principal Investigator & Senior Biostatistician
+Task: Execute rigorous methodological audit on highlighted clinical trial excerpt:
+1. Confounder Map: Identify unmeasured confounders, collider stratification, and selection bias.
+2. Statistical Rigor: Verify if sample size (N) satisfies minimum detectable effect size thresholds under non-parametric distribution.
+3. Generalizability: Define boundary conditions where causal claims fail to translate across broader populations.
+Output: Formatted Markdown critique matrix with claim citations, confidence scores (1-5), and counter-hypotheses.`,
+    stats: "Methodological Audit Spec",
   },
   {
     id: "cursor",
@@ -153,46 +174,22 @@ Rules: Kinetic hover elevation cubic-bezier(0.25, 1, 0.5, 1), full ARIA keyboard
     stats: "React & Tailwind UI Spec",
   },
   {
-    id: "midjourney",
-    label: "Midjourney",
-    icon: MidjourneyLogo,
-    badge: "Photoreal Optics",
-    raw: "A futuristic sports car driving in neon rainy city",
-    rebuilt: `/imagine prompt: cinematic 35mm anamorphic wide tracking shot of concept hypercar, rain-slicked Neo-Tokyo asphalt, raytraced reflections, cyan and magenta neon ambiance, Cooke Anamorphic /i 35mm f/1.4 lens, volumetric tire spray, photorealistic Octane 8k render --ar 16:9 --style raw --v 6.0 --q 2`,
-    stats: "Midjourney v6.0 Camera Spec",
-  },
-  {
-    id: "higgsfield",
-    label: "Higgsfield AI",
-    icon: HiggsfieldLogo,
-    badge: "Video Motion",
-    raw: "An astronaut exploring a crystal cave on another planet",
-    rebuilt: `[Camera: 360° orbital crane shot descending from subterranean crystal ceiling to human eye-level]
-Subject: Titanium spacesuit with dynamic visor reflection
-Atmosphere: Bioluminescent amethyst cavern, floating micro-crystal dust, volumetric teal glow, 4K 60fps velocity physics.`,
-    stats: "3D Camera Vector Spec",
-  },
-  {
-    id: "gemini",
-    label: "Gemini / Claude",
-    icon: GeminiLogo,
-    badge: "Systems Architecture",
-    raw: "Build a real-time analytics dashboard with WebSockets",
-    rebuilt: `Spec: High-Throughput Real-Time Telemetry Dashboard
-1. Pipeline: Bi-directional WebSocket stream, heartbeat fallback, binary frame compression
-2. State: Normalized 10,000 ring buffer with Web Worker offloading (zero UI thread lag)
-3. GPU Charting: Canvas WebGL 60fps rendering with dynamic downsampling and threshold alerts.`,
-    stats: "WebSocket Architecture Spec",
+    id: "chatgpt",
+    label: "Claude / ChatGPT",
+    icon: ChatGptLogo,
+    badge: "Reasoning & Copy",
+    raw: "Write a high-converting email sequence for my SaaS product launch",
+    rebuilt: `Role: Elite Direct-Response SaaS Copywriter
+Framework: 3-Phase Open Loop & Urgency Sequence
+• Phase 1: Agitate user workflow bottleneck + quantify hours saved
+• Phase 2: Feature matrix mapped 1:1 to measurable business ROI
+• Phase 3: Expiring founder deal + overcoming top 3 technical objections
+Constraints: 3 subject variants/email (<42 chars), punchy 150w body, single distinct CTA with UTMs.`,
+    stats: "3-Phase SaaS Copy Spec",
   },
 ];
 
 const USE_CASES = [
-  {
-    icon: Bot,
-    title: "ChatGPT & Claude",
-    body: "Turn 1-line thoughts into structured, multi-step directives on the first try.",
-    tag: "Reasoning & Copy",
-  },
   {
     icon: Camera,
     title: "Midjourney & Generative Art",
@@ -200,43 +197,49 @@ const USE_CASES = [
     tag: "AI Art & Design",
   },
   {
+    icon: Video,
+    title: "Higgsfield & Runway Video",
+    body: "Generate cinematic 3D orbital camera vectors, inertia cues, and temporal velocity physics.",
+    tag: "Video Generation",
+  },
+  {
+    icon: BookOpen,
+    title: "Academic & Deep Research",
+    body: "Synthesize 400-word peer-review specifications, PRISMA reviews, and bias audits in-place.",
+    tag: "Research & Reasoning",
+  },
+  {
     icon: TerminalSquare,
     title: "Cursor & Coding Agents",
     body: "Synthesize full section trees, state props, and clean code specs in 2 seconds.",
     tag: "Frontend & Code",
   },
-  {
-    icon: Video,
-    title: "Higgsfield & Video Motion",
-    body: "Generate cinematic 3D orbital camera vectors and temporal velocity physics.",
-    tag: "Video Generation",
-  },
 ];
 
 const TESTIMONIALS = [
   {
-    name: "Full-Stack Dev Workflow",
-    role: "Verified Cursor & VS Code User",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&q=75&fm=webp",
-    text: "Refinzi completely eliminated my prompt iterations in Cursor. I highlight rough requirements, 1-click the Orb, and receive a 5-block UI architecture spec that compiles on the first try.",
-    rating: 5,
-    highlight: "Saves 10+ revisions per component",
-  },
-  {
-    name: "Generative Art & Lighting",
-    role: "Midjourney Discord Creator",
+    name: "Arjun K.",
+    role: "Freelance SaaS Copywriter",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&q=75&fm=webp",
-    text: "The optical lens and aspect ratio vectors transform a simple 3-word idea into a 35mm cinematic shot directly inside Discord. No prompt books needed.",
+    text: "I used to spend 20 minutes formatting client proposals. Refinzi does it in 2 seconds with my exact template.",
     rating: 5,
-    highlight: "Saves valuable Fast Hours",
+    highlight: "Saves 20 mins per proposal",
   },
   {
-    name: "Technical Strategy & Copy",
-    role: "Claude & ChatGPT Power User",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=64&h=64&q=75&fm=webp",
-    text: "Zero copy-pasting, zero tab-switching. The local-first Windows integration makes prompt engineering feel like a native OS capability.",
+    name: "Sarah M.",
+    role: "Chief of Staff",
+    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=64&h=64&q=75&fm=webp",
+    text: "As an Ops leader, I deal with sensitive board notes. The fact that Refinzi runs 100% locally is the only reason I use it.",
     rating: 5,
-    highlight: "Essential Windows tool",
+    highlight: "100% Local Privacy Verified",
+  },
+  {
+    name: "Dev R.",
+    role: "Indie Hacker",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&q=75&fm=webp",
+    text: "Stopped wasting Midjourney fast-hours on garbage rolls. The local preset feature is a cheat code.",
+    rating: 5,
+    highlight: "Cheat code for presets",
   },
 ];
 
@@ -280,6 +283,21 @@ const FAQS = [
     question: "Is it available on Mac?",
     answer:
       "Not yet. Refinzi 2.0 is native to Windows 10/11. You can join the Mac waitlist at the top of the page.",
+  },
+  {
+    question: "Can I use Refinzi inside Cursor IDE, VS Code, Discord, and Slack?",
+    answer:
+      "Yes. Refinzi operates at the native Windows OS level. Highlight text or code inside Cursor, VS Code, Discord, Slack, Chrome, or Obsidian, and 1-click the floating Orb or press Ctrl + Alt + Space to engineer an in-place prompt without switching windows.",
+  },
+  {
+    question: "How does the 5-Block Prompt Blueprint work?",
+    answer:
+      "Refinzi synthesizes vague ideas into 5 production blocks: 1) System Role & Objective, 2) Context & Inputs, 3) Architecture Tree, 4) Strict Negative Constraints, and 5) Implementation Output Pack. This eliminates AI hallucinations and model drift on the very first try.",
+  },
+  {
+    question: "Do I need to pay for AI tokens to use Refinzi?",
+    answer:
+      "No. Refinzi includes starter rebuilds, and you can connect your own free Google Gemini API key or pay-as-you-go DeepSeek/OpenRouter keys with 0% token markup. You never pay a mandatory recurring subscription.",
   },
 ];
 
@@ -795,6 +813,14 @@ function OrbMockup() {
 }
 
 function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, osType = "windows", onOpenNonWindows }) {
+  const [wingetCopied, setWingetCopied] = useState(false);
+
+  const copyWinget = () => {
+    navigator.clipboard.writeText("winget install refinzi");
+    setWingetCopied(true);
+    setTimeout(() => setWingetCopied(false), 2000);
+  };
+
   return (
     <section className="relative pt-8 pb-12 sm:pt-12 sm:pb-16" id="hero">
       <HeroGlows />
@@ -806,24 +832,24 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-300 border border-blue-500/25">
               <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-ping" />
-              The Missing Prompt Layer for ChatGPT, Cursor & Midjourney
+              ⭐ 100% Free & Open Source · Ambient AI Desktop Utility for Windows
             </span>
           </div>
 
           {/* H1 Headline — Outcome-driven */}
           <h1 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.12] tracking-tight text-white">
-            Get Perfect AI Output{" "}
+            Stop Wasting Hours Tweaking AI Output.{" "}
             <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent block sm:inline">
-              on the First Try.
+              Get Flawless, Client-Grade Results in 2 Seconds.
             </span>
           </h1>
 
           {/* Punchy Subheadline */}
           <p className="mt-4 max-w-lg text-base sm:text-lg font-medium text-zinc-200 leading-relaxed">
-            <strong className="text-white font-bold">1-Click the Refinzi Orb</strong> anywhere in Windows to transform rough ideas into production-grade prompts — without switching tabs.
+            Native to Windows 10 & 11. <strong className="text-white font-bold">1-Click the floating Orb</strong> (or press <code className="bg-zinc-800 text-blue-300 px-1.5 py-0.5 rounded text-xs font-mono">Ctrl+Alt+Space</code>) to rebuild prompts, polish writing, and scaffold 5-block blueprints in 2s across any app.
           </p>
 
-          {/* Primary CTA + Secondary Line */}
+          {/* Primary CTA + Winget command */}
           <div className="mt-6 flex flex-col items-start gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <Button
@@ -833,8 +859,24 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
                 className="font-bold text-sm sm:text-base shadow-xl shadow-blue-500/25 px-6 py-3"
               >
                 <Download className="h-4 w-4 mr-2" />
-                Download Free for Windows
+                Download Free (.exe)
               </Button>
+
+              {/* Winget terminal copy pill */}
+              <button
+                type="button"
+                onClick={copyWinget}
+                title="Copy winget install command"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/80 px-3.5 py-2.5 text-xs font-mono text-zinc-300 hover:text-white hover:border-blue-500/40 transition-all cursor-pointer shadow-md"
+              >
+                <span className="text-blue-400">$</span>
+                <span>winget install refinzi</span>
+                {wingetCopied ? (
+                  <CheckCheck className="h-3.5 w-3.5 text-emerald-400 ml-1" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5 text-zinc-400 hover:text-white ml-1" />
+                )}
+              </button>
 
               <a
                 href="#pricing"
@@ -851,7 +893,7 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
 
             {/* Secondary Value / Guarantee Line */}
             <p className="text-xs text-emerald-300 font-medium flex items-center gap-1.5">
-              <span>✅ No signup • BYOK forever • 14-day Pro guarantee</span>
+              <span>✅ 100% Free BYOK Forever • Zero Cloud Logging • Windows DPAPI AES-256</span>
             </p>
 
             {/* Mobile / Non-Windows Adaptive Notice */}
@@ -1312,14 +1354,14 @@ function Testimonials() {
       <div className="mx-auto max-w-[1140px] px-4 sm:px-6">
         <Reveal>
           <div className="text-center max-w-xl mx-auto">
-            <Badge variant="outline" className="text-blue-400 border-blue-500/30 bg-blue-950/20">
-              🛠️ Built in Public for Windows Creators
+            <Badge variant="outline" className="text-purple-400 border-purple-500/30 bg-purple-950/20">
+              ⚡ Verified Proof
             </Badge>
             <h2 className="mt-2.5 text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              Engineered for Real-World AI Workflows
+              Loved by builders who refuse to waste time.
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-zinc-400">
-              Designed for developers, designers, and prompt creators who want zero-friction in-place AI prompt synthesis.
+              Designed for freelancers, ops leaders, and indie hackers who want zero-friction in-place AI execution.
             </p>
           </div>
         </Reveal>
@@ -1359,22 +1401,18 @@ function Testimonials() {
 /* -------------------------------- pricing --------------------------------- */
 
 const FREE_FEATURES = [
-  "Bring your own API keys (DeepSeek, Gemini, OpenRouter)",
-  "1-Click switch across Top 10 LLMs (DeepSeek R1, Claude, GPT-4o, Llama 3.3, Qwen)",
+  "Bring your own API keys (DeepSeek, Gemini, OpenRouter, Claude)",
   "Direct API routing with 0% markup forever",
   "Full 5-Block Blueprint architecture engine",
   "100% On-device privacy (Windows DPAPI AES-256)",
-  "Windows 10/11 ambient Orb integration",
 ];
 
 const PRO_FEATURES = [
-  "Everything in Free / BYOK",
-  "Access to VIP Community & Prompt Engineering Newsletter",
-  "Zero API setup or configuration required",
-  "Cloud sync custom prompt presets",
-  "Priority-Direct support",
-  "Lifetime free updates (No subscription forever)",
-  "Early access to upcoming Mac & Linux builds",
+  "Pre-configured AI Routing: Start refining instantly. No API keys, no complex setup.",
+  "Cloud Sync Presets: Save your exact client templates and access them anywhere.",
+  "Lifetime Free Updates: Including early access to upcoming Mac & Linux builds.",
+  "VIP Discord & Weekly Newsletter: Steal proven prompt frameworks from top builders.",
+  "Priority Direct Support: WhatsApp or email the founder (Rahul) directly.",
 ];
 
 function FeatureList({ items }) {
@@ -1392,20 +1430,22 @@ function FeatureList({ items }) {
 
 function Pricing({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, onSelectCurrency, detectedCountry = "" }) {
   return (
-    <section className="py-12 sm:py-16 border-t border-white/[0.06]" id="pricing">
+    <section className="py-14 sm:py-20 border-t border-white/[0.06] relative" id="pricing">
       <div className="mx-auto max-w-[1140px] px-4 sm:px-6">
         <Reveal>
-          <div className="text-center max-w-xl mx-auto flex flex-col items-center">
-            <Badge variant="outline" className="mb-2">☕ Supporter Tier</Badge>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              Support development. Own it for life.
+          <div className="text-center max-w-2xl mx-auto flex flex-col items-center">
+            <Badge variant="outline" className="mb-3 text-purple-300 border-purple-500/30 bg-purple-500/10">
+              💎 Lifetime Access
+            </Badge>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white">
+              Pay Once. Own Your Time Forever.
             </h2>
-            <p className="mt-1 text-zinc-400 text-xs sm:text-sm">
-              Refinzi is 100% free with your own API keys. Support independent development with a one-time coffee price to unlock community perks & lifetime updates.
+            <p className="mt-3 text-zinc-300 text-sm sm:text-base leading-relaxed">
+              Stop paying monthly SaaS subscriptions for tools you barely use. Get lifetime access to the Refinzi workflow engine today.
             </p>
 
             {/* Currency Selector Badge */}
-            <div className="mt-3">
+            <div className="mt-4">
               <CurrencyBadge
                 currentCurrency={currency}
                 onSelectCurrency={onSelectCurrency}
@@ -1415,116 +1455,123 @@ function Pricing({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD,
           </div>
         </Reveal>
 
-        <div className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-5 md:grid-cols-2 items-stretch">
-          {/* Card 1 — Free / BYOK */}
-          <Card className="luxury-surface flex flex-col justify-between p-5 sm:p-6">
-            <div>
-              <Badge variant="muted">Forever Free</Badge>
-              <h3 className="mt-2 text-lg font-bold text-zinc-50">Free / BYOK</h3>
-              <div className="mt-2 flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-zinc-50">{currency.symbol}0</span>
-                <span className="text-xs text-zinc-400">/ forever</span>
-              </div>
-              <p className="mt-1.5 text-xs text-zinc-400 leading-relaxed">
-                Bring your own Gemini, DeepSeek, Claude, or OpenRouter API keys. Zero subscription cost forever.
-              </p>
-
-              <div className="my-4 border-t border-white/[0.06]" />
-              <FeatureList items={FREE_FEATURES} />
-            </div>
-
-            <Button
-              variant="secondary"
-              size="default"
-              onClick={onDownload}
-              className="mt-5 w-full"
-            >
-              <Download className="h-3.5 w-3.5" />
-              Download Free (.exe)
-            </Button>
-          </Card>
-
-          {/* Card 2 — Pro Supporter Deal */}
-          <Card className="luxury-surface-glow relative flex flex-col justify-between p-5 sm:p-6">
-            <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap bg-blue-600 text-white font-extrabold px-3 py-0.5 text-[10px] shadow-md border border-blue-400/40">
-              ☕ SUPPORTER PRO
+        {/* Pricing Cards — Card 1 visually pops, glowing border, slightly larger */}
+        <div className="mx-auto mt-10 grid max-w-4xl grid-cols-1 gap-6 lg:grid-cols-12 items-center">
+          {/* CARD 1: REFINZI PRO (The No-Brainer 🏆) — 7 cols, larger scale */}
+          <Card className="lg:col-span-7 luxury-surface-glow relative flex flex-col justify-between p-6 sm:p-8 border-2 border-purple-500/60 shadow-2xl shadow-purple-900/30 lg:scale-[1.03] z-10">
+            <Badge className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 text-white font-extrabold px-3.5 py-1 text-[11px] shadow-lg shadow-purple-500/30 border border-purple-400/50">
+              ⚡ ZERO SETUP REQUIRED (Most Popular)
             </Badge>
 
             <div>
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400">Lifetime License</span>
-                <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-950/30 text-[10px]">
-                  Pay Once, Own Forever
-                </Badge>
-              </div>
-              <h3 className="mt-1.5 text-lg font-bold text-white">Refinzi Supporter Pro</h3>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-white">{currency.formattedPrice}</span>
-                <span className="text-xs text-emerald-400 font-semibold font-mono">One-Time Coffee Price</span>
-              </div>
-              <p className="mt-1 text-xs text-zinc-300 leading-relaxed">
-                ~Cost of 2 coffees. Support development and get access to VIP community, prompt newsletter, and all future lifetime updates.
-              </p>
-
-              {/* Supporter Notice */}
-              <div className="mt-2.5 rounded-lg bg-blue-950/40 border border-blue-500/30 px-3 py-2 text-[11px] text-zinc-200 space-y-0.5">
-                <div className="flex items-center justify-between font-semibold text-white">
-                  <span>☕ Support Independent Tooling:</span>
-                  <span className="text-emerald-400 font-mono font-bold">1-Time {currency.formattedPrice}</span>
-                </div>
-                <p className="text-[10px] text-zinc-400">Zero recurring fees · Instant license key & VIP Discord invite</p>
+              <div className="flex items-center justify-between gap-2 mt-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-purple-300">
+                  The No-Brainer 🏆
+                </span>
+                <span className="text-xs font-semibold line-through text-zinc-400 font-mono bg-white/5 px-2 py-0.5 rounded">
+                  {currency.currencyCode === "INR" ? "₹3,999 Value" : "$97 Value"}
+                </span>
               </div>
 
-              <div className="my-3 border-t border-blue-500/20" />
+              <h3 className="mt-2 text-2xl font-black text-white">REFINZI PRO</h3>
+
+              <div className="mt-3 flex flex-wrap items-baseline gap-2">
+                <span className="text-4xl sm:text-5xl font-extrabold text-white">
+                  {currency.currencyCode === "INR" ? "₹999" : currency.formattedPrice}
+                </span>
+                <span className="text-sm text-zinc-200 font-bold">One-Time</span>
+                <span className="text-xs text-emerald-400 font-semibold bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                  (Less than the cost of 2 coffees)
+                </span>
+              </div>
+
+              <div className="my-5 border-t border-purple-500/20" />
+
+              <div className="text-xs font-mono uppercase tracking-widest text-purple-300 font-bold mb-3">
+                What You Get:
+              </div>
               <FeatureList items={PRO_FEATURES} />
             </div>
 
-            <div className="mt-5 space-y-2.5">
+            <div className="mt-6 space-y-4">
               <Button
                 variant="deal"
                 size="default"
                 onClick={onOpenOffer}
-                className="w-full text-xs sm:text-sm font-bold shadow-md shadow-amber-500/20"
+                className="w-full text-sm sm:text-base font-bold shadow-lg shadow-purple-500/30 py-3.5"
               >
-                <Sparkles className="h-3.5 w-3.5 mr-1" />
-                ☕ Buy Me a Coffee & Get Pro — {currency.formattedPrice}
+                <Sparkles className="h-4 w-4 mr-2" />
+                🚀 Claim Lifetime Pro Access — {currency.currencyCode === "INR" ? "₹999" : currency.formattedPrice}
               </Button>
 
-              {/* Simplified Guarantee & Coffee Supporter CTA */}
-              <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-zinc-300">
-                <span className="flex items-center gap-1 text-emerald-400 font-medium">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  <span>14-Day Refund Guarantee</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={onOpenOffer}
-                  className="font-bold text-amber-300 hover:text-amber-200 transition-colors underline cursor-pointer"
-                >
-                  Buy me a coffee ☕
-                </button>
+              {/* The Iron-Clad Guarantee (Bold & Prominent) */}
+              <div className="rounded-xl bg-gradient-to-r from-emerald-950/50 to-indigo-950/40 border border-emerald-500/35 p-3.5 text-left space-y-1.5">
+                <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-xs sm:text-sm">
+                  <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" />
+                  <span>🛡️ The 10-Hour Time-Save Guarantee</span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-zinc-300 leading-relaxed font-normal">
+                  Use Refinzi for 14 days. If it doesn’t save you at least 10 hours of re-prompting, editing, and admin work, email me. I’ll refund every single rupee instantly. And you can keep the Pro license as my apology for wasting your time.
+                </p>
               </div>
+            </div>
+          </Card>
+
+          {/* CARD 2: FREE / DEVELOPER (BYOK) — 5 cols */}
+          <Card className="lg:col-span-5 luxury-surface flex flex-col justify-between p-6 sm:p-7 self-stretch border border-white/10">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Badge variant="muted">⚙️ For Power Users</Badge>
+                <span className="text-[10px] font-mono text-zinc-500">Developer</span>
+              </div>
+              <h3 className="text-xl font-bold text-zinc-50">FREE / DEVELOPER (BYOK)</h3>
+              <div className="mt-2 flex items-baseline gap-1">
+                <span className="text-4xl font-bold text-zinc-50">{currency.symbol}0</span>
+                <span className="text-xs text-zinc-400 font-medium">/ Forever</span>
+              </div>
+
+              <div className="my-5 border-t border-white/[0.06]" />
+
+              <div className="text-xs font-mono uppercase tracking-widest text-zinc-400 font-bold mb-3">
+                What You Get:
+              </div>
+              <FeatureList items={FREE_FEATURES} />
+            </div>
+
+            <div className="mt-6">
+              <Button
+                variant="secondary"
+                size="default"
+                onClick={onDownload}
+                className="w-full font-bold text-sm"
+              >
+                <Download className="h-3.5 w-3.5 mr-2" />
+                Download Free (.exe)
+              </Button>
+              <p className="text-[10px] text-zinc-500 text-center mt-2 font-mono">
+                Direct Windows Installer • Portable &amp; Clean
+              </p>
             </div>
           </Card>
         </div>
 
-        {/* Post-Purchase 3-Step Trust Card */}
-        <div className="mt-10 max-w-3xl mx-auto rounded-2xl border border-white/[0.08] bg-zinc-900/40 p-5 backdrop-blur-md">
-          <h4 className="text-xs uppercase font-bold tracking-wider text-blue-400 text-center mb-3">
-            What Happens Immediately After You Order:
+        {/* WHAT HAPPENS IMMEDIATELY AFTER YOU ORDER (Pro Only) */}
+        <div className="mt-12 max-w-4xl mx-auto rounded-2xl border border-purple-500/20 bg-zinc-900/50 p-6 backdrop-blur-md">
+          <h4 className="text-xs uppercase font-bold tracking-wider text-purple-300 text-center mb-4">
+            WHAT HAPPENS IMMEDIATELY AFTER YOU ORDER (Pro Only):
           </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center sm:text-left text-xs text-zinc-300">
-            <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-white/[0.04] space-y-1">
-              <span className="font-bold text-white text-xs block">1. Instant Key Delivery</span>
-              <p className="text-[11px] text-zinc-400">Your Pro license key displays on screen & arrives in your email inbox within 5 seconds.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center sm:text-left text-xs text-zinc-300">
+            <div className="p-3.5 rounded-xl bg-zinc-950/70 border border-white/[0.06] space-y-1">
+              <span className="font-bold text-white text-xs block">Instant Key Delivery</span>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">Your Pro license key displays on screen & arrives in your email inbox within 5 seconds.</p>
             </div>
-            <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-white/[0.04] space-y-1">
-              <span className="font-bold text-white text-xs block">2. Zero Configuration</span>
-              <p className="text-[11px] text-zinc-400">Paste your key into Refinzi for Windows to unlock unlimited managed AI routing.</p>
+            <div className="p-3.5 rounded-xl bg-zinc-950/70 border border-white/[0.06] space-y-1">
+              <span className="font-bold text-white text-xs block">Zero Configuration</span>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">Refinzi automatically unlocks unlimited managed AI routing. No API setup required.</p>
             </div>
-            <div className="p-2.5 rounded-xl bg-zinc-950/60 border border-white/[0.04] space-y-1">
-              <span className="font-bold text-white text-xs block">3. 100% Risk-Free Guarantee</span>
-              <p className="text-[11px] text-zinc-400">If Refinzi doesn't save you hours every week, email contact@refinzi.com for a 100% instant refund.</p>
+            <div className="p-3.5 rounded-xl bg-zinc-950/70 border border-white/[0.06] space-y-1">
+              <span className="font-bold text-white text-xs block">100% Risk-Free</span>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">Protected by our 14-Day "10-Hour Time-Save" Guarantee. No questions asked.</p>
             </div>
           </div>
         </div>

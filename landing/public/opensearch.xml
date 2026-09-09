@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+  <ShortName>Refinzi</ShortName>
+  <Description>Refinzi 2.0 — Ambient AI Prompt Builder & Research Specs for Windows</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Image width="32" height="32" type="image/x-icon">https://refinzi.com/favicon.ico</Image>
+  <Url type="text/html" template="https://refinzi.com/?q={searchTerms}"/>
+</OpenSearchDescription>

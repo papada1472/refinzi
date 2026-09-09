@@ -9,17 +9,22 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Refinzi 2.0" />
     <meta name="format-detection" content="telephone=no" />
-    <title>Refinzi 2.0 — 1-Click AI Prompt Builder for Windows</title>
+    <title>Refinzi 2.0 — Ambient AI Prompt Builder & Research Specs for Windows</title>
     <meta
       name="description"
-      content="Transform messy ideas into production-grade AI prompts in 2 seconds. 1-Click floating Orb for ChatGPT, Claude, Midjourney & Cursor on Windows."
+      content="Turn rough thoughts into calibrated cinematic video prompts & detailed research specifications in 2 seconds. 1-Click floating Windows Orb for Midjourney, Runway, Claude 3.7, DeepSeek R1 & Cursor."
     />
     <meta
       name="keywords"
-      content="prompt engineering tool, Windows 11 AI companion, prompt generator, ChatGPT prompt builder, Claude prompt enhancer, Cursor rules builder, Midjourney v6 prompts, 5-block prompt blueprint, BYOK AI desktop, ambient AI Orb, prompt synthesis, DeepSeek R1 prompt tool"
+      content="prompt engineering tool, Windows 11 AI companion, cinematic video prompts, Midjourney v6 prompts, Runway Gen-3 prompt builder, research prompt engineering, DeepSeek R1 prompts, Claude 3.7 reasoning prompts, academic literature review prompts, 5-block prompt blueprint, BYOK AI desktop, ambient AI Orb, prompt synthesis"
     />
     <meta name="author" content="Rahul Mangla" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    
+    <!-- Google Search Console Verification -->
+    <meta name="google-site-verification" content="GSC_VERIFICATION_TOKEN" />
     
     <!-- Favicon & App Icons -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
@@ -32,21 +37,27 @@
     <meta property="og:url" content="https://refinzi.com" />
     <meta property="og:site_name" content="Refinzi 2.0" />
     <meta property="og:locale" content="en_US" />
-    <meta property="og:title" content="Refinzi 2.0 — 1-Click AI Prompt Builder for Windows" />
-    <meta property="og:description" content="Transform messy ideas into production-grade AI prompts in 2 seconds. 1-Click floating Orb for ChatGPT, Claude, Midjourney & Cursor on Windows." />
+    <meta property="og:title" content="Refinzi 2.0 — Ambient AI Prompt Builder & Research Specs for Windows" />
+    <meta property="og:description" content="Turn rough thoughts into calibrated cinematic video prompts & detailed research specifications in 2 seconds. 1-Click floating Windows Orb for Midjourney, Runway, Claude 3.7, DeepSeek R1 & Cursor." />
     <meta property="og:image" content="https://refinzi.com/branding/Refinzi-logo.png" />
+    <meta property="og:image:secure_url" content="https://refinzi.com/branding/Refinzi-logo.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Refinzi 2.0 Windows Ambient Prompt Engine" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@refinzi" />
     <meta name="twitter:creator" content="@refinzi" />
-    <meta name="twitter:title" content="Refinzi 2.0 — 1-Click AI Prompt Builder for Windows" />
-    <meta name="twitter:description" content="Transform messy ideas into production-grade AI prompts in 2 seconds. 1-Click floating Orb for ChatGPT, Claude, Midjourney & Cursor on Windows." />
+    <meta name="twitter:title" content="Refinzi 2.0 — Ambient AI Prompt Builder & Research Specs for Windows" />
+    <meta name="twitter:description" content="Turn rough thoughts into calibrated cinematic video prompts & detailed research specifications in 2 seconds. 1-Click floating Windows Orb for Midjourney, Runway, Claude 3.7, DeepSeek R1 & Cursor." />
     <meta name="twitter:image" content="https://refinzi.com/branding/Refinzi-logo.png" />
+    <meta name="twitter:image:alt" content="Refinzi 2.0 Windows Ambient Prompt Engine" />
 
     <!-- Canonical & Alternates -->
     <link rel="canonical" href="https://refinzi.com/" />
+    <link rel="search" type="application/opensearchdescription+xml" title="Refinzi" href="/opensearch.xml" />
     <link rel="alternate" type="text/plain" href="https://refinzi.com/llms.txt" title="LLM Summary (llms.txt)" />
     <link rel="alternate" type="text/plain" href="https://refinzi.com/llms-full.txt" title="Full LLM Documentation (llms-full.txt)" />
 
@@ -54,11 +65,13 @@
     <meta name="ai-agent" content="enabled" />
     <meta
       name="ai-content-declaration"
-      content="Refinzi is a native Windows desktop companion that rebuilds vague prompts into 5-block architectural prompts in 2 seconds via 1-Click on the floating Orb or Ctrl+Alt+Space for ChatGPT, Claude, Midjourney, Cursor, and DeepSeek."
+      content="Refinzi is a native Windows desktop companion that rebuilds vague ideas into cinematic prompts for creators and detailed research specifications for analysts in 2 seconds via 1-Click on the floating Orb or Ctrl+Alt+Space for Midjourney, Runway, Claude 3.7, DeepSeek R1, ChatGPT, and Cursor."
     />
     
-    <!-- Critical Asset Preloads -->
+    <!-- Critical Asset Preloads & DNS Prefetch for Google Core Web Vitals -->
     <link rel="preload" as="image" href="/branding/logo-mark.webp" type="image/webp" fetchpriority="high" />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -69,7 +82,15 @@
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      />
+    </noscript>
 
     <!-- Schema.org JSON-LD Structured Data for Google Rich Snippets & Knowledge Graph -->
     <script type="application/ld+json">
@@ -81,8 +102,18 @@
             "@id": "https://refinzi.com/#website",
             "url": "https://refinzi.com/",
             "name": "Refinzi",
-            "description": "1-Click AI Prompt Transformation in Windows",
+            "alternateName": [
+              "Refinzi AI",
+              "Refinzi 2.0",
+              "Refinzi Prompt Builder"
+            ],
+            "description": "Ambient AI Cinematic Prompt Builder & Detailed Research Spec Engine for Windows",
             "inLanguage": "en-US",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://refinzi.com/?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            },
             "publisher": {
               "@type": "Organization",
               "name": "Refinzi",
@@ -93,8 +124,21 @@
             "@type": "Organization",
             "@id": "https://refinzi.com/#organization",
             "name": "Refinzi",
+            "legalName": "Refinzi",
             "url": "https://refinzi.com/",
-            "logo": "https://refinzi.com/branding/logo-mark.png",
+            "disambiguatingDescription": "Refinzi is an ambient Windows desktop artificial intelligence software application and prompt builder, completely separate and distinct from Infinzi accounting services.",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://refinzi.com/branding/logo-mark.png",
+              "width": "512",
+              "height": "512"
+            },
+            "brand": {
+              "@type": "Brand",
+              "name": "Refinzi",
+              "alternateName": "Refinzi 2.0",
+              "url": "https://refinzi.com/"
+            },
             "founder": {
               "@type": "Person",
               "name": "Rahul Mangla",
@@ -102,7 +146,14 @@
               "url": "https://github.com/papada1472"
             },
             "sameAs": [
-              "https://github.com/papada1472/refinzi"
+              "https://github.com/papada1472/refinzi",
+              "https://x.com/refinzi"
+            ],
+            "knowsAbout": [
+              "Artificial Intelligence Prompt Engineering",
+              "Windows 11 Desktop Software",
+              "Cinematic Video Prompts",
+              "DeepSeek R1 and Claude 3.7 Research Specifications"
             ]
           },
           {
@@ -136,14 +187,44 @@
                 "description": "Lifetime license with built-in managed Claude 3.5 Sonnet & GPT-4o routing, cloud sync, and lifetime updates."
               }
             ],
-            "aggregateRating": {
-              "@type": "AggregateRating",
-              "ratingValue": "4.9",
-              "bestRating": "5",
-              "worstRating": "1",
-              "ratingCount": "148"
-            },
+            "featureList": [
+              "1-Click Ambient Floating Orb for instant in-place prompt rebuilding",
+              "Cinematic video prompts calibrated for Midjourney v6 and Runway Gen-3",
+              "Detailed research specifications and analytical thinking frameworks for DeepSeek R1 and Claude 3.7",
+              "5-Block prompt synthesis blueprint (Role, Context, Architecture, Constraints, Output)",
+              "Zero prompt storage, local-first Windows DPAPI AES-256 key encryption"
+            ],
             "description": "An ambient Windows desktop app that rebuilds any AI prompt in 2 seconds. 1-Click on floating Orb or Ctrl+Alt+Space to engineer production prompts in-place for ChatGPT, Gemini, Midjourney, Higgsfield, Cursor & Claude."
+          },
+          {
+            "@type": "BreadcrumbList",
+            "@id": "https://refinzi.com/#breadcrumbs",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://refinzi.com/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Features & Demo",
+                "item": "https://refinzi.com/#demo"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Pricing",
+                "item": "https://refinzi.com/#pricing"
+              },
+              {
+                "@type": "ListItem",
+                "position": 4,
+                "name": "Documentation",
+                "item": "https://refinzi.com/docs/"
+              }
+            ]
           },
           {
             "@type": "HowTo",
@@ -170,6 +251,27 @@
                 "text": "Refinzi analyzes the context and replaces or copies an optimized 5-block prompt calibrated for ChatGPT, Claude, Midjourney, or Cursor in 2 seconds."
               }
             ]
+          },
+          {
+            "@type": "VideoObject",
+            "@id": "https://refinzi.com/#demo-video",
+            "name": "Refinzi 2.0 Ambient Prompt Engine Live Workflow Demo",
+            "description": "Watch how Refinzi rebuilds rough prompts into calibrated 5-block blueprints for Midjourney, Runway, Claude 3.7, and DeepSeek in 2 seconds on Windows 10/11.",
+            "thumbnailUrl": [
+              "https://refinzi.com/branding/Refinzi-logo.png"
+            ],
+            "uploadDate": "2026-09-01T08:00:00+00:00",
+            "contentUrl": "https://refinzi.com/refinzi-demo.mp4",
+            "embedUrl": "https://refinzi.com/#demo",
+            "publisher": {
+              "@type": "Organization",
+              "name": "Refinzi",
+              "url": "https://refinzi.com/",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://refinzi.com/branding/logo-mark.png"
+              }
+            }
           },
           {
             "@type": "FAQPage",
@@ -237,6 +339,30 @@
                 "acceptedAnswer": {
                   "@type": "Answer",
                   "text": "Not yet. Refinzi 2.0 is native to Windows 10/11. Mac and Linux builds are in active development."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I use Refinzi inside Cursor IDE, VS Code, Discord, and Slack?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. Refinzi operates at the native Windows OS level. Highlight text or code inside Cursor, VS Code, Discord, Slack, Chrome, or Obsidian, and 1-click the floating Orb or press Ctrl + Alt + Space to engineer an in-place prompt without switching windows."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How does the 5-Block Prompt Blueprint work?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Refinzi synthesizes vague ideas into 5 production blocks: 1) System Role & Objective, 2) Context & Inputs, 3) Architecture Tree, 4) Strict Negative Constraints, and 5) Implementation Output Pack. This eliminates AI hallucinations and model drift on the very first try."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Do I need to pay for AI tokens to use Refinzi?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. Refinzi includes starter rebuilds, and you can connect your own free Google Gemini API key or pay-as-you-go DeepSeek/OpenRouter keys with 0% token markup. You never pay a mandatory recurring subscription."
                 }
               }
             ]

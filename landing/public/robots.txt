@@ -7,6 +7,12 @@ Allow: /
 User-agent: Googlebot
 Allow: /
 
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Googlebot-Video
+Allow: /
+
 User-agent: Bingbot
 Allow: /
 
@@ -57,3 +63,7 @@ User-agent: Diffbot
 Allow: /
 
 Sitemap: https://refinzi.com/sitemap.xml
+
+# LLM Context Files
+# https://refinzi.com/llms.txt
+# https://refinzi.com/llms-full.txt
