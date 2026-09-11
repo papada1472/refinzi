@@ -837,17 +837,17 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
     <section className="relative pt-6 pb-10 sm:pt-10 sm:pb-14" id="hero">
       <HeroGlows />
 
-      <div className="relative mx-auto grid w-full max-w-[1160px] grid-cols-1 items-start gap-8 px-4 sm:px-6 lg:grid-cols-12">
-        {/* Left column (7 cols on desktop, tightly composed and balanced) */}
-        <div className="lg:col-span-7 flex flex-col items-start">
+      <div className="relative mx-auto w-full max-w-[1160px] px-4 sm:px-6">
+        {/* Hero Text — centered */}
+        <div className="flex flex-col items-center text-center">
           {/* Top Muted Category Tag */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-medium bg-white/[0.05] text-zinc-300 border border-white/[0.08]">
-            <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
-            <span>Ambient Windows Prompt Layer • v2.0</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-white/[0.04] text-zinc-500 border border-white/[0.07]">
+            <span className="h-1.5 w-1.5 rounded-full bg-blue-500/70" />
+            <span>Windows 10 &amp; 11 · v2.0</span>
           </div>
 
           {/* H1 Headline — Pinpoint prompt from simple words transformation */}
-          <h1 className="mt-3.5 text-3xl sm:text-4xl lg:text-[44px] font-black leading-[1.12] tracking-tight text-white">
+          <h1 className="mt-3.5 text-3xl sm:text-4xl lg:text-[52px] font-black leading-[1.1] tracking-tight text-white max-w-4xl">
             <span className="block text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.9)]">
               Turn Simple Words Into Pinpoint, Master&#8209;Grade Prompts.
             </span>
@@ -857,150 +857,95 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
           </h1>
 
           {/* Subheadline */}
-          <p className="mt-3.5 text-sm sm:text-base text-zinc-300 font-normal leading-relaxed max-w-xl">
-            Type rough thoughts in <strong className="text-white font-semibold">any Windows app</strong>, tap the Orb or press <kbd className="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-800 text-blue-300 border border-blue-500/30">Ctrl+Alt+Space</kbd>, and instantly get a pinpoint, client-grade prompt architecture calibrated for Claude, ChatGPT, Cursor &amp; Midjourney.
+          <p className="mt-4 text-sm sm:text-base lg:text-lg text-zinc-300 font-normal leading-relaxed max-w-2xl">
+            Type rough thoughts anywhere in Windows. Click the floating Orb and get a production-grade prompt calibrated for Claude, Cursor &amp; Midjourney — in 2 seconds.
           </p>
 
-          {/* 3 Core Bullets */}
-          <div className="mt-4 space-y-2 text-xs sm:text-[13px] text-zinc-300">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[11px]">
-                ✓
-              </span>
-              <span>
-                <strong className="text-white font-semibold">Zero Prompting Skill Needed:</strong> Turns 3 messy words into complete 5-block architectures.
-              </span>
+          {/* 3 Core Bullets — horizontal on desktop */}
+          <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-xs sm:text-[13px] text-zinc-300">
+            <div className="flex items-center gap-2">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[11px]">✓</span>
+              <span><strong className="text-white font-semibold">Zero Prompting Skill Needed</strong></span>
             </div>
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[11px]">
-                ✓
-              </span>
-              <span>
-                <strong className="text-white font-semibold">100% Local DPAPI Privacy:</strong> Zero cloud logging, zero telemetry. Your data stays on your PC.
-              </span>
+            <div className="flex items-center gap-2">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[11px]">✓</span>
+              <span><strong className="text-white font-semibold">100% Local DPAPI Privacy</strong></span>
             </div>
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[11px]">
-                ✓
-              </span>
-              <span>
-                <strong className="text-white font-semibold">Free Forever with BYOK:</strong> Unlimited rebuilds with your own free Gemini or DeepSeek API key.
-              </span>
+            <div className="flex items-center gap-2">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[11px]">✓</span>
+              <span><strong className="text-white font-semibold">Free Forever with BYOK</strong></span>
             </div>
-          </div>
-
-          {/* Action CTAs — One Clear Primary Winner, One Secondary Ghost */}
-          <div className="mt-6 flex flex-col items-start gap-3 w-full">
-            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-              {/* Primary Solid Action (Clear Visual Winner) */}
-              <Button
-                size="lg"
-                variant="primary"
-                onClick={onDownload}
-                className="group relative flex items-center justify-center font-bold text-sm sm:text-base px-7 py-3.5 shadow-xl shadow-blue-600/25 bg-blue-600 hover:bg-blue-500 text-white rounded-xl border border-blue-400/40 cursor-pointer transition-all transform hover:-translate-y-0.5 w-full sm:w-auto"
-              >
-                <Download className="h-4 w-4 mr-2 group-hover:translate-y-0.5 transition-transform" />
-                <div className="flex flex-col items-start text-left">
-                  <span>Download Free for Windows</span>
-                  <span className="text-xs font-semibold text-blue-100 tracking-wide mt-0.5">v2.0.0 • 111.8 MB • 0/72 Clean on VirusTotal</span>
-                </div>
-              </Button>
-
-              {/* Secondary Ghost Button + Satisfaction & Refund Policy Guarantee */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <button
-                  type="button"
-                  onClick={onOpenOffer}
-                  className="font-semibold text-xs sm:text-sm px-5 py-3.5 bg-transparent hover:bg-white/[0.06] text-zinc-100 border border-white/20 hover:border-white/30 rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-sm"
-                  title="View Lifetime Pro Deal"
-                >
-                  <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-                  <span>Get Lifetime Pro — {currency.currencyCode === "INR" ? "₹999" : currency.formattedPrice}</span>
-                </button>
-                <a
-                  href="#pricing"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/20 transition-colors shadow-sm"
-                  title="14-Day 100% Money-Back Guarantee"
-                >
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                  <span>14-Day Money-Back • Satisfaction Guaranteed</span>
-                </a>
-              </div>
-
-              {/* Winget copy button */}
-              <button
-                type="button"
-                onClick={copyWinget}
-                title="Copy winget install command for PowerShell"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-3.5 text-xs font-mono text-zinc-300 hover:text-white hover:border-white/20 transition-all cursor-pointer shadow-sm"
-              >
-                <span className="text-blue-400 font-bold">$</span>
-                <span className="hidden sm:inline">winget</span>
-                {wingetCopied ? (
-                  <span className="inline-flex items-center gap-1 text-emerald-400 font-sans text-[11px] font-semibold">
-                    <CheckCheck className="h-3.5 w-3.5" /> Copied
-                  </span>
-                ) : (
-                  <Copy className="h-3.5 w-3.5 text-zinc-400" />
-                )}
-              </button>
-            </div>
-
-            {/* Prominent Recognized Technical Trust Badges Row */}
-            <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
-              <div
-                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300 font-semibold shadow-sm"
-                title="100% clean verified by VirusTotal across 72 antivirus engines"
-              >
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                <span>VirusTotal: 0/72 Clean</span>
-              </div>
-              <div
-                className="inline-flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-2.5 py-1 text-blue-300 font-semibold shadow-sm"
-                title="Windows hardware-backed DPAPI AES-256 local encryption"
-              >
-                <Lock className="h-3.5 w-3.5 text-blue-400 shrink-0" />
-                <span>Security: DPAPI AES-256</span>
-              </div>
-              <div
-                className="inline-flex items-center gap-1.5 rounded-lg border border-purple-500/30 bg-purple-500/10 px-2.5 py-1 text-purple-300 font-semibold shadow-sm"
-                title="100% local execution with zero cloud telemetry or storage"
-              >
-                <Check className="h-3.5 w-3.5 text-purple-400 shrink-0" />
-                <span>Privacy: Zero Cloud Logging</span>
-              </div>
-              <div
-                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-amber-300 font-semibold shadow-sm"
-                title="Bring your own API keys with 0% token price markup"
-              >
-                <Zap className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                <span>Pricing: 0% Markup BYOK</span>
-              </div>
-              <div className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-900/80 px-2.5 py-1 text-zinc-200 font-medium shadow-sm">
-                <Laptop className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-                <span>Windows 10 &amp; 11 Native</span>
-              </div>
-            </div>
-
-            {/* Mobile / Non-Windows Adaptive Notice */}
-            {osType !== "windows" && (
-              <div className="mt-2 rounded-xl bg-blue-950/40 border border-blue-500/30 p-2.5 text-xs text-blue-200 flex items-center justify-between gap-2 w-full max-w-xl">
-                <span>📱 On phone or Mac? Send the Windows installer to your PC:</span>
-                <button
-                  type="button"
-                  onClick={onOpenNonWindows}
-                  className="shrink-0 bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer"
-                >
-                  Send to Email
-                </button>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Right column with Demo Frame (Clean macOS/Windows Glassmorphism Bezel) */}
-        <div className="lg:col-span-5 w-full">
+        {/* Video — full width, larger */}
+        <div className="mt-8 w-full">
           <HeroVideoPlayer />
+        </div>
+
+        {/* CTA — centered below video */}
+        <div className="mt-8 flex flex-col items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {/* Primary CTA — single clear winner */}
+            <Button
+              size="lg"
+              variant="primary"
+              onClick={onDownload}
+              className="group relative flex items-center justify-center font-bold text-sm sm:text-base px-8 py-4 shadow-xl shadow-blue-600/25 bg-blue-600 hover:bg-blue-500 text-white rounded-xl border border-blue-400/40 cursor-pointer transition-all transform hover:-translate-y-0.5"
+            >
+              <Download className="h-5 w-5 mr-2 group-hover:translate-y-0.5 transition-transform" />
+              <div className="flex flex-col items-start text-left">
+                <span>Download Free for Windows</span>
+                <span className="text-xs font-semibold text-blue-100 tracking-wide mt-0.5">v2.0.0 · 111.8 MB · Free forever</span>
+              </div>
+            </Button>
+
+            {/* Secondary Ghost CTA */}
+            <button
+              type="button"
+              onClick={onOpenOffer}
+              className="font-semibold text-sm px-6 py-4 bg-transparent hover:bg-white/[0.06] text-zinc-300 border border-white/15 hover:border-white/25 rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-sm"
+              title="See Pricing"
+            >
+              <span>See Pricing →</span>
+            </button>
+          </div>
+
+          {/* Subtle guarantee line */}
+          <p className="text-[11px] text-zinc-500 flex items-center gap-1.5">
+            <ShieldCheck className="h-3 w-3 text-zinc-600 shrink-0" />
+            14-day money-back guarantee · No subscription · Windows 10 &amp; 11
+          </p>
+
+          {/* Trust Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+            <div className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-zinc-400 font-medium shadow-sm">
+              <ShieldCheck className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
+              <span>VirusTotal 0/72 Clean</span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-zinc-400 font-medium shadow-sm">
+              <Lock className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
+              <span>DPAPI Local Encryption</span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-zinc-400 font-medium shadow-sm">
+              <Zap className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
+              <span>Free forever with BYOK</span>
+            </div>
+          </div>
+
+          {/* Mobile / Non-Windows Adaptive Notice */}
+          {osType !== "windows" && (
+            <div className="mt-1 rounded-xl bg-blue-950/40 border border-blue-500/30 p-2.5 text-xs text-blue-200 flex items-center justify-between gap-2 w-full max-w-xl">
+              <span>📱 On phone or Mac? Send the Windows installer to your PC:</span>
+              <button
+                type="button"
+                onClick={onOpenNonWindows}
+                className="shrink-0 bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer"
+              >
+                Send to Email
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </section>
@@ -1023,8 +968,8 @@ function HeroVideoPlayer() {
   };
 
   return (
-    <div className="relative lg:justify-self-end w-full max-w-lg">
-      <div className="rounded-2xl border border-white/[0.08] bg-[#121620] p-2.5 sm:p-3 shadow-2xl backdrop-blur-xl transition-all">
+    <div className="relative w-full max-w-4xl mx-auto">
+      <div className="rounded-2xl border border-white/[0.08] bg-[#121620] p-3 sm:p-4 shadow-2xl backdrop-blur-xl transition-all">
         {/* Window Header */}
         <div className="mb-2 flex items-center justify-between px-2 py-1">
           <div className="flex items-center gap-1.5">
@@ -1261,18 +1206,11 @@ function LiveDemoSection({ onDownload }) {
               ⚡ AI Architecture &amp; System Specs
             </Badge>
             <h2 className="mt-2.5 text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
-              AI Prompt Transformation Presets &amp; System Specs
+              See Exactly What Refinzi Builds
             </h2>
-            <p className="mt-2 text-zinc-200 text-xs sm:text-sm leading-relaxed max-w-xl mx-auto">
-              Explore production-tested system prompt blueprints engineered specifically for each AI architecture. Select a model engine preset or type your own rough prompt to watch it rebuild in real time.
+            <p className="mt-2 text-zinc-400 text-xs sm:text-sm leading-relaxed max-w-xl mx-auto">
+              Pick a tool below and watch your rough idea become a production-ready prompt in real time.
             </p>
-            {/* Total Product Count to gauge tool scale */}
-            <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/[0.04] border border-white/[0.1] px-3.5 py-1 text-xs text-zinc-200 font-mono shadow-sm">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span><strong className="text-blue-400">5</strong> AI Engine Presets</span>
-              <span className="text-zinc-500">•</span>
-              <span><strong className="text-emerald-400">16</strong> Production Blueprints Available</span>
-            </div>
           </div>
         </Reveal>
 
@@ -1560,10 +1498,10 @@ function Blueprint({ onDownload }) {
               🧠 5-Block Blueprint Engine
             </Badge>
             <h2 className="mt-2.5 text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              Need an entire system spec? Hold for 300ms.
+              The 5-Block Architecture Every Prompt Gets Built From
             </h2>
             <p className="mt-1.5 text-zinc-400 text-xs sm:text-sm">
-              When 1-line improvements aren't enough, hold the Orb to generate full 5-block architectural scaffolding.
+              Hold the Orb for 300ms and Refinzi synthesizes a complete 5-block architectural spec — not just a better sentence.
             </p>
           </div>
         </Reveal>
@@ -2049,15 +1987,6 @@ function FinalCTA({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD
               <Download className="h-4 w-4 mr-1.5" />
               Download Free for Windows (.exe)
             </Button>
-
-            <Button
-              variant="deal"
-              size="lg"
-              onClick={onOpenOffer}
-            >
-              <Flame className="h-4 w-4 mr-1.5" />
-              Claim Lifetime Pro — {currency.formattedPrice}
-            </Button>
           </div>
 
           <p className="mt-3 text-[11px] text-zinc-400">
@@ -2299,11 +2228,22 @@ export default function App() {
     // Retain existing event for continuity
     trackEvent("download_initiated", { platform: "windows", source, os: osType });
 
-    // Download via Edge Redirector route (allows Cloudflare Edge Worker to log server-side telemetry & 302 redirect)
-    const downloadEndpoint = `${EDGE_DOWNLOAD_ROUTE}?source=${encodeURIComponent(source)}`;
+    // In local dev the Cloudflare edge function doesn't run — fall back to GitHub directly.
+    // In production, route through the edge worker for server-side GA4 telemetry & 302 redirect.
+    const isLocalDev = typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+    const downloadHref = isLocalDev
+      ? GITHUB_DOWNLOAD_URL
+      : `${EDGE_DOWNLOAD_ROUTE}?source=${encodeURIComponent(source)}`;
+
     const link = document.createElement("a");
-    link.href = downloadEndpoint;
-    link.setAttribute("download", SETUP_FILE_NAME);
+    link.href = downloadHref;
+    if (isLocalDev) {
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+    } else {
+      link.setAttribute("download", SETUP_FILE_NAME);
+    }
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -2362,8 +2302,8 @@ export default function App() {
           onOpenNonWindows={() => setIsNonWindowsModalOpen(true)}
         />
         <TrustBar />
-        <LiveDemoSection onDownload={() => handleTriggerDownload("demo")} />
         <Mechanism />
+        <LiveDemoSection onDownload={() => handleTriggerDownload("demo")} />
         <Blueprint onDownload={() => handleTriggerDownload("blueprint")} />
         <UseCases />
         <RefinziComparison />
