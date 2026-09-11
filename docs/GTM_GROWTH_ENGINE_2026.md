@@ -7,14 +7,14 @@
 
 ## 🎯 1. ICP & Customer Archetypes
 
-Refinzi is not for everyone. We focus obsessively on high-frequency AI operators who experience prompt latency multiple times per hour:
+Refinzi focuses obsessively on high-frequency AI operators who experience prompt latency and context switching multiple times per hour, centered around two primary archetypes:
 
 | Archetype | Primary Pain Point | What Sells Them on Refinzi | Trigger Moment |
 | :--- | :--- | :--- | :--- |
-| **The Cursor / Windsurf Developer** | Cursor Composer writes spaghetti code when given vague 1-line instructions. | 5-Block Architectural Blueprints (`Ctrl+Alt+B`) with section trees, CSS tokens, and edge cases. | Before typing `Ctrl+I` in Cursor. |
-| **The Local-First Privacy Advocate** | Distrust of cloud prompt loggers and proprietary closed-source telemetry. | 100% Client-side DPAPI AES-256 key encryption; zero telemetry; raw BYOK connections. | Reading our security model & local architecture. |
-| **The Multi-Model AI Power User** | Re-prompting Claude, ChatGPT, and Midjourney 5–10 times per session. | In-place OS execution (`Ctrl+Alt+Space`) in < 2 seconds without Alt-Tabbing. | Seeing the 20-second screen capture demo. |
-| **The Windows Power User** | Jealous of Mac-only tools like Raycast or Superhuman. | Native Windows 10/11 desktop utility with ambient floating Orb and system tray docking. | Discovering a native Windows companion. |
+| **1. The Generative Media Creator** *(Primary ICP)* | Repetitive typing of camera choreography, lighting physics, and burning expensive video render credits (Runway, Kling, Midjourney). | **Cinematic Scaffolding in 2s**: Converts 1-line ideas into calibrated focal lengths, 3D orbit vectors, volumetric lighting, and negative constraints. | Typing into Midjourney, Runway, or Discord. |
+| **2. The Researcher & Analyst** *(Primary ICP)* | Superficial, undergraduate-level AI summaries; tedious manual construction of 400-word constraint prompts for reasoning models (DeepSeek R1, Claude 3.7). | **Detailed Research Prompting Engine**: Automatically injects epistemic frameworks, methodology audits, confounder detection, and comparative matrices in-place. | Reading a paper/data in a PDF reader, Zotero, or Obsidian. |
+| **3. The AI Code Engineer** | Cursor Composer writes spaghetti code when given vague 1-line instructions. | 5-Block Architectural Blueprints (`Ctrl+Alt+B`) with section trees, CSS tokens, and edge cases. | Before typing `Ctrl+I` in Cursor. |
+| **4. The Local-First Privacy Advocate** | Distrust of cloud prompt loggers, telemetry, and non-disclosure risk of pre-publication research/IP. | 100% Client-side DPAPI AES-256 key encryption; zero telemetry; raw BYOK connections. | Evaluating privacy policy & local architecture. |
 
 ---
 

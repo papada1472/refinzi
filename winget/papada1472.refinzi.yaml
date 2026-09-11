@@ -1,0 +1,42 @@
+# Winget Package Manifest for Refinzi 2.0
+# Package Identifier: papada1472.refinzi
+# Version: 2.0.0
+
+PackageIdentifier: papada1472.refinzi
+PackageVersion: 2.0.0
+PackageLocale: en-US
+Publisher: papada1472
+PublisherUrl: https://refinzi.com
+PublisherSupportUrl: https://github.com/papada1472/refinzi/issues
+Author: papada1472
+PackageName: Refinzi
+PackageUrl: https://refinzi.com
+License: MIT
+LicenseUrl: https://github.com/papada1472/refinzi/blob/main/LICENSE
+Copyright: Copyright (c) 2026 papada1472
+ShortDescription: The ambient AI layer for Windows. In-place prompt rebuilding, writing polish, and 5-block architecture blueprints.
+Description: |
+  Refinzi 2.0 is an open-source, ambient Windows desktop utility that transforms rough 1-line ideas into calibrated cinematic prompts, polished writing, and deep 5-block architecture blueprints in under 2 seconds. Operating directly at the Windows OS layer via a floating Orb or global shortcut (Ctrl+Alt+Space), Refinzi eliminates tab switching and prompt engineering friction across any application.
+Moniker: refinzi
+Tags:
+  - ai
+  - productivity
+  - prompt-engineering
+  - ambient-ai
+  - electron
+  - windows-utility
+  - local-first
+
+Installers:
+  - Architecture: x64
+    InstallerType: nullsoft
+    InstallerUrl: https://github.com/papada1472/refinzi/releases/download/v2.0.0/Refinzi-Setup-v2.0.0.exe
+    InstallerSha256: bd2416a3277b56ad1b2a119d8e9536aae0618f45d659c8269dd944f525a1c1e2
+    UpgradeBehavior: install
+    InstallModes:
+      - interactive
+      - silent
+      - silentWithProgress
+
+ManifestType: singleton
+ManifestVersion: 1.6.0

@@ -26,6 +26,64 @@ function deepFreeze(obj) {
 // ─── Output Type Patterns ───────────────────────────────────────────────────
 
 const OUTPUT_PATTERNS = {
+  cinematic_prompt: {
+    keywords: [
+      'midjourney',
+      'runway',
+      'kling',
+      'higgsfield',
+      'sora',
+      'pika',
+      'cinematic',
+      'camera',
+      'lens',
+      'lighting',
+      'volumetric',
+      'render',
+      'photoreal',
+      'photorealistic',
+      'shot',
+      'footage',
+    ],
+    expectations: { visualFidelity: 'high', cameraChoreography: true, lightingOptics: true },
+  },
+  research_synthesis: {
+    keywords: [
+      'research',
+      'paper',
+      'study',
+      'methodology',
+      'literature review',
+      'confounder',
+      'hypothesis',
+      'clinical',
+      'sample size',
+      'p-value',
+      'bias',
+      'prisma',
+      'peer review',
+    ],
+    expectations: { methodologicalRigor: 'high', structuredMatrix: true, epistemicValidity: true },
+  },
+  code_architecture: {
+    keywords: [
+      'react',
+      'typescript',
+      'component',
+      'api',
+      'database',
+      'sql',
+      'bug',
+      'refactor',
+      'css',
+      'tailwind',
+      'cursor',
+      'endpoint',
+      'backend',
+      'frontend',
+    ],
+    expectations: { architectureClean: true, typeSafety: true, edgeCases: true },
+  },
   email: {
     keywords: ['email', 'draft an email', 'write an email', 'compose email', 'send an email'],
     expectations: { concise: true, clarity: 'high' },
@@ -127,6 +185,38 @@ const OUTPUT_PATTERNS = {
 // ─── Role Patterns ──────────────────────────────────────────────────────────
 
 const ROLE_PATTERNS = {
+  cinematographer: {
+    keywords: [
+      'cinematic',
+      'camera',
+      'lens',
+      'midjourney',
+      'runway',
+      'kling',
+      'higgsfield',
+      'lighting',
+      'volumetric',
+      'bokeh',
+      'octane',
+      'render',
+      'director',
+    ],
+  },
+  research_scientist: {
+    keywords: [
+      'research',
+      'paper',
+      'study',
+      'methodology',
+      'literature review',
+      'confounder',
+      'clinical',
+      'hypothesis',
+      'biostatistician',
+      'empirical',
+      'academic',
+    ],
+  },
   copywriter: {
     keywords: [
       'copy',

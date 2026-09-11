@@ -825,98 +825,132 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
     <section className="relative pt-8 pb-12 sm:pt-12 sm:pb-16" id="hero">
       <HeroGlows />
 
-      <div className="relative mx-auto grid w-full max-w-[1140px] grid-cols-1 items-center gap-10 px-4 sm:px-6 lg:grid-cols-2">
-        {/* Left column */}
-        <div>
-          {/* Top Badge */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-300 border border-blue-500/25">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-ping" />
-              ⚡ Local-First AI Engine • Native for Windows 10 &amp; 11
-            </span>
+      <div className="relative mx-auto grid w-full max-w-[1160px] grid-cols-1 items-center gap-10 px-4 sm:px-6 lg:grid-cols-12">
+        {/* Left column (7 cols on desktop for strong copy presence) */}
+        <div className="lg:col-span-7 flex flex-col items-start">
+          {/* Top Category Badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-300 border border-blue-500/25 shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-blue-400 animate-ping" />
+            <span>⚡ Simple Words to Pinpoint Prompts • Native for Windows 10 &amp; 11</span>
           </div>
 
-          {/* H1 Headline — Outcome-driven & perfectly balanced */}
-          <h1 className="mt-3 text-3xl sm:text-4xl lg:text-[42px] xl:text-[48px] font-black leading-[1.12] tracking-tight text-white">
-            Stop Wasting Hours Tweaking AI Output.{" "}
-            <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent block mt-1 break-normal">
-              Get Flawless, Client&#8209;Grade Results in 2 Seconds.
+          {/* H1 Headline — Pinpoint prompt from simple words transformation */}
+          <h1 className="mt-4 text-3xl sm:text-4xl lg:text-[46px] font-black leading-[1.12] tracking-tight text-white">
+            <span className="block text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.9)]">
+              Turn Simple Words Into Pinpoint, Master&#8209;Grade Prompts.
+            </span>
+            <span className="block mt-1.5 bg-gradient-to-r from-blue-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent font-black drop-shadow-sm">
+              In 2 Seconds. Anywhere in Windows.
             </span>
           </h1>
 
-          {/* Crisp Subheadline */}
-          <p className="mt-3 max-w-lg text-sm sm:text-base text-zinc-200 leading-relaxed font-normal">
-            Highlight rough notes anywhere in Windows, click the Orb, and instantly enforce your exact formatting, tone, and rules. Zero tab switching. 100% local privacy.
+          {/* Subheadline — Explains the effortless simple words -> pinpoint prompt mechanics */}
+          <p className="mt-4 text-base sm:text-lg text-zinc-200 font-normal leading-relaxed max-w-xl">
+            Type just a few rough, simple words in <strong className="text-white font-semibold">any Windows app</strong>, tap the Orb or press <kbd className="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-800 text-blue-300 border border-blue-500/30">Ctrl+Alt+Space</kbd>, and instantly get a pinpoint, client-grade prompt architecture calibrated for Claude, ChatGPT, Cursor &amp; Midjourney.
           </p>
 
-          {/* Action Buttons */}
-          <div className="mt-5 flex flex-col items-start gap-3">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <Button
-                size="lg"
-                variant="deal"
-                onClick={onOpenOffer}
-                className="font-bold text-sm sm:text-base shadow-xl shadow-purple-500/25 px-5 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white border border-purple-400/40 cursor-pointer"
-              >
-                <Sparkles className="h-4 w-4 mr-1.5" />
-                Download Refinzi Pro — {currency.currencyCode === "INR" ? "₹999" : currency.formattedPrice} Lifetime
-              </Button>
+          {/* 3 Core Objection-Crushing Bullets (Hormozi Framework) */}
+          <div className="mt-5 space-y-2.5 w-full max-w-xl bg-zinc-900/50 border border-white/[0.08] p-3.5 rounded-xl backdrop-blur-sm">
+            <div className="flex items-start gap-2.5 text-xs sm:text-[13px] text-zinc-200">
+              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
+                ✓
+              </span>
+              <span>
+                <strong className="text-white font-semibold">From 3 Simple Words to Pinpoint Precision:</strong> Turns messy phrases into structured, 5-block production architectures with zero prompt wrestling.
+              </span>
+            </div>
+            <div className="flex items-start gap-2.5 text-xs sm:text-[13px] text-zinc-200">
+              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
+                ✓
+              </span>
+              <span>
+                <strong className="text-white font-semibold">100% Local DPAPI Privacy:</strong> Zero cloud logging, zero prompt telemetry. Your data and API keys never leave your PC.
+              </span>
+            </div>
+            <div className="flex items-start gap-2.5 text-xs sm:text-[13px] text-zinc-200">
+              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
+                ✓
+              </span>
+              <span>
+                <strong className="text-white font-semibold">Free Forever with BYOK:</strong> Use free Gemini/DeepSeek keys forever without mandatory monthly fees or card required.
+              </span>
+            </div>
+          </div>
 
+          {/* Action CTAs — Clear Single Primary Focus */}
+          <div className="mt-6 flex flex-col items-start gap-3 w-full">
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+              {/* Dominant Primary Action (70% visual focus) */}
               <Button
                 size="lg"
-                variant="secondary"
+                variant="primary"
                 onClick={onDownload}
-                className="font-semibold text-sm sm:text-base px-4 py-3 border border-white/15 hover:bg-white/10 text-zinc-100"
+                className="group relative flex items-center justify-center font-bold text-base sm:text-lg px-8 py-4 shadow-2xl shadow-blue-600/30 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl border border-blue-400/40 cursor-pointer transition-all transform hover:-translate-y-0.5 w-full sm:w-auto"
               >
-                <Download className="h-4 w-4 mr-1.5" />
-                Developer Free (.exe)
+                <Download className="h-5 w-5 mr-2.5 group-hover:translate-y-0.5 transition-transform" />
+                <div className="flex flex-col items-start text-left">
+                  <span>Download Free for Windows</span>
+                  <span className="text-[11px] font-normal text-blue-100/90 -mt-0.5">v2.0.0 • .exe Installer • 0/72 Clean</span>
+                </div>
               </Button>
 
-              {/* Winget terminal copy pill */}
-              <button
-                type="button"
-                onClick={copyWinget}
-                title="Copy winget install command"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-zinc-900/90 px-3 py-2 text-xs font-mono text-zinc-300 hover:text-white hover:border-blue-500/40 transition-all cursor-pointer"
-              >
-                <span className="text-blue-400 font-bold">$</span>
-                <span>winget install refinzi</span>
-                {wingetCopied ? (
-                  <CheckCheck className="h-3.5 w-3.5 text-emerald-400 ml-0.5" />
-                ) : (
-                  <Copy className="h-3.5 w-3.5 text-zinc-400 ml-0.5" />
-                )}
-              </button>
+              {/* Secondary Actions */}
+              <div className="flex items-center gap-2">
+                <Button
+                  size="lg"
+                  variant="deal"
+                  onClick={onOpenOffer}
+                  className="font-semibold text-xs sm:text-sm px-4 py-3 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-white/15 cursor-pointer rounded-xl transition-colors shadow-sm"
+                  title="View Lifetime Pro Deal"
+                >
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-300" />
+                  <span>Supporter Pro ({currency.currencyCode === "INR" ? "₹999" : currency.formattedPrice})</span>
+                </Button>
+
+                {/* Winget copy button */}
+                <button
+                  type="button"
+                  onClick={copyWinget}
+                  title="Copy winget install command for PowerShell"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-zinc-900/90 px-3 py-3 text-xs font-mono text-zinc-300 hover:text-white hover:border-blue-500/40 transition-all cursor-pointer shadow-sm"
+                >
+                  <span className="text-blue-400 font-bold">$</span>
+                  <span className="hidden sm:inline">winget</span>
+                  {wingetCopied ? (
+                    <span className="inline-flex items-center gap-1 text-emerald-400 font-sans text-[11px] font-semibold">
+                      <CheckCheck className="h-3.5 w-3.5" /> Copied
+                    </span>
+                  ) : (
+                    <Copy className="h-3.5 w-3.5 text-zinc-400" />
+                  )}
+                </button>
+              </div>
             </div>
 
-            {/* Trust Badge below buttons */}
-            <div className="w-full max-w-lg rounded-xl bg-emerald-950/25 border border-emerald-500/30 px-3.5 py-2 text-xs text-zinc-200 space-y-0.5">
-              <div className="flex items-center gap-1.5 text-emerald-400 font-semibold text-xs">
-                <ShieldCheck className="h-4 w-4 shrink-0" />
-                <span>🔒 100% Local Execution • Zero Cloud Logging</span>
-              </div>
+            {/* SmartScreen reassurance notice */}
+            <div className="w-full max-w-xl rounded-xl bg-emerald-950/20 border border-emerald-500/20 px-3.5 py-2 text-xs text-zinc-300">
               <p className="text-[11px] text-zinc-400 leading-snug">
-                Windows SmartScreen warning? That&apos;s proof Refinzi runs locally without cloud routing. Click &apos;More Info&apos; &gt; &apos;Run Anyway&apos;.
+                🛡️ <strong className="text-emerald-300">100% Clean Software:</strong> Refinzi runs locally. If Windows SmartScreen shows an alert on download, simply click <strong className="text-zinc-200">'More Info' → 'Run Anyway'</strong>.
               </p>
             </div>
 
             {/* Mobile / Non-Windows Adaptive Notice */}
             {osType !== "windows" && (
-              <div className="mt-1 rounded-xl bg-blue-950/40 border border-blue-500/30 p-2.5 text-xs text-blue-200 flex items-center justify-between gap-2 max-w-lg">
-                <span>💻 Refinzi is a Windows desktop app. Send the installer link to your PC:</span>
+              <div className="mt-1 rounded-xl bg-blue-950/40 border border-blue-500/30 p-2.5 text-xs text-blue-200 flex items-center justify-between gap-2 w-full max-w-xl">
+                <span>📱 On phone or Mac? Send the Windows installer to your PC:</span>
                 <button
                   type="button"
                   onClick={onOpenNonWindows}
-                  className="shrink-0 bg-blue-600 hover:bg-blue-500 text-white font-bold px-2.5 py-1 rounded-lg text-[11px] transition-colors"
+                  className="shrink-0 bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer"
                 >
-                  Email Link
+                  Send to Email
                 </button>
               </div>
             )}
           </div>
 
-          {/* Authentic Trust & Security Badges */}
-          <div className="mt-3 flex flex-wrap items-center gap-2.5 text-xs">
+          {/* Authentic Trust & Security Badges directly supporting CTA */}
+          <div className="mt-4 flex flex-wrap items-center gap-2.5 text-xs">
             <a
               href="https://github.com/papada1472/refinzi/releases/tag/v2.0.0"
               target="_blank"
@@ -924,14 +958,13 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
               className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/40 border border-emerald-500/30 px-3 py-1 text-[11px] font-semibold text-emerald-400 hover:bg-emerald-900/40 transition-colors"
             >
               <ShieldCheck className="h-3.5 w-3.5" />
-              <span>VirusTotal Verified Clean (0/72)</span>
+              <span>VirusTotal Clean (0/72 Detections)</span>
             </a>
             <a
               href="https://github.com/papada1472/refinzi"
               target="_blank"
               rel="noopener noreferrer"
-              title="GitHub Open Source (opens in a new tab)"
-              aria-label="GitHub Open Source (opens in a new tab)"
+              title="GitHub Open Source"
               className="inline-flex items-center gap-1.5 rounded-full bg-zinc-900 border border-white/10 px-3 py-1 text-[11px] font-mono text-zinc-300 hover:text-white transition-colors"
             >
               <span>⭐ Built in Public on GitHub</span>
@@ -939,8 +972,10 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
           </div>
         </div>
 
-        {/* Right column with Live Video Demo */}
-        <HeroVideoPlayer />
+        {/* Right column with Live Video Demo & Visual Proof (5 cols on desktop) */}
+        <div className="lg:col-span-5 w-full">
+          <HeroVideoPlayer />
+        </div>
       </div>
     </section>
   );
@@ -962,47 +997,61 @@ function HeroVideoPlayer() {
   };
 
   return (
-    <div className="relative lg:justify-self-end w-full max-w-lg">
-      <div className="rounded-2xl border border-white/[0.1] bg-zinc-950/80 p-2 sm:p-3 shadow-2xl shadow-blue-500/10 backdrop-blur-xl">
-        {/* Video Player Header */}
-        <div className="mb-2 flex items-center justify-between px-2 py-1">
-          <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-red-500/80" />
-            <span className="h-2 w-2 rounded-full bg-amber-500/80" />
-            <span className="h-2 w-2 rounded-full bg-emerald-500/80" />
-            <span className="ml-2 text-[10px] font-mono text-zinc-300">Refinzi Live Demo · Windows</span>
-          </div>
-          <button
-            onClick={togglePlay}
-            aria-label={isPlaying ? "Pause video demo" : "Play video demo"}
-            title={isPlaying ? "Pause video demo" : "Play video demo"}
-            className="text-[10px] text-blue-300 font-semibold bg-blue-500/20 hover:bg-blue-500/30 px-2.5 py-0.5 rounded-full border border-blue-500/30 transition-all flex items-center gap-1 cursor-pointer"
-          >
-            {isPlaying ? "⏸ Pause Demo" : "▶ Play Demo"}
-          </button>
-        </div>
+    <div className="relative lg:justify-self-end w-full max-w-lg group">
+      {/* Visual Proof Badge */}
+      <div className="mb-2.5 flex items-center justify-between">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-300 bg-emerald-950/60 border border-emerald-500/35 px-3 py-1 rounded-full shadow-sm backdrop-blur-md">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
+          Real Screen Recording (No Edits)
+        </span>
+        <span className="text-[11px] text-zinc-300 font-mono font-medium">⚡ 2-Second In-Place Rebuild</span>
+      </div>
 
-        {/* Video Container */}
-        <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-white/[0.06]">
-          <video
-            ref={videoRef}
-            src="/refinzi-demo.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-            controls
-            preload="metadata"
-            className="h-full w-full object-cover"
-            title="Refinzi Live Workflow Demo in Windows"
-            aria-label="Refinzi Live Workflow Demo in Windows"
-          >
-            <track kind="captions" srcLang="en" label="English captions" default />
-          </video>
+      <div className="relative">
+        {/* Ambient Glow behind video player */}
+        <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-blue-600/25 via-indigo-600/20 to-purple-600/25 blur-xl opacity-75 -z-10 group-hover:opacity-100 transition-opacity duration-500" />
+
+        <div className="rounded-2xl border border-white/[0.12] bg-zinc-950/90 p-2 sm:p-3 shadow-2xl shadow-blue-900/20 backdrop-blur-2xl transition-all">
+          {/* Video Player Header */}
+          <div className="mb-2 flex items-center justify-between px-2 py-1">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-red-500/80 shadow-sm" />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80 shadow-sm" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80 shadow-sm" />
+              <span className="ml-2 text-[11px] font-mono text-zinc-300 font-medium">Refinzi Live Demo · Windows 11</span>
+            </div>
+            <button
+              onClick={togglePlay}
+              aria-label={isPlaying ? "Pause video demo" : "Play video demo"}
+              title={isPlaying ? "Pause video demo" : "Play video demo"}
+              className="text-[11px] text-blue-300 font-semibold bg-blue-500/20 hover:bg-blue-500/30 px-3 py-0.5 rounded-full border border-blue-500/40 transition-all flex items-center gap-1 cursor-pointer"
+            >
+              {isPlaying ? "⏸ Pause Demo" : "▶ Play Demo"}
+            </button>
+          </div>
+
+          {/* Video Container */}
+          <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-white/[0.08] shadow-inner">
+            <video
+              ref={videoRef}
+              src="/refinzi-demo.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              controls
+              preload="metadata"
+              className="h-full w-full object-cover"
+              title="Refinzi Live Workflow Demo in Windows"
+              aria-label="Refinzi Live Workflow Demo in Windows"
+            >
+              <track kind="captions" srcLang="en" label="English captions" default />
+            </video>
+          </div>
+          <p className="mt-2.5 text-center text-[11px] text-zinc-300 font-medium">
+            <strong className="text-blue-300">1-Click the Ambient Orb</strong> for instant in-place rebuild · <span className="text-zinc-400 font-mono text-[10px]">Ctrl+Alt+Space</span>
+          </p>
         </div>
-        <p className="mt-2 text-center text-[10px] text-zinc-300">
-          <strong className="text-blue-300">1-Click the Orb</strong> for instant in-place rebuild · <span className="text-zinc-300">(Or press Ctrl+Alt+Space · Hold 300ms for Blueprint)</span>
-        </p>
       </div>
     </div>
   );
@@ -1040,22 +1089,138 @@ function TrustBar() {
 
 /* ----------------------- Live Interactive Playground Demo ----------------- */
 
+function synthesizeCustomPrompt(input) {
+  const text = (input || "").trim();
+  if (!text) {
+    return `Role: Principal AI Prompt & Systems Architect
+Task: Transform rough thought into execution-grade production blueprint
+1. System Objective: Specify exact boundaries, target audience, and success metrics.
+2. Architecture Scaffolding: Structural breakdown, component token matrix, and step-by-step logic.
+3. Strict Negative Constraints: Zero fluff, no filler adjectives, enforce production-ready precision.
+Output: Formatted Markdown deliverables pack ready for 1-click execution.`;
+  }
+
+  const lower = text.toLowerCase();
+
+  if (
+    lower.includes("car") ||
+    lower.includes("photo") ||
+    lower.includes("render") ||
+    lower.includes("art") ||
+    lower.includes("shot") ||
+    lower.includes("cinematic") ||
+    lower.includes("image") ||
+    lower.includes("portrait") ||
+    lower.includes("landscape")
+  ) {
+    return `/imagine prompt: Cinematic 35mm anamorphic wide shot of ${text}, 8k resolution, photorealistic Octane render, raytraced volumetric lighting, high-contrast dynamic range, atmospheric depth of field, Cooke Anamorphic /i 35mm f/1.4 lens, Kodak Portra 400 color science --ar 16:9 --style raw --v 6.0 --q 2`;
+  }
+
+  if (
+    lower.includes("video") ||
+    lower.includes("drone") ||
+    lower.includes("motion") ||
+    lower.includes("camera") ||
+    lower.includes("flight") ||
+    lower.includes("animation") ||
+    lower.includes("orbit")
+  ) {
+    return `[Camera: Smooth 360° orbital tracking crane descending from ceiling to subject eye-level]
+Subject: ${text}
+Motion Dynamics: Liquid velocity curves, realistic fluid drag, volumetric atmospheric particle glow.
+Physics & Specs: 4K 60fps, IMAX 70mm lens clarity, zero jitter, cinematic color grade.`;
+  }
+
+  if (
+    lower.includes("code") ||
+    lower.includes("react") ||
+    lower.includes("api") ||
+    lower.includes("table") ||
+    lower.includes("component") ||
+    lower.includes("auth") ||
+    lower.includes("fastapi") ||
+    lower.includes("python") ||
+    lower.includes("backend") ||
+    lower.includes("frontend") ||
+    lower.includes("database") ||
+    lower.includes("landing")
+  ) {
+    return `Role: Principal Full-Stack Software Engineer & Architect
+Task: Implement production-grade architecture for "${text}"
+1. Architecture & Patterns: Clean modular component tree, strict TypeScript/typed contracts, zero layout shift.
+2. State & Boundary Matrix: Optimistic updates, skeleton loaders, defensive error boundaries, ARIA 1.2 accessibility.
+3. Edge Case Handling: Exponential backoff retry, rate-limit tolerance, full keyboard navigation.
+Output: Complete, compiling code with zero placeholders or omissions, plus unit test specifications.`;
+  }
+
+  if (
+    lower.includes("email") ||
+    lower.includes("copy") ||
+    lower.includes("marketing") ||
+    lower.includes("sales") ||
+    lower.includes("launch")
+  ) {
+    return `Role: Elite Direct-Response Copywriter & Conversion Strategist
+Task: Craft high-converting conversion copy for "${text}"
+Framework: 3-Phase Open Loop & Urgency Framework
+• Phase 1: Agitate user workflow bottleneck + quantify hours/dollars lost
+• Phase 2: Feature matrix mapped 1:1 to measurable business ROI
+• Phase 3: Risk-reversal guarantee + overcoming top 3 technical objections
+Constraints: 3 punchy subject lines (<42 chars), clear value anchors, single distinct CTA with UTMs.`;
+  }
+
+  return `Role: Senior Domain Expert & Principal Strategist
+Task: Synthesize client-grade production blueprint for "${text}"
+1. Objective & Success Metrics: Define clear deliverables, quantifiable milestones, and audience calibration.
+2. Structural Scaffolding: 5-stage logical breakdown with component tree and action triggers.
+3. Strict Negative Constraints: Zero generic AI filler, no passive buzzwords, enforce concise direct-action syntax.
+Output: Structured, copy-paste ready Markdown pack calibrated for immediate execution.`;
+}
+
 function LiveDemoSection({ onDownload }) {
   const [selectedPreset, setSelectedPreset] = useState(DEMO_PRESETS[0]);
+  const [isCustomMode, setIsCustomMode] = useState(false);
+  const [customInput, setCustomInput] = useState("Build a responsive pricing table with annual discount toggle");
+  const [customOutput, setCustomOutput] = useState(() =>
+    synthesizeCustomPrompt("Build a responsive pricing table with annual discount toggle")
+  );
   const [copied, setCopied] = useState(false);
   const [isRebuilding, setIsRebuilding] = useState(false);
 
+  const activeRebuilt = isCustomMode ? customOutput : selectedPreset.rebuilt;
+  const activeRaw = isCustomMode ? customInput : selectedPreset.raw;
+
   const handleCopy = () => {
-    navigator.clipboard.writeText(selectedPreset.rebuilt);
+    navigator.clipboard.writeText(activeRebuilt);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleRebuild = () => {
+  const handleTriggerRebuild = () => {
     setIsRebuilding(true);
     setTimeout(() => {
+      if (isCustomMode) {
+        setCustomOutput(synthesizeCustomPrompt(customInput));
+      }
       setIsRebuilding(false);
     }, 250);
+  };
+
+  const handleSelectPreset = (preset) => {
+    setIsCustomMode(false);
+    setSelectedPreset(preset);
+    setIsRebuilding(true);
+    setTimeout(() => setIsRebuilding(false), 200);
+  };
+
+  const handleSelectCustomSample = (sampleText) => {
+    setIsCustomMode(true);
+    setCustomInput(sampleText);
+    setIsRebuilding(true);
+    setTimeout(() => {
+      setCustomOutput(synthesizeCustomPrompt(sampleText));
+      setIsRebuilding(false);
+    }, 200);
   };
 
   return (
@@ -1064,29 +1229,26 @@ function LiveDemoSection({ onDownload }) {
         <Reveal>
           <div className="text-center max-w-xl mx-auto">
             <Badge variant="outline" className="text-blue-400 border-blue-500/30 bg-blue-950/30 text-xs">
-              ⚡ Proof · Live Transformation Engine
+              ⚡ Live Transformation Engine
             </Badge>
             <h2 className="mt-2.5 text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               See How Refinzi Transforms Any Prompt
             </h2>
             <p className="mt-1.5 text-zinc-300 text-xs sm:text-sm">
-              Click any model tab or the glowing Orb to see vague 1-liners transform into precision production prompts in real time.
+              Test with curated AI model presets or type your own rough idea to watch it rebuild in real time.
             </p>
           </div>
         </Reveal>
 
-        {/* Model Selector Tabs */}
+        {/* Model Selector Tabs + Custom Mode */}
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
           {DEMO_PRESETS.map((preset) => {
             const Icon = preset.icon;
-            const isSelected = selectedPreset.id === preset.id;
+            const isSelected = !isCustomMode && selectedPreset.id === preset.id;
             return (
               <button
                 key={preset.id}
-                onClick={() => {
-                  setSelectedPreset(preset);
-                  handleRebuild();
-                }}
+                onClick={() => handleSelectPreset(preset)}
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   isSelected
                     ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 border border-white/20 scale-105"
@@ -1098,12 +1260,28 @@ function LiveDemoSection({ onDownload }) {
               </button>
             );
           })}
+
+          {/* Dedicated Custom Prompt Mode Tab */}
+          <button
+            onClick={() => {
+              setIsCustomMode(true);
+              handleTriggerRebuild();
+            }}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              isCustomMode
+                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-500/25 border border-purple-400/40 scale-105"
+                : "bg-zinc-900/80 text-zinc-300 border border-purple-500/30 hover:text-white hover:border-purple-500/50"
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+            <span>✨ Test Your Own Prompt</span>
+          </button>
         </div>
 
         {/* Interactive Comparison Box */}
         <Reveal delay={80}>
           <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch relative">
-            {/* Raw Input Box */}
+            {/* Left: Input Box */}
             <Card className="luxury-surface flex flex-col justify-between p-4 sm:p-5 border-white/[0.08]">
               <div>
                 <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.06]">
@@ -1111,28 +1289,81 @@ function LiveDemoSection({ onDownload }) {
                     <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
                     Before: Rough Thought
                   </span>
-                  <Badge variant="muted" className="text-[10px]">Vague Prompt</Badge>
+                  <Badge variant="muted" className="text-[10px]">
+                    {isCustomMode ? "Interactive Input" : "Vague Prompt"}
+                  </Badge>
                 </div>
-                <div className="mt-3 rounded-xl bg-zinc-950/80 p-3 border border-red-500/20 font-mono text-xs text-zinc-300 break-words">
-                  "{selectedPreset.raw}"
-                </div>
-                <p className="mt-2.5 text-xs text-zinc-400 leading-relaxed">
-                  ⚠️ <strong>Result without Refinzi:</strong> Standard AI models generate shallow, generic fluff, requiring 5–10 frustrating re-prompts.
-                </p>
+
+                {isCustomMode ? (
+                  <div className="mt-3 space-y-2.5">
+                    <label htmlFor="custom-prompt-input" className="sr-only">Type your rough prompt</label>
+                    <textarea
+                      id="custom-prompt-input"
+                      rows={3}
+                      value={customInput}
+                      onChange={(e) => setCustomInput(e.target.value)}
+                      placeholder="Type any raw prompt... e.g. FastAPI JWT auth or Cyberpunk street photo"
+                      className="w-full rounded-xl bg-zinc-950/90 p-3 border border-purple-500/30 font-mono text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+                    />
+
+                    {/* Quick suggestion tags */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-[10px] text-zinc-400 font-semibold">Try sample:</span>
+                      {[
+                        "FastAPI JWT auth backend",
+                        "Cyberpunk sports car in neon rain",
+                        "High-converting SaaS pricing table",
+                        "Cold email sequence for B2B",
+                      ].map((sample) => (
+                        <button
+                          key={sample}
+                          type="button"
+                          onClick={() => handleSelectCustomSample(sample)}
+                          className="rounded-md bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-300 border border-white/[0.08] hover:border-purple-500/40 hover:text-white transition-colors cursor-pointer"
+                        >
+                          {sample}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-3">
+                    <div className="rounded-xl bg-zinc-950/80 p-3 border border-red-500/20 font-mono text-xs text-zinc-300 break-words">
+                      "{selectedPreset.raw}"
+                    </div>
+                    <p className="mt-2.5 text-xs text-zinc-400 leading-relaxed">
+                      ⚠️ <strong>Without Refinzi:</strong> AI models generate generic fluff, requiring 5–10 frustrating re-prompts and wasted API tokens.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between">
-                <span className="text-[11px] text-zinc-400">Windows Shortcut:</span>
-                <kbd className="bg-zinc-900 text-blue-400 font-mono text-xs px-2 py-0.5 rounded border border-zinc-700">
-                  Ctrl + Alt + Space
-                </kbd>
+                {isCustomMode ? (
+                  <Button
+                    size="xs"
+                    variant="deal"
+                    onClick={handleTriggerRebuild}
+                    className="font-bold text-xs"
+                  >
+                    <Sparkles className="h-3 w-3 mr-1 text-amber-300" />
+                    ⚡ Rebuild Prompt (Instant)
+                  </Button>
+                ) : (
+                  <>
+                    <span className="text-[11px] text-zinc-400">Windows Shortcut:</span>
+                    <kbd className="bg-zinc-900 text-blue-400 font-mono text-xs px-2 py-0.5 rounded border border-zinc-700">
+                      Ctrl + Alt + Space
+                    </kbd>
+                  </>
+                )}
               </div>
             </Card>
 
-            {/* Rebuilt Output Box */}
+            {/* Right: Rebuilt Output Box */}
             <Card className="luxury-surface-glow relative flex flex-col justify-between p-4 sm:p-5 border-blue-500/30">
               <Badge className="absolute -top-2.5 right-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-[10px]">
-                {selectedPreset.stats}
+                {isCustomMode ? "5-Block Custom Spec" : selectedPreset.stats}
               </Badge>
 
               <div>
@@ -1140,7 +1371,7 @@ function LiveDemoSection({ onDownload }) {
                   <div className="flex items-center gap-1.5">
                     <Sparkles className="h-3.5 w-3.5 text-blue-400" />
                     <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">
-                      After: Rebuilt {selectedPreset.label} Spec
+                      After: Rebuilt {isCustomMode ? "Production Blueprint" : `${selectedPreset.label} Spec`}
                     </span>
                   </div>
                   <button
@@ -1153,7 +1384,7 @@ function LiveDemoSection({ onDownload }) {
                 </div>
 
                 <div className={`mt-3 rounded-xl bg-zinc-950/90 p-3.5 border border-blue-500/30 font-mono text-xs text-zinc-100 whitespace-pre-wrap leading-relaxed max-h-52 overflow-y-auto break-words ${isRebuilding ? "opacity-50 animate-pulse" : ""}`}>
-                  {selectedPreset.rebuilt}
+                  {activeRebuilt}
                 </div>
               </div>
 
@@ -1663,12 +1894,14 @@ function FinalCTA({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD
 /* -------------------------- Sticky Conversion Bar ------------------------- */
 
 function StickyConversionBar({ show, onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD }) {
-  if (!show) return null;
+  const [dismissed, setDismissed] = useState(false);
+
+  if (!show || dismissed) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/[0.08] bg-[#08090c]/90 backdrop-blur-xl px-4 py-2 shadow-2xl transition-all animate-in slide-in-from-bottom-3">
+    <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/[0.08] bg-[#08090c]/92 backdrop-blur-xl px-4 py-2.5 shadow-2xl transition-all animate-in slide-in-from-bottom-3">
       <div className="mx-auto flex max-w-[1140px] items-center justify-between gap-4">
-        <div className="hidden sm:flex items-center gap-2">
+        <div className="hidden sm:flex items-center gap-2.5">
           <img
             src="/branding/logo-mark.webp"
             alt="Refinzi"
@@ -1676,30 +1909,45 @@ function StickyConversionBar({ show, onOpenOffer, onDownload, currency = SUPPORT
             height="24"
             loading="lazy"
             decoding="async"
-            className="h-6 w-6 rounded-md object-contain shadow-sm"
+            className="h-6 w-6 rounded-md object-contain shadow-sm shadow-blue-500/30"
           />
           <div>
-            <p className="text-xs font-bold text-white">Refinzi 2.0</p>
+            <p className="text-xs font-bold text-white flex items-center gap-1.5">
+              <span>Refinzi 2.0</span>
+              <span className="text-[9px] font-mono text-blue-400 bg-blue-500/15 px-1 py-0.2 rounded border border-blue-500/25">v2.0.0</span>
+            </p>
             <p className="text-[10px] text-zinc-400">Rebuild any prompt in &lt;2s (Ctrl+Alt+Space)</p>
           </div>
         </div>
 
-        <div className="flex w-full sm:w-auto items-center justify-end gap-2.5">
+        <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-2.5">
           <button
             onClick={onOpenOffer}
-            className="text-xs font-semibold text-zinc-300 hover:text-amber-300 px-2 py-1 transition-colors cursor-pointer"
+            className="text-xs font-semibold text-zinc-300 hover:text-amber-300 px-2 py-1 transition-colors cursor-pointer flex items-center gap-1"
           >
-            ☕ Supporter {currency.formattedPrice}
+            <span>☕ Supporter Pro</span>
+            <span className="font-bold text-white">{currency.formattedPrice}</span>
           </button>
-          <Button
-            size="xs"
-            variant="primary"
-            onClick={onDownload}
-            className="font-bold text-xs"
-          >
-            <Download className="h-3 w-3 mr-1" />
-            Download Free (.exe)
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="xs"
+              variant="primary"
+              onClick={onDownload}
+              className="font-bold text-xs shadow-md shadow-blue-500/20"
+            >
+              <Download className="h-3 w-3 mr-1" />
+              Download Free (.exe)
+            </Button>
+            <button
+              type="button"
+              onClick={() => setDismissed(true)}
+              className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+              aria-label="Dismiss bottom bar"
+              title="Dismiss banner"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1733,7 +1981,7 @@ function ScrollToTopButton() {
       onClick={scrollToTop}
       aria-label="Scroll to top of page"
       title="Back to Top"
-      className="fixed bottom-14 right-4 sm:bottom-14 sm:right-6 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-zinc-900/90 text-white shadow-xl backdrop-blur-md transition-all hover:scale-110 hover:border-blue-500/50 hover:bg-blue-600/30 active:scale-95 cursor-pointer"
+      className="fixed bottom-16 right-4 sm:bottom-16 sm:right-6 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-zinc-900/90 text-white shadow-xl backdrop-blur-md transition-all hover:scale-110 hover:border-blue-500/50 hover:bg-blue-600/30 active:scale-95 cursor-pointer"
     >
       <ArrowUp className="h-4 w-4 text-blue-400" />
     </button>

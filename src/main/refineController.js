@@ -108,11 +108,27 @@ export async function refineSelectedText({ notifySuccess, notifyError, notifyWar
       }
     }
 
+    // Compile prompt through domain-adaptive intelligence pipeline
+    let promptToRun = input;
+    let effectiveSystemPrompt = SYSTEM_PROMPT;
+    try {
+      const { buildEnvelope } = await import("./output/compiler.js");
+      const { optimizeEnvelope } = await import("./output/optimizer.js");
+      const { buildExecutionPlan } = await import("./output/promptEngineer.js");
+      const { envelope } = buildEnvelope({ input, mode: "sparkle" });
+      const optimized = optimizeEnvelope(envelope);
+      const plan = buildExecutionPlan(optimized, "sparkle");
+      if (plan?.systemPrompt) effectiveSystemPrompt = plan.systemPrompt;
+      if (plan?.userPrompt) promptToRun = plan.userPrompt;
+    } catch (compileErr) {
+      log.warn("Intent compiler error in hotkey flow, falling back to default system prompt:", compileErr.message);
+    }
+
     // Actually call AI provider using the centralized failover refinement engine
     log.info("Calling AI provider via failover engine...");
-    const { output, providerId } = await ProviderManager.refineWithFailover(input, {
+    const { output, providerId } = await ProviderManager.refineWithFailover(promptToRun, {
       mode: "sparkle",
-      systemPrompt: SYSTEM_PROMPT,
+      systemPrompt: effectiveSystemPrompt,
       timeoutMs: REFINE_TIMEOUT_MS
     });
 
@@ -215,7 +231,9 @@ export async function refineSelectedText({ notifySuccess, notifyError, notifyWar
 
     if (notifyError) {
       if (e?.code === "MISSING_API_KEY" || errMsg.toLowerCase().includes("api key required")) {
-        notifyError("API Key Required", "DeepSeek API key is required. Right-click Refinzi Tray > Settings to add your key.", 5000);
+        const activeProv = store.get("activeProvider") || "deepseek";
+        const provName = activeProv.charAt(0).toUpperCase() + activeProv.slice(1);
+        notifyError("API Key Required", `${provName} API key is required. Right-click Refinzi Tray > Settings to add your key.`, 5000);
       } else if (e?.code === "RATE_LIMITED" || errMsg.toLowerCase().includes("rate limit") || errMsg.includes("429")) {
         notifyError("Rate Limit Reached", "AI provider is currently busy. Try again in 10s or switch model in Settings.", 4500);
       } else {

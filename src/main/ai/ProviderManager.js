@@ -38,6 +38,56 @@ export class ProviderManager {
     "custom": OpenAICompatibleProvider
   };
 
+  static #cache = new Map();
+  static #MAX_CACHE_SIZE = 500;
+  static #CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+
+  static #getCacheKey(providerId, model, mode, systemPrompt, text) {
+    const raw = `${providerId}|${model}|${mode}|${systemPrompt || ""}|${text.trim()}`;
+    let hash = 0;
+    for (let i = 0; i < raw.length; i++) {
+      hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+      hash |= 0;
+    }
+    return `${hash}_${raw.length}`;
+  }
+
+  static getFromCache(providerId, model, mode, systemPrompt, text) {
+    const key = this.#getCacheKey(providerId, model, mode, systemPrompt, text);
+    const item = this.#cache.get(key);
+    if (!item) return null;
+    if (Date.now() - item.timestamp > this.#CACHE_TTL_MS) {
+      this.#cache.delete(key);
+      return null;
+    }
+    this.#cache.delete(key);
+    this.#cache.set(key, item);
+    return item.output;
+  }
+
+  static setInCache(providerId, model, mode, systemPrompt, text, output) {
+    if (!output || typeof output !== "string") return;
+    const key = this.#getCacheKey(providerId, model, mode, systemPrompt, text);
+    if (this.#cache.size >= this.#MAX_CACHE_SIZE) {
+      const oldestKey = this.#cache.keys().next().value;
+      if (oldestKey) this.#cache.delete(oldestKey);
+    }
+    this.#cache.set(key, { output, timestamp: Date.now() });
+  }
+
+  static clearCache() {
+    this.#cache.clear();
+    log.info("[ProviderManager] Transformation cache cleared.");
+  }
+
+  static getCacheStats() {
+    return {
+      size: this.#cache.size,
+      maxSize: this.#MAX_CACHE_SIZE,
+      ttlMs: this.#CACHE_TTL_MS,
+    };
+  }
+
   static lastCallDiagnostic = {
     provider: "unknown",
     model: "unknown",
@@ -464,6 +514,18 @@ export class ProviderManager {
       generationTimeMs: 0
     };
 
+    // Check in-memory LRU transformation cache
+    if (!opts.media && typeof text === "string") {
+      const cached = this.getFromCache(activeProvider, "any", mode, opts.systemPrompt, text);
+      if (cached) {
+        log.info(`[ProviderManager] Cache hit for prompt in mode: ${mode}`);
+        this.lastCallDiagnostic.provider = activeProvider;
+        this.lastCallDiagnostic.cached = true;
+        this.lastCallDiagnostic.generationTimeMs = 2;
+        return { output: cached, providerId: activeProvider, model: "cached" };
+      }
+    }
+
     // 1. Resolve fallback chain
     const providersToTry = [];
     const isValidKey = (k) => Boolean(k && k.length >= 8);
@@ -512,7 +574,7 @@ export class ProviderManager {
       this.lastCallDiagnostic.fallbackUsed = (providerId !== activeProvider);
 
       const apiKey = keys[providerId] || "";
-      const attemptTimeout = opts.timeoutMs ? Math.max(opts.timeoutMs, 25000) : 25000;
+      const attemptTimeout = opts.timeoutMs ? Math.min(opts.timeoutMs, 14000) : 14000;
       
       let provider;
       try {
@@ -567,6 +629,10 @@ export class ProviderManager {
           }
         }
         
+        if (!opts.media && output && typeof output === "string") {
+          this.setInCache(providerId, model, mode, opts.systemPrompt, text, output);
+        }
+
         return { output, providerId, model };
       } catch (err) {
         const latency = Date.now() - start;

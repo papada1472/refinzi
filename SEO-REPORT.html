@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Refinzi 2.0 — Executive SEO Audit & 90-Day Growth Roadmap</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #08090c;
+      --card-bg: rgba(18, 20, 26, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover-border: rgba(59, 130, 246, 0.4);
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --accent-blue: #3b82f6;
+      --accent-indigo: #6366f1;
+      --accent-purple: #8b5cf6;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --glow-blue: rgba(59, 130, 246, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.6;
+      padding: 40px 20px;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background gradients */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -200px;
+      left: 20%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -200px;
+      right: 10%;
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      padding-bottom: 30px;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 40px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-orb {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .brand h1 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(to right, #fff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .meta-badges {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+    }
+
+    .badge-primary {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+    }
+
+    /* Hero / Summary Banner */
+    .hero-banner {
+      background: linear-gradient(180deg, rgba(24, 27, 36, 0.8) 0%, rgba(14, 16, 22, 0.8) 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 36px;
+      margin-bottom: 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(12px);
+    }
+
+    .hero-banner h2 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+    }
+
+    .hero-banner p {
+      color: var(--text-muted);
+      max-width: 800px;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    /* Scorecard Grid */
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .score-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .score-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--card-hover-border);
+    }
+
+    .score-card .title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .score-card .value {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .score-card .value span {
+      font-size: 16px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .score-card .desc {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .status-bar {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      margin-top: 14px;
+      overflow: hidden;
+    }
+
+    .status-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+    }
+
+    /* Top Issues Matrix */
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .issues-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 50px;
+    }
+
+    .issue-item {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 20px 24px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 20px;
+      transition: all 0.2s;
+    }
+
+    .issue-item:hover {
+      border-color: rgba(255, 255, 255, 0.16);
+      background: rgba(26, 30, 40, 0.8);
+    }
+
+    .severity-pill {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      width: 72px;
+      text-align: center;
+    }
+
+    .sev-high {
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      color: #fda4af;
+    }
+
+    .sev-med {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #fcd34d;
+    }
+
+    .sev-low {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+    }
+
+    .issue-content h4 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .issue-content p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .issue-meta {
+      text-align: right;
+      font-size: 12px;
+    }
+
+    .owner-tag {
+      font-family: 'JetBrains Mono', monospace;
+      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+
+    /* Roadmap Timeline */
+    .roadmap-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-bottom: 50px;
+    }
+
+    .phase-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .phase-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent-blue);
+      margin-bottom: 12px;
+    }
+
+    .phase-card h3 {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .phase-card .phase-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .phase-tasks {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .phase-tasks li {
+      font-size: 13px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      color: #e4e4e7;
+    }
+
+    .check-icon {
+      color: var(--accent-emerald);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* Table */
+    .table-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      overflow-x: auto;
+      margin-bottom: 50px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 16px 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    td {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: #d4d4d8;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--card-border);
+      padding-top: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    footer a {
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+      .issue-item {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .issue-meta {
+        text-align: left;
+      }
+      .hero-banner {
+        padding: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="logo-orb">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="12 8 8 12 12 16 16 12 12 8"></polygon>
+          </svg>
+        </div>
+        <div>
+          <h1>Refinzi 2.0 SEO Audit</h1>
+          <p>Target: https://refinzi.com · Windows Desktop AI Ambient Layer</p>
+        </div>
+      </div>
+      <div class="meta-badges">
+        <span class="badge badge-primary">90-Day Roadmap</span>
+        <span class="badge">Auditor: Senior Search Architect</span>
+        <span class="badge">Status: Complete</span>
+      </div>
+    </header>
+
+    <!-- Executive Summary Banner -->
+    <section class="hero-banner">
+      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <span class="badge" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); color: #6ee7b7;">Opportunity Score: 85/100</span>
+        <span class="badge" style="background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.3); color: #fcd34d;">Current Health: 64/100</span>
+      </div>
+      <h2>Strategic Growth Trajectory for Refinzi 2.0</h2>
+      <p>
+        Refinzi 2.0 possesses exceptional technical velocity, local-first privacy positioning, and modern LLM discovery assets (<code>llms.txt</code>). However, organic search acquisition is bottlenecked by a single-page React CSR indexation wall, an invalid anchor-fragment XML sitemap, self-serving aggregate rating schema risks, and a tiny 4-page indexed domain footprint. Implementing the prioritized 90-day plan will capture bottom-of-funnel commercial intent ("Raycast Windows alternative", "Midjourney prompt builder") and secure dominant AI Overview citations.
+      </p>
+    </section>
+
+    <!-- Scorecards -->
+    <section class="grid-4">
+      <div class="score-card">
+        <div>
+          <div class="title">Technical SEO Health</div>
+          <div class="value" style="color: #60a5fa;">76<span>/100</span></div>
+          <p class="desc">High HTTP/2 security headers; penalized for CSR empty body & sitemap fragments.</p>
+        </div>
+        <div class="status-bar"><div class="status-bar-fill" style="width: 76%; background: #3b82f6;"></div></div>
+      </div>
+
+      <div class="score-card">
+        <div>
+          <div class="title">Topical Authority</div>
+          <div class="value" style="color: #f87171;">42<span>/100</span></div>
+          <p class="desc">Severe content deficit: only 4 indexed URLs across the entire domain.</p>
+        </div>
+        <div class="status-bar"><div class="status-bar-fill" style="width: 42%; background: #ef4444;"></div></div>
+      </div>
+
+      <div class="score-card">
+        <div>
+          <div class="title">Schema & Rich Data</div>
+          <div class="value" style="color: #fbbf24;">62<span>/100</span></div>
+          <p class="desc">Deprecated HowTo markup & risky hardcoded AggregateRating without 3rd-party proof.</p>
+        </div>
+        <div class="status-bar"><div class="status-bar-fill" style="width: 62%; background: #f59e0b;"></div></div>
+      </div>
+
+      <div class="score-card">
+        <div>
+          <div class="title">AI / GEO Readiness</div>
+          <div class="value" style="color: #34d399;">81<span>/100</span></div>
+          <p class="desc">Ahead of curve with llms.txt and crawler permissions; requires pre-rendered SSG text.</p>
+        </div>
+        <div class="status-bar"><div class="status-bar-fill" style="width: 81%; background: #10b981;"></div></div>
+      </div>
+    </section>
+
+    <!-- Top 6 Critical Audit Findings -->
+    <section>
+      <h3 class="section-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        Top Prioritized Audit Findings
+      </h3>
+      <p class="section-subtitle">Ranked by organic search ranking impact and urgency.</p>
+
+      <div class="issues-list">
+        <!-- Issue 1 -->
+        <div class="issue-item">
+          <span class="severity-pill sev-high">High</span>
+          <div class="issue-content">
+            <h4>Invalid URL Anchor Fragments in sitemap.xml</h4>
+            <p>Entries like <code>/#features</code>, <code>/#pricing</code> violate RFC 3986 and Google Search Central sitemap protocols, causing crawl errors and wasted search budget.</p>
+          </div>
+          <div class="issue-meta">
+            <span class="owner-tag">Owner: Dev</span>
+            <div style="color: #a1a1aa; font-size: 11px;">Fix Effort: Low</div>
+          </div>
+        </div>
+
+        <!-- Issue 2 -->
+        <div class="issue-item">
+          <span class="severity-pill sev-high">High</span>
+          <div class="issue-content">
+            <h4>Client-Side Rendering (CSR) Empty Body Indexation Barrier</h4>
+            <p>Initial server response delivers an empty <code>&lt;div id="root"&gt;&lt;/div&gt;</code>. Non-JS crawlers (Bing, social preview bots, and LLM search scrapers) cannot read content.</p>
+          </div>
+          <div class="issue-meta">
+            <span class="owner-tag">Owner: Dev</span>
+            <div style="color: #a1a1aa; font-size: 11px;">Fix Effort: Medium</div>
+          </div>
+        </div>
+
+        <!-- Issue 3 -->
+        <div class="issue-item">
+          <span class="severity-pill sev-high">High</span>
+          <div class="issue-content">
+            <h4>Self-Serving AggregateRating Schema Vulnerability</h4>
+            <p>Hardcoded 4.9 rating / 148 reviews on promotional domain without third-party review provider nodes violates Google Review Snippet policies and risks manual action.</p>
+          </div>
+          <div class="issue-meta">
+            <span class="owner-tag">Owner: Dev/SEO</span>
+            <div style="color: #a1a1aa; font-size: 11px;">Fix Effort: Low</div>
+          </div>
+        </div>
+
+        <!-- Issue 4 -->
+        <div class="issue-item">
+          <span class="severity-pill sev-high">High</span>
+          <div class="issue-content">
+            <h4>Severe Topical Authority Deficit (Zero Comparison Hubs)</h4>
+            <p>Domain has only 4 indexed URLs. Zero bottom-of-funnel comparison pages to capture surging commercial traffic for "Raycast Windows alternative" or "TypingMind alternative".</p>
+          </div>
+          <div class="issue-meta">
+            <span class="owner-tag">Owner: Content</span>
+            <div style="color: #a1a1aa; font-size: 11px;">Fix Effort: Medium</div>
+          </div>
+        </div>
+
+        <!-- Issue 5 -->
+        <div class="issue-item">
+          <span class="severity-pill sev-med">Medium</span>
+          <div class="issue-content">
+            <h4>Unoptimized 1.4MB Video Triggering Mobile LCP & CLS Penalty</h4>
+            <p>The <code>refinzi-demo.mp4</code> loads with autoplay without a WebP poster image or aspect-ratio bounding box, significantly slowing mobile rendering speed.</p>
+          </div>
+          <div class="issue-meta">
+            <span class="owner-tag">Owner: Dev</span>
+            <div style="color: #a1a1aa; font-size: 11px;">Fix Effort: Low</div>
+          </div>
+        </div>
+
+        <!-- Issue 6 -->
+        <div class="issue-item">
+          <span class="severity-pill sev-med">Medium</span>
+          <div class="issue-content">
+            <h4>Synthetic Stock Testimonials Hurting Google E-E-A-T Ratings</h4>
+            <p>Using generic pseudonyms ("AI Cinema Director") with Unsplash stock photos weakens trust metrics under Google's Quality Rater Guidelines.</p>
+          </div>
+          <div class="issue-meta">
+            <span class="owner-tag">Owner: Founder</span>
+            <div style="color: #a1a1aa; font-size: 11px;">Fix Effort: Low</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 90-Day Strategic Roadmap -->
+    <section>
+      <h3 class="section-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        90-Day Execution Roadmap
+      </h3>
+      <p class="section-subtitle">Structured in three progressive 30-day phases.</p>
+
+      <div class="roadmap-grid">
+        <!-- Phase 1 -->
+        <div class="phase-card">
+          <span class="phase-badge">Phase 1 · Days 1–30</span>
+          <h3>Quick Wins & Critical Hygiene</h3>
+          <p class="phase-desc">Eliminate indexing errors, de-risk schema, and optimize Core Web Vitals.</p>
+          <ul class="phase-tasks">
+            <li><span class="check-icon">✓</span> Purge fragment anchors from sitemap.xml</li>
+            <li><span class="check-icon">✓</span> Harmonize trailing slashes in vercel.json & canonicals</li>
+            <li><span class="check-icon">✓</span> Strip risky AggregateRating; add Breadcrumbs</li>
+            <li><span class="check-icon">✓</span> Align Homepage Title & H1 with commercial intent</li>
+            <li><span class="check-icon">✓</span> Add WebP video poster & lazyload demo media</li>
+            <li><span class="check-icon">✓</span> Replace stock testimonials with authentic quotes</li>
+            <li><span class="check-icon">✓</span> Initial submissions to AlternativeTo, Softpedia & Slant</li>
+          </ul>
+        </div>
+
+        <!-- Phase 2 -->
+        <div class="phase-card">
+          <span class="phase-badge">Phase 2 · Days 31–60</span>
+          <h3>Core Content & Pre-Rendering</h3>
+          <p class="phase-desc">Deliver full static HTML and establish high-converting comparison pages.</p>
+          <ul class="phase-tasks">
+            <li><span class="check-icon">✓</span> Implement Static Site Generation (SSG) in Vite</li>
+            <li><span class="check-icon">✓</span> Launch BOFU Comparison Page: <code>/vs/raycast/</code></li>
+            <li><span class="check-icon">✓</span> Launch Comparison Page: <code>/vs/typingmind/</code></li>
+            <li><span class="check-icon">✓</span> Modularize Documentation into 5 standalone URLs</li>
+            <li><span class="check-icon">✓</span> Publish Midjourney v6 Camera Optics Playbook</li>
+            <li><span class="check-icon">✓</span> Setup Google Search Console performance tracking</li>
+          </ul>
+        </div>
+
+        <!-- Phase 3 -->
+        <div class="phase-card">
+          <span class="phase-badge">Phase 3 · Days 61–90</span>
+          <h3>Authority & Advanced GEO</h3>
+          <p class="phase-desc">Attract authoritative backlinks and establish primary citation authority in LLMs.</p>
+          <ul class="phase-tasks">
+            <li><span class="check-icon">✓</span> Publish DeepSeek R1 & Claude 3.7 Reasoning Guide</li>
+            <li><span class="check-icon">✓</span> Release "Token & GPU Savings Benchmark Report"</li>
+            <li><span class="check-icon">✓</span> Coordinated Product Hunt & Hacker News Launch</li>
+            <li><span class="check-icon">✓</span> Build Programmatic Blueprint Directory (50+ templates)</li>
+            <li><span class="check-icon">✓</span> Engage AI Overview citation tracking & monitoring</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Top 10 Actions Master Table -->
+    <section>
+      <h3 class="section-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        Top 10 High-Impact Actions
+      </h3>
+      <p class="section-subtitle">Prioritized implementation plan for developers and marketers.</p>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Category</th>
+              <th>Impact</th>
+              <th>Effort</th>
+              <th>Owner</th>
+              <th>Target Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Sanitize XML Sitemap</strong> (Purge <code>#</code> fragments)</td>
+              <td>Technical</td>
+              <td><span class="severity-pill sev-high">High</span></td>
+              <td>Low</td>
+              <td><span class="owner-tag">Dev</span></td>
+              <td>Day 5</td>
+            </tr>
+            <tr>
+              <td><strong>Harmonize Canonical & Trailing Slash</strong></td>
+              <td>Technical</td>
+              <td><span class="severity-pill sev-high">High</span></td>
+              <td>Low</td>
+              <td><span class="owner-tag">Dev</span></td>
+              <td>Day 8</td>
+            </tr>
+            <tr>
+              <td><strong>De-risk Schema</strong> (Remove AggregateRating, add Breadcrumbs)</td>
+              <td>Schema</td>
+              <td><span class="severity-pill sev-high">High</span></td>
+              <td>Low</td>
+              <td><span class="owner-tag">Dev/SEO</span></td>
+              <td>Day 12</td>
+            </tr>
+            <tr>
+              <td><strong>Calibrate Title & H1</strong> for "AI Prompt Engine Windows"</td>
+              <td>On-Page</td>
+              <td><span class="severity-pill sev-high">High</span></td>
+              <td>Low</td>
+              <td><span class="owner-tag">SEO</span></td>
+              <td>Day 15</td>
+            </tr>
+            <tr>
+              <td><strong>Optimize Demo Video</strong> (WebP poster frame, preload="none")</td>
+              <td>CWV Speed</td>
+              <td><span class="severity-pill sev-med">Medium</span></td>
+              <td>Low</td>
+              <td><span class="owner-tag">Dev</span></td>
+              <td>Day 18</td>
+            </tr>
+            <tr>
+              <td><strong>Replace Stock Testimonials</strong> with authentic users</td>
+              <td>E-E-A-T</td>
+              <td><span class="severity-pill sev-high">High</span></td>
+              <td>Medium</td>
+              <td><span class="owner-tag">Founder</span></td>
+              <td>Day 25</td>
+            </tr>
+            <tr>
+              <td><strong>Vite Static Pre-Rendering (SSG)</strong> for full HTML body</td>
+              <td>Technical / GEO</td>
+              <td><span class="severity-pill sev-high">High</span></td>
+              <td>High</td>
+              <td><span class="owner-tag">Dev</span></td>
+              <td>Day 40</td>
+            </tr>
+            <tr>
+              <td><strong>Launch Raycast Windows Comparison Hub</strong> (<code>/vs/raycast/</code>)</td>
+              <td>Content BOFU</td>
+              <td><span class="severity-pill sev-high">High</span></td>
+              <td>Medium</td>
+              <td><span class="owner-tag">Content</span></td>
+              <td>Day 48</td>
+            </tr>
+            <tr>
+              <td><strong>Modularize Documentation</strong> into 5 standalone URLs</td>
+              <td>Architecture</td>
+              <td><span class="severity-pill sev-high">High</span></td>
+              <td>Medium</td>
+              <td><span class="owner-tag">Dev</span></td>
+              <td>Day 56</td>
+            </tr>
+            <tr>
+              <td><strong>Publish Token & Render Credit Benchmark Study</strong></td>
+              <td>GEO Authority</td>
+              <td><span class="severity-pill sev-high">High</span></td>
+              <td>Medium</td>
+              <td><span class="owner-tag">Product</span></td>
+              <td>Day 75</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div>
+        <span>Refinzi 2.0 SEO Audit Artifacts: </span>
+        <a href="FULL-AUDIT-REPORT.md">FULL-AUDIT-REPORT.md</a> · 
+        <a href="ACTION-PLAN.md">ACTION-PLAN.md</a>
+      </div>
+      <div>Generated for Rahul Mangla & Refinzi Core Team · Confidential & Actionable</div>
+    </footer>
+  </div>
+</body>
+</html>

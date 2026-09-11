@@ -292,7 +292,9 @@ async function runPipeline(mode, input, artifactType, { selectionCaptured, gemin
     sendStatus("❌ Refinement failed");
     const errMsg = err?.message || "Unable to process right now. Please check your API key.";
     if (err?.code === "MISSING_API_KEY" || errMsg.toLowerCase().includes("api key required")) {
-      notifyError("API Key Required", "DeepSeek API key required. Right-click Refinzi Tray > Settings to add your key.", 5000);
+      const activeProv = store.get("activeProvider") || "deepseek";
+      const provName = activeProv.charAt(0).toUpperCase() + activeProv.slice(1);
+      notifyError("API Key Required", `${provName} API key is required. Right-click Refinzi Tray > Settings to add your key.`, 5000);
     } else {
       notifyError("Refinement Failed", errMsg, 4500);
     }

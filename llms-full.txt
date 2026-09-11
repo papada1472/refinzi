@@ -1,0 +1,468 @@
+# https://refinzi.com/ llms-full.txt
+
+# Refinzi 2.0 — Ambient AI Prompt Rebuilder & Multi-Dimensional Specification Engine for Windows
+
+> Refinzi 2.0 is an ambient, local-first Windows desktop utility that transforms 1-line ideas and raw thoughts into calibrated cinematic video/image prompts, production-ready frontend specifications, and rigorous multi-dimensional research specifications in under 2 seconds. Operating directly at the Windows OS layer, Refinzi eliminates prompt engineering friction, tab switching, and burned render credits across Midjourney, Runway, Kling, DeepSeek R1, Claude 3.7 Thinking, Cursor, OpenAI o1/o3, Discord, Zotero, and Chrome.
+
+---
+
+## Executive Overview & Value Proposition
+
+In modern artificial intelligence workflows, generative models (text-to-video, text-to-image, and deep reasoning models) have attained astonishing capabilities. However, human operators face an unrelenting bottleneck: **The Unstated Context Problem**.
+
+When a creator prompts an AI video tool like Runway Gen-3 or Midjourney v6 with *"a samurai walking through fog at sunrise"*, the model lacks camera choreography, lens focal length, volumetric illumination parameters, motion physics, and negative boundary constraints. The result is often an unstable, blurry, or cliché generation that wastes time and costly GPU render credits.
+
+Similarly, when an academic researcher asks frontier reasoning engines like DeepSeek R1 or Claude 3.7 Sonnet (Thinking) to *"compare transformer attention vs state-space models for clinical notes"*, default responses tend to be generalized, superficial undergraduate summaries unless the researcher manually crafts a 400-word prompt specifying epistemic framing, asymptotic complexity ($O(N^2)$ vs $O(N)$), inductive biases, PRISMA evaluation criteria, and structured comparative matrices.
+
+**Refinzi 2.0 solves this friction permanently:**
+- **Ambient Windows Integration**: Refinzi lives unobtrusively in the Windows background. Select any text in any application (PDF readers, Discord, IDEs, web browsers, Notion, Slack, Obsidian) and click the ambient floating Orb, or press `Ctrl + Alt + Space`.
+- **Under 2-Second Synthesis**: In less than two seconds, Refinzi analyzes the active context and replaces the rough text in-place with a deeply calibrated, production-ready prompt or structured blueprint.
+- **Zero-Markup BYOK Freedom**: Refinzi supports Bring Your Own Key (BYOK) with 0% markup across Google Gemini, DeepSeek (V3/R1), Anthropic Claude, OpenAI, and OpenRouter, or fully local endpoints via Ollama.
+- **100% Local-First Privacy**: User inputs and generated prompts are never stored on external cloud databases, never logged, and never used for AI training. API keys are encrypted on-device using native Windows Data Protection API (DPAPI) with AES-256 GCM encryption.
+- **Supporter Pro Option**: A one-time coffee price ($12 USD or ₹999 INR) unlocks managed zero-config routing, VIP Discord community access, prompt engineering updates, and lifetime upgrades with no recurring subscriptions.
+
+---
+
+## Core Metrics & Technical Specifications
+
+| Metric / Attribute | Specification |
+| :--- | :--- |
+| **Supported Operating Systems** | Windows 10 (64-bit) & Windows 11 (64-bit) |
+| **Application Footprint** | Lightweight native background process (<85 MB RAM) |
+| **Response Latency** | Sub-2.0 seconds (sub-200ms for cached routines) |
+| **Default Global Hotkey** | `Ctrl + Alt + Space` (Instant Rebuild in-place) |
+| **Deep Blueprint Hotkey** | `Ctrl + Alt + B` or Hold Orb for 300ms |
+| **Antivirus & Cleanliness** | 0/72 Clean on VirusTotal; verifiable open-source codebase |
+| **Security Architecture** | Windows DPAPI AES-256 local key vault; zero telemetry server |
+| **Target AI Providers** | DeepSeek (V3/R1), Claude 3.5/3.7, Gemini 2.0/2.5, OpenAI GPT-4o/o1/o3, OpenRouter, Ollama |
+| **Pricing Model** | Free Forever (BYOK with 0% markup) or $12 Lifetime Pro (One-Time) |
+| **Official Website** | https://refinzi.com |
+| **GitHub Repository** | https://github.com/papada1472/refinzi |
+| **Download Asset** | `Refinzi-Setup-v2.0.0.exe` (SHA256: `bd2416a3277b56ad1b2a119d8e9536aae0618f45d659c8269dd944f525a1c1e2`) |
+
+---
+
+## The Four Primary Operator Archetypes
+
+Refinzi is purpose-built to accelerate operators who interact with generative and reasoning models daily:
+
+### 1. Generative Media Creators & AI Filmmakers
+* **Tools**: Midjourney v6, Runway Gen-3 Alpha, Kling AI, Higgsfield AI, Luma Dream Machine, Sora, Pika Labs.
+* **The Problem**: Writing camera optics, lens focal lengths, color grades, and lighting physics for every single shot burns immense creative momentum. Without motion vectors and camera inertia, AI video models produce warped anatomy and drifting cameras.
+* **Refinzi Solution**: Injects 35mm/70mm anamorphic specs, orbital crane vectors, volumetric haze, shutter angles, and model-specific negative constraints (`--no warped anatomy, plastic skin, jitter`). Creators save up to 50% of burned video credits on the first generation pass.
+
+### 2. Academic Researchers, PhDs & Intelligence Analysts
+* **Tools**: DeepSeek R1, Claude 3.7 Sonnet (Thinking Process), OpenAI o1 & o3-mini, Zotero, Mendeley, Acrobat Reader.
+* **The Problem**: Frontier reasoning models require explicit epistemic framing, boundary conditions, and methodology audit instructions to bypass boilerplate conversational answers. Typing these 400-word meta-prompts while reading literature disrupts deep focus.
+* **Refinzi Solution**: With text highlighted in a PDF reader or research paper, Refinzi synthesizes PRISMA literature matrices, selection bias audits, statistical power checks ($N$, effect sizes), and counter-hypotheses in-place.
+
+### 3. Frontend Engineers & Technical Builders
+* **Tools**: Cursor Composer, Windsurf, VS Code, GitHub Copilot, Claude 3.5 Sonnet, v0 by Vercel.
+* **The Problem**: Giving an AI coding agent a one-line request like *"make a responsive pricing table with monthly/annual toggle"* results in disorganized spaghetti code with missing responsive breakpoints, accessibility oversights, and generic CSS.
+* **Refinzi Solution**: Refinzi generates a structured 5-Block architectural specification containing component trees, compound component patterns (`<Pricing.Root>`, `<Pricing.Card>`), ARIA keyboard navigation specs, and Tailwind utility classes ready for zero-iteration compilation.
+
+### 4. Direct-Response Copywriters & Growth Strategists
+* **Tools**: ChatGPT (GPT-4o), Claude 3.7, Notion AI, Slack, Gmail, Google Docs.
+* **The Problem**: Raw LLM copy is notoriously bland, buzzword-heavy, and passive.
+* **Refinzi Solution**: Transforms rough talking points into 3-phase open-loop sequences, agitating pain points, quantifying ROI, overcoming technical objections, and enforcing strict character count limits and persuasive psychological frameworks.
+
+---
+
+## Primary Workflows & Interaction Mechanics
+
+Refinzi operates invisibly until summoned, integrating smoothly with the Windows Desktop Window Manager (DWM).
+
+### 1. In-Place 1-Click Prompt Rebuilding (Instant Mode)
+* **User Action**: Highlight any text string in any Windows application (Discord, Chrome, Terminal, PDF viewer, Slack, IDE).
+* **Trigger**: Click the subtle floating Orb that anchors smoothly near your cursor, or press `Ctrl + Alt + Space`.
+* **Execution Flow**:
+  1. Refinzi uses a native OS hook to copy the highlighted selection into a secure buffer.
+  2. The raw text is passed to the configured AI engine alongside Refinzi's contextual intelligence system prompt.
+  3. In under 2 seconds, the refined text is written back to the clipboard and pasted directly over the user's initial selection.
+  4. An unobtrusive, non-stealing Windows toast appears: `✨ Polished & Pasted in 1.8s`.
+* **Outcome**: Your rough 1-line concept is replaced on screen by an expert prompt without ever switching application windows.
+
+### 2. The 5-Block Architectural & Research Blueprint (Deep Mode)
+* **Trigger**: Hold the ambient Orb for 300 milliseconds, or press the dedicated hotkey `Ctrl + Alt + B`.
+* **Purpose**: When an inquiry requires comprehensive, end-to-end scaffolding rather than a single prompt string, Refinzi activates its 5-Block Blueprint Engine.
+* **The 5 Blueprint Blocks**:
+  1. **Block 1: Structural Layout & Epistemic Hierarchy**: Defines the overall layout grid, responsive breakpoint behaviors, and core methodological assumptions.
+  2. **Block 2: Component Assets, Variables & State Matrix**: Tokenized design assets (HSL colors, typography scales) or experimental study variables (cohort definitions, statistical thresholds).
+  3. **Block 3: Conversion Copy, Microcopy & Evidence Claims**: Direct-response headlines, feature-to-benefit pairings, or literature citations with confidence scores.
+  4. **Block 4: Motion Dynamics, Camera Physics & Adversarial Constraints**: 3D orbital camera vectors, inertia values, and spring physics, or confounder audits, collider stratification, and negative boundary controls.
+  5. **Block 5: Master Production Prompt Pack**: Zero-rework master execution prompts formatted for instant copy-pasting into Midjourney, Runway, DeepSeek R1, Claude, or Cursor Composer.
+
+---
+
+## Real-World Before & After Demonstrations
+
+Below are concrete, verbatim examples illustrating how Refinzi 2.0 rebuilds raw human thoughts across different professional creative and analytical domains.
+
+### Scenario A: Generative AI Cinema (Runway Gen-3 / Kling / Sora)
+* **Raw User Thought**:
+  ```txt
+  a lonely astronaut walking through a red desert
+  ```
+* **Refinzi 2.0 Rebuilt Output**:
+  ```txt
+  [Camera: Slow low-angle 35mm anamorphic tracking shot with subtle handheld inertia, keeping subject in center-right third]
+  Subject: Weathered titanium-white EVA spacesuit with reflective gold-tinted visor mirroring a twin sunset.
+  Setting: Expansive Martian red desert with towering basalt dunes and cracked clay beds. Fine red particulate dust catches the air with each grounded step.
+  Lighting & Atmosphere: Low-altitude golden-hour volumetric backlighting, atmospheric heat shimmer rippling the horizon line, soft lens flare, deep amber-crimson color grade.
+  Motion Physics: Weighted low-gravity walking cadence, realistic cloth tension on joint folds, dynamic dust kick-up with natural settling physics.
+  Constraints: Cinematic sci-fi photorealism, 4K 24fps motion cadence, no jerky camera panning, no warped suit anatomy, no cartoonish saturation.
+  ```
+
+### Scenario B: AI Art & Conceptual Design (Midjourney v6.0)
+* **Raw User Thought**:
+  ```txt
+  a futuristic sports car driving in neon rainy city
+  ```
+* **Refinzi 2.0 Rebuilt Output**:
+  ```txt
+  /imagine prompt: cinematic 35mm anamorphic wide tracking shot of concept hypercar, rain-slicked Neo-Tokyo asphalt, raytraced reflections, cyan and magenta neon ambiance, Cooke Anamorphic /i 35mm f/1.4 lens, volumetric tire spray, photorealistic Octane 8k render, hyper-detailed carbon fiber aero bodywork, moody blade runner aesthetic --ar 16:9 --style raw --v 6.0 --q 2
+  ```
+
+### Scenario C: Deep Epistemic Research (DeepSeek R1 / Claude 3.7 Thinking)
+* **Raw User Thought**:
+  ```txt
+  compare transformer attention vs state-space models for clinical notes
+  ```
+* **Refinzi 2.0 Rebuilt Output**:
+  ```txt
+  Act as a Principal Research Scientist in Biomedical NLP and Machine Learning. Provide an exhaustive, mathematically rigorous comparative evaluation between Multi-Head Self-Attention Transformers and Structured State-Space Models (Mamba / S4) specifically applied to longitudinal Electronic Health Records (EHR) and clinical unstructured narratives:
+
+  1. Asymptotic Complexity & Memory Footprint:
+     - Formally compare computational scaling across sequence length N (quadratic O(N²) self-attention vs linear O(N) recurrent state updates).
+     - Analyze memory overhead during inference: KV-cache memory saturation in long-context Transformers vs fixed-size hidden state h(t) retention in SSMs across 100,000+ token clinical dossiers.
+
+  2. Information Retrieval & Induction Heads:
+     - Compare associative recall and in-context learning capabilities. Assess Needle-in-a-Haystack retrieval decay across multi-year inpatient histories containing sparse diagnostic markers.
+
+  3. Clinical Domain Robustness:
+     - Evaluate handling of irregularly sampled physiological time-series data, dense ICD-10 codification, and fragmented clinician progress notes.
+
+  4. Failure Modes & Empirical Limitations:
+     - Detail catastrophic forgetting and state collapse in SSMs versus computational exhaustion and quadratic latency spikes in Transformers.
+
+  Format Requirement: Structure your analysis as a technical whitepaper with a Markdown comparative matrix, explicit state-space transition equations, and benchmark references (e.g., MIMIC-IV benchmarks). Avoid pleasantries or conversational intros.
+  ```
+
+### Scenario D: Methodological & Statistical Audit (Clinical Trials)
+* **Raw User Thought**:
+  ```txt
+  critique this clinical study methodology for selection bias and sample confounders
+  ```
+* **Refinzi 2.0 Rebuilt Output**:
+  ```txt
+  Role: Senior Epidemiologist & Principal Biostatistical Reviewer
+  Objective: Conduct an uncompromising methodological and causal inference audit on the provided clinical trial excerpt.
+
+  Execute your evaluation according to the following strict analytical framework:
+  1. Confounder Identification & Directed Acyclic Graph (DAG) Analysis:
+     - Map potential unmeasured confounders, immortal time bias, and collider stratification in patient cohort selection.
+  2. Statistical Power & Sample Adequacy:
+     - Assess whether the statistical sample size (N) satisfies minimum detectable effect size (MDES) thresholds under non-parametric distribution assumptions.
+     - Evaluate the validity of p-value claims against Bonferroni or False Discovery Rate (FDR) corrections for multiple secondary endpoints.
+  3. Generalizability & External Validity Boundary Conditions:
+     - Identify demographic, institutional, or phenotypic filtering that restricts translation of findings to general real-world clinical populations.
+
+  Output Format: Provide a structured Markdown review matrix listing: Issue Category, Severity Score (1-5), Cited Excerpt, Methodological Vulnerability, and Recommended Remediation Protocol.
+  ```
+
+### Scenario E: Production Coding & UI Architecture (Cursor / VS Code / Claude)
+* **Raw User Thought**:
+  ```txt
+  make a responsive pricing table with toggle and tooltip
+  ```
+* **Refinzi 2.0 Rebuilt Output**:
+  ```txt
+  Task: Implement a production-grade, accessible Pricing Matrix component in React 19, TypeScript, and Tailwind CSS.
+
+  Architecture & Structure:
+  - Utilize the Compound Component pattern: <Pricing.Root>, <Pricing.Header>, <Pricing.BillingToggle>, <Pricing.Grid>, <Pricing.Card>, <Pricing.FeatureList>, <Pricing.Action>.
+  - State Management: Controlled billing cadence ('monthly' | 'annual') with a 20% discount badge calculation.
+
+  Design & Micro-Interactions:
+  - Dark luxury theme: zinc-950 background, zinc-900/60 card surfaces, subtle blue-500/20 borders, and delicate ambient radial glow on the featured tier.
+  - Interactive hover state: Kinetic elevation with transition-all duration-300 cubic-bezier(0.25, 1, 0.5, 1) and subtle border glow highlight.
+  - Accessible Tooltip: Implement Radix UI Tooltip primitives for feature detail explanations with zero layout shift on trigger hover.
+
+  Accessibility & Performance:
+  - Full keyboard navigability (Arrow keys between tiers, Space/Enter toggle switch).
+  - Proper ARIA attributes: role="radiogroup", aria-checked, and aria-describedby for pricing tiers.
+  - Zero external icon dependencies other than lucide-react. Output full, self-contained, typed code.
+  ```
+
+---
+
+## Detailed Architectural Comparison: Refinzi 2.0 vs. The Landscape
+
+Many developers and creators rely on ad-hoc methods or browser extensions. The table below illustrates why an ambient Windows desktop layer provides superior ergonomics, velocity, and privacy:
+
+| Feature / Dimension | Traditional Web Prompt Tools | Browser Extensions | Raycast (macOS) | Native Chat Windows | Refinzi 2.0 (Windows) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Operating System** | Platform-agnostic (Web) | Chrome / Edge only | macOS exclusively | Web / Desktop Apps | **Windows 10 / 11 Native** |
+| **Workflow Friction** | Alt-Tab, copy, paste, copy back | Trapped inside browser tab | Hotkey command bar | Context switching | **In-Place Rebuild via Orb / Hotkey** |
+| **Execution Latency** | 15–30 seconds manual work | 5–10 seconds | 3–5 seconds | 20+ seconds | **< 2.0 seconds end-to-end** |
+| **Architectural Depth** | Simple text rephrasing | Fixed canned templates | Script dependent | Conversational text | **5-Block Architectural Blueprints** |
+| **Data Privacy** | Prompts logged to cloud DB | Telemetry & browser tracking | Cloud sync options | Cloud retention & training | **100% Local DPAPI AES-256 Vault** |
+| **Model Freedom** | Hardcoded single model | Locked to extension API | Raycast Pro subscription | Locked to specific vendor | **BYOK (DeepSeek, Claude, Gemini, OpenAI)** |
+| **Pricing & Cost** | $15–$30/month recurring | $10–$20/month recurring | $8–$16/month recurring | $20/month per service | **Free BYOK ($0) or $12 Lifetime Pro** |
+| **System Resource Impact** | Heavy browser tab memory | Constant background tab | Native Mac daemon | Heavy multi-app RAM | **Ultra-lightweight (<85 MB RAM)** |
+
+---
+
+## Security, Privacy & Local-First Architecture
+
+Refinzi is built on strict **fail-closed, local-first principles**. In an era where corporate intellectual property and pre-publication research data face frequent leaks via cloud aggregators, Refinzi guarantees:
+
+### 1. Zero Cloud Prompt Telemetry
+* Refinzi does **not** operate intermediate proxy servers that capture or store user prompts.
+* When you highlight text and trigger a rebuild, the payload is transmitted directly and securely from your Windows machine to the AI endpoint you have configured (e.g., Google, Anthropic, DeepSeek, OpenAI, or local localhost Ollama).
+* Refinzi developers cannot see, inspect, monetize, or train on any user prompts.
+
+### 2. Windows DPAPI AES-256 Key Vault
+* Under Bring Your Own Key (BYOK) mode, sensitive API keys are encrypted immediately upon entry using the native Windows Data Protection API (`CryptProtectData`).
+* Keys are tied to your specific Windows user profile security principal and encrypted with AES-256 GCM.
+* Even if an attacker copies the local configuration files to another machine, the keys cannot be decrypted without your Windows credentials.
+* Diagnostic logs automatically mask API keys and prompt fragments with cryptographic hashes before writing to disk.
+
+### 3. Antivirus Verification & Code Cleanliness
+* Refinzi binaries are compiled from open-source code and evaluated against VirusTotal, maintaining a clean **0/72 detection record**.
+* The application requests only the minimal Windows operating system permissions necessary:
+  - Global hotkey registration (`RegisterHotKey` Win32 API).
+  - Cursor position query (`GetCursorPos`) to position the ambient Orb adjacent to selections.
+  - Clipboard read/write simulation (`SendInput` for `Ctrl+C` and `Ctrl+V`).
+* Refinzi does not install background device drivers, kernel hooks, or persistent telemetry daemons.
+
+---
+
+## Supported AI Models & Routing Architecture
+
+Refinzi features an instant model-switcher allowing users to route their queries to the optimal frontier model for the task:
+
+### 1. Reasoning & Analytical Models
+* **DeepSeek-R1**: Frontier open-weight reasoning model excelling at complex algorithmic logic, mathematical deduction, and deep epistemic critique with sub-cent token economics.
+* **Claude 3.7 Sonnet (Thinking)**: Anthropic's flagship reasoning model combining deep chain-of-thought analysis with world-class writing clarity.
+* **OpenAI o1 & o3-mini**: Benchmark-dominating reasoning architectures designed for STEM, software architecture, and competitive coding logic.
+
+### 2. Fast Creative & Multimodal Models
+* **Google Gemini 2.0 Flash & Gemini 1.5 Pro**: Ultra-low latency processing, 1M+ token context capacity, and state-of-the-art multimodal understanding.
+* **Anthropic Claude 3.5 Sonnet**: The industry standard for frontend code generation, nuance, and natural voice.
+* **OpenAI GPT-4o & GPT-4o mini**: Fast, multimodal daily driver for general copy, brainstorming, and translation tasks.
+* **DeepSeek-V3**: Ultra-cost-effective general-purpose LLM with exceptional coding and conversational versatility.
+
+### 3. Open-Source, OpenRouter & Local Inference
+* **OpenRouter Routing**: Direct access to 100+ open and proprietary models including Llama 3.3 70B, Qwen 2.5 72B, Mistral Large 2, and NVIDIA Nemotron 120B.
+* **Local Ollama Endpoints**: Connect to `http://localhost:11434` for 100% offline, air-gapped inference using locally hosted models without sending a single byte over the internet.
+
+---
+
+## The 5-Block Blueprint Engine Specification
+
+When holding the Orb for 300ms or pressing `Ctrl + Alt + B`, Refinzi generates a structured **5-Block Rebuild Pack**. Here is how each block is defined and utilized:
+
+```
+┌────────────────────────────────────────────────────────┐
+│               REFINZI 5-BLOCK BLUEPRINT                │
+├────────────────────────────────────────────────────────┤
+│  Block 1: Structure & Epistemic Hierarchy               │
+│  → Visual grid layouts, breakpoints, or hypotheses     │
+├────────────────────────────────────────────────────────┤
+│  Block 2: Component Assets & Variable Matrix           │
+│  → Design tokens, ARIA roles, or study parameters      │
+├────────────────────────────────────────────────────────┤
+│  Block 3: Conversion Copy & Evidence Claims            │
+│  → Value hooks, microcopy, or literature citations     │
+├────────────────────────────────────────────────────────┤
+│  Block 4: Motion Dynamics & Adversarial Constraints    │
+│  → 3D camera vectors, or confounder failure controls   │
+├────────────────────────────────────────────────────────┤
+│  Block 5: Master Production Prompt Pack                │
+│  → Formatted execution code for Midjourney, Claude, etc│
+└────────────────────────────────────────────────────────┘
+```
+
+1. **Block 1: Structure & Epistemic Hierarchy**:
+   * *For UI/UX*: Layout tree, column structures, responsive containers, flexbox alignments, and viewport rules.
+   * *For Research*: Primary research questions, null hypotheses ($H_0$), conceptual models, and epistemic boundaries.
+2. **Block 2: Component Assets & Variable Matrix**:
+   * *For UI/UX*: Color variables (primary, secondary, surface, border), typography hierarchy (font-family, font-size, tracking), and component variants.
+   * *For Research*: Independent variables, dependent variables, confounding covariates, inclusion/exclusion criteria, and sample stratification.
+3. **Block 3: Conversion Copy & Evidence Claims**:
+   * *For UI/UX*: Hero value propositions, action-oriented CTAs, trust badges, feature descriptions, and error states.
+   * *For Research*: Empirical assertions, documented literature citations, confidence intervals, and effect size benchmarks.
+4. **Block 4: Motion Dynamics & Adversarial Constraints**:
+   * *For UI/UX & Video*: Easing curves (`cubic-bezier(0.25, 1, 0.5, 1)`), camera orbit speeds, lens distortion parameters, and volumetric lighting angles.
+   * *For Research*: Negative controls, boundary conditions, sensitivity analyses, and potential vulnerabilities where causal inferences breakdown.
+5. **Block 5: Master Production Prompt Pack**:
+   * *Universal*: The ready-to-run prompt syntax optimized for immediate execution in target tools (e.g., `/imagine prompt:` with Midjourney flags, or system-instruction blocks for Cursor Composer and Claude).
+
+---
+
+## Pricing & Licensing Details
+
+Refinzi offers a refreshingly transparent, anti-subscription commercial model:
+
+### Free / BYOK Tier ($0 Forever)
+* **Price**: $0.00 / forever.
+* **Includes**:
+  - Full access to the ambient Windows Orb and custom hotkeys (`Ctrl + Alt + Space`).
+  - Full 5-Block Blueprint Engine (`Ctrl + Alt + B`).
+  - Unlimited text prompt rebuilds using your own API credentials.
+  - Direct connection to Gemini, DeepSeek, Anthropic, OpenAI, OpenRouter, and Ollama.
+  - **Zero Markup**: You pay only your AI provider's direct wholesale API rates (e.g., DeepSeek rates are often fractions of a cent per prompt).
+  - 100% on-device Windows DPAPI AES-256 encryption.
+
+### Supporter Pro Tier ($12 USD / ₹999 INR One-Time Lifetime License)
+* **Price**: One-time coffee payment ($12 USD or ₹999 INR). No monthly or annual recurring fees.
+* **Includes**:
+  - Everything included in Free / BYOK.
+  - **Zero Configuration**: Immediate access to managed Claude 3.5 Sonnet & GPT-4o routing without creating or funding individual API accounts.
+  - Cloud synchronization for custom prompt presets and organizational libraries.
+  - VIP Discord Community membership with direct developer access.
+  - Weekly Prompt Engineering & AI Cinema breakdown newsletter.
+  - Lifetime free application updates and new engine features.
+  - Early beta access to future macOS and Linux cross-platform releases.
+  - **14-Day 100% Money-Back Guarantee**: If Refinzi does not save you hours every week, simply email `contact@refinzi.com` for an immediate, no-questions-asked refund.
+
+---
+
+## Installation, Verification & Building from Source
+
+Refinzi is distributed as a lightweight, standalone Windows installer, and can also be compiled directly from source.
+
+### 1. Download & Standard Installation
+1. Download the latest installer from the official GitHub release:
+   - File: `Refinzi-Setup-v2.0.0.exe`
+   - URL: https://github.com/papada1472/refinzi/releases/download/v2.0.0/Refinzi-Setup-v2.0.0.exe
+2. Double-click the downloaded `.exe` to install.
+3. The application will launch and minimize to your Windows System Tray (near the taskbar clock).
+4. An ambient greeting will confirm Refinzi is active.
+
+### 2. Windows SmartScreen Verification Notice
+Because Refinzi is an independent, community-backed open-source project without a multi-thousand-dollar enterprise EV code signing certificate, Windows Defender SmartScreen may display an informational dialog on first launch:
+* Click **"More info"**.
+* Click **"Run anyway"**.
+* To verify that the binary has not been altered or tampered with in transit, perform a SHA256 checksum verification.
+
+### 3. Verifying the SHA256 Checksum
+Open PowerShell in the folder where you downloaded the setup file and execute:
+```powershell
+Get-FileHash .\Refinzi-Setup-v2.0.0.exe -Algorithm SHA256
+```
+The resulting hash **must match exactly**:
+```txt
+bd2416a3277b56ad1b2a119d8e9536aae0618f45d659c8269dd944f525a1c1e2
+```
+
+### 4. Compiling from Source
+For security-conscious environments, researchers, or developers who prefer compiling directly from the repository:
+
+**Prerequisites**:
+- Windows 10 or Windows 11 (64-bit)
+- Node.js version 18.0.0 or higher
+- npm package manager
+- Git version control
+
+**Step-by-step commands**:
+```powershell
+# 1. Clone the official repository
+git clone https://github.com/papada1472/refinzi.git
+
+# 2. Navigate to project root
+cd refinzi
+
+# 3. Install dependencies
+npm install
+
+# 4. Launch in development mode
+npm run dev
+
+# 5. Compile a standalone Windows installer (.exe)
+npm run dist
+```
+The compiled, ready-to-run installer will be output directly into the local `dist/` folder.
+
+---
+
+## Complete Frequently Asked Questions (FAQ)
+
+### Getting Started & Daily Usage
+
+#### What is Refinzi 2.0?
+Refinzi 2.0 is an ambient Windows desktop tool that transforms short, rough ideas into calibrated cinematic prompts, production code specifications, and multi-dimensional research prompts in under 2 seconds. It operates in-place across any Windows application via an ambient floating Orb or global keyboard shortcut.
+
+#### How does Refinzi differ from browser extensions or web chat windows?
+Browser extensions only work inside Chrome or Edge; they cannot interact with native Windows software like PDF readers (Acrobat, Zotero), Discord desktop, Cursor, VS Code, Slack, or Obsidian. Web chat windows (like ChatGPT or Claude) force you to stop working, switch tabs, paste text, write prompting instructions, copy the output, and switch back. Refinzi replaces text right where your cursor is positioned in a single keystroke.
+
+#### Which keyboard shortcuts are configured by default?
+- `Ctrl + Alt + Space`: Instantly rebuilds highlighted text in-place using your active AI model.
+- `Ctrl + Alt + B`: Generates a deep 5-Block Architectural or Research Blueprint.
+- You can customize these shortcuts to any combination via the Refinzi Command Center (accessed by right-clicking the System Tray icon and choosing *Settings*).
+
+#### Can I use Refinzi without touching the keyboard?
+Yes. Whenever you highlight text with your mouse in any Windows application, the ambient Refinzi Orb gently fades in adjacent to your cursor. Clicking it once triggers instant rebuild; holding it for 300ms triggers the 5-Block Blueprint engine.
+
+### AI Models & API Integration
+
+#### Which AI models are supported?
+Refinzi 2.0 supports:
+- **DeepSeek**: DeepSeek-V3, DeepSeek-R1 (Deep Reasoning).
+- **Anthropic**: Claude 3.5 Sonnet, Claude 3.7 Sonnet (Thinking).
+- **Google GenAI**: Gemini 2.0 Flash, Gemini 1.5 Pro, Gemini 2.5.
+- **OpenAI**: GPT-4o, GPT-4o mini, o1, o3-mini.
+- **OpenRouter & NVIDIA**: Nemotron 120B, Llama 3.3 70B, Qwen 2.5, Mistral Large.
+- **Local Endpoints**: Ollama (e.g., `llama3.2`, `deepseek-r1:8b`, `qwen2.5-coder`).
+
+#### How does BYOK (Bring Your Own Key) work?
+In the Settings window, simply paste your API key from Google AI Studio, DeepSeek, Anthropic, or OpenAI. Refinzi communicates directly with those providers. There are no middleman servers, no markups, and no monthly platform fees.
+
+#### Can I run Refinzi completely offline?
+Yes. By configuring Refinzi to connect to a local Ollama instance (`http://localhost:11434`), all prompt expansions and blueprint generations run 100% on your local GPU/CPU without transmitting any data over the internet.
+
+### Security, Trust & Antivirus
+
+#### Does Refinzi store or train on my prompts?
+No. Refinzi has zero cloud prompt telemetry. Your text never touches a Refinzi server. Payload transmissions go directly to your configured provider, adhering to their respective privacy standards.
+
+#### How are my API keys secured on my machine?
+Keys are encrypted using native Windows Data Protection API (DPAPI) with AES-256 GCM encryption. They are locked to your specific Windows user profile and cannot be decrypted by unauthorized user sessions or external devices.
+
+#### Why does Windows SmartScreen appear during installation?
+Independent open-source developers face prohibitive costs ($400–$800/year) for commercial Extended Validation (EV) code signing certificates. Windows SmartScreen displays a default cautionary message for unsigned binaries until sufficient download reputation accumulates. You can review the complete open-source code on GitHub and verify the SHA256 checksum before installing.
+
+#### Does Refinzi flag on VirusTotal?
+No. Refinzi maintains a pristine 0/72 detection score across all major antivirus scanners on VirusTotal.
+
+### Licensing, Pricing & Guarantees
+
+#### Is Refinzi truly free?
+Yes. The Free / BYOK version is free forever with no expiration date, no trial periods, and no prompt volume throttles. You only pay the direct pennies or fractions of a cent charged by your chosen AI API provider.
+
+#### What does the Supporter Pro tier provide?
+Supporter Pro is a one-time payment ($12 USD or ₹999 INR) designed to support ongoing independent software development. It includes managed zero-config routing (no need to buy individual API credits), cloud preset syncing, VIP Discord community access, and lifetime software updates.
+
+#### What is the refund policy?
+Refinzi Supporter Pro comes with an unconditional 14-day 100% money-back guarantee. If you are unsatisfied for any reason, email `contact@refinzi.com` and your payment will be refunded immediately.
+
+### Compatibility & Future Platforms
+
+#### Does Refinzi work on multiple monitors?
+Yes. Refinzi uses multi-monitor coordinate detection via the Windows Desktop Window Manager to accurately anchor the ambient Orb and notification toasts on whichever monitor your cursor is actively working on.
+
+#### Is a macOS or Linux version planned?
+Refinzi 2.0 is currently engineered specifically for Windows 10 and Windows 11 to leverage native Win32 APIs. A macOS version (utilizing native macOS Accessibility APIs and Menu Bar integration) is currently on our public development roadmap. You can join the cross-platform waitlist at https://refinzi.com.
+
+---
+
+## Contact, Community & Diagnostic Support
+
+* **Official Website**: https://refinzi.com
+* **Documentation & LLM Index**: https://refinzi.com/llms.txt & https://refinzi.com/llms-full.txt
+* **GitHub Repository**: https://github.com/papada1472/refinzi
+* **Issue Tracker**: https://github.com/papada1472/refinzi/issues
+* **Community Discussions**: https://github.com/papada1472/refinzi/discussions
+* **Direct Support Email**: contact@refinzi.com (or hello@refinzi.com)
+* **Creator / Developer Handle**: papada1472

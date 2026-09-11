@@ -102,6 +102,14 @@ if (__isVitest) {
 
   console.log("[Refinzi][Main] electron-store initialized at", store.path);
 
+  // Auto-migrate legacy hotkey to Ctrl+Alt+Space if needed
+  try {
+    if (store.get("hotkey") === "Alt+Shift+F") {
+      store.set("hotkey", DEFAULT_HOTKEY);
+      console.log("[Refinzi][Store] Migrated legacy hotkey Alt+Shift+F to", DEFAULT_HOTKEY);
+    }
+  } catch (_) {}
+
   // Migration from old Refinezy store
   try {
     const userData = app.getPath("userData");

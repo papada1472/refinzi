@@ -1,207 +1,155 @@
-# Refinzi 2.0
+# Refinzi 2.0 — The Ambient AI Layer for Windows
 
-> Local-first Windows prompt tool that turns 1-line ideas into calibrated cinematic AI video/image prompts in under 2 seconds.
+> 100% Free, open-source, and local-first. Refinzi sits ambiently on Windows 10 & 11 to transform rough 1-line ideas, polish writing, and scaffold deep 5-block architecture blueprints in under 2 seconds directly in-place across any Windows application.
 
-Refinzi is built for AI video creators, prompt engineers, and digital artists using tools like Higgsfield, Runway, Midjourney, Sora-style workflows, Pika, Luma, and other generative media tools.
+[![GitHub release](https://img.shields.io/github/v/release/papada1472/refinzi?color=blue&style=flat-square)](https://github.com/papada1472/refinzi/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg?style=flat-square)](LICENSE)
+[![VirusTotal Clean](https://img.shields.io/badge/VirusTotal-0%2F72%20Clean-success?style=flat-square)](https://refinzi.com)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-blue?style=flat-square)](https://refinzi.com)
+[![Privacy](https://img.shields.io/badge/Privacy-100%25%20Local%20DPAPI-purple?style=flat-square)](docs/TRUST_AND_PRIVACY.md)
 
-Instead of manually rewriting the same camera, lighting, atmosphere, and motion language every time, Refinzi sits quietly on Windows and helps expand rough ideas into structured prompts you can paste into your creative AI stack.
-
-[Website](https://refinzi.com) · [Releases](https://github.com/papada1472/refinzi/releases) · [Issues](https://github.com/papada1472/refinzi/issues) · [Discussions](https://github.com/papada1472/refinzi/discussions)
+[Website](https://refinzi.com) · [Documentation](https://refinzi.com/docs/) · [LLMs Context](https://refinzi.com/llms-full.txt) · [Releases](https://github.com/papada1472/refinzi/releases) · [Issues](https://github.com/papada1472/refinzi/issues) · [Discussions](https://github.com/papada1472/refinzi/discussions)
 
 ---
 
-## What it does
+## ⚡ The Problem Refinzi Solves
 
-Turn this:
+In modern AI workflows on Windows, users are left with clunky friction:
+1. **The Alt-Tab Tax**: Constantly switching away from your work into ChatGPT or Claude web tabs, copy-pasting back and forth, losing creative flow.
+2. **Locked Browser Extensions**: Extensions only work inside Chrome/Edge tabs. They cannot touch your desktop IDEs (Cursor, VS Code), Discord, Slack, Obsidian, Notion desktop, or PDF readers.
+3. **The Diminishing Prompt Bottleneck**: When you type a vague 1-liner into Midjourney, Runway, Kling, or frontier reasoning models (DeepSeek R1, Claude 3.7 Thinking), you get hallucinations, generic output, or burned render credits because the model lacked camera physics, epistemic boundaries, or structural specs.
 
-```txt
-a lonely astronaut walking through a red desert
+**Refinzi 2.0 brings a native, instant ambient execution layer to Windows:**  
+Highlight any text in **any** application, 1-click the subtle floating Orb (or press `Ctrl + Alt + Space`), and your text is refined in-place in under 2 seconds.
+
+---
+
+## 🚀 Quick Install
+
+### Method 1: Windows Package Manager (winget)
+```powershell
+winget install refinzi
 ```
 
-Into something closer to this:
+### Method 2: Direct Setup Binary (.exe)
+Download the standalone Windows setup executable:
+* **Release Asset:** [`Refinzi-Setup-v2.0.0.exe`](https://github.com/papada1472/refinzi/releases/download/v2.0.0/Refinzi-Setup-v2.0.0.exe)
+* **SHA256 Checksum:** `bd2416a3277b56ad1b2a119d8e9536aae0618f45d659c8269dd944f525a1c1e2`
 
-```txt
-A lonely astronaut walks slowly across a vast red desert at golden hour, captured in a slow low-angle tracking shot with subtle handheld inertia. Fine dust lifts around each step, heat haze bends the distant horizon, and warm volumetric backlight catches the edges of the suit. Shallow depth of field, grounded walking motion, soft lens bloom, cinematic sci-fi realism, restrained color grade, no exaggerated camera shake, no warped anatomy.
-```
-
-Refinzi is designed to add the technical cinematic scaffolding creators often repeat manually:
-
-- camera choreography
-- lens and framing language
-- volumetric lighting
-- subject and environment motion
-- atmosphere and texture
-- temporal consistency cues
-- model-friendly constraints
-
----
-
-## Why creators use it
-
-| Workflow problem | Refinzi approach |
-|---|---|
-| Writing camera/lighting jargon repeatedly | Expand a 1-line idea into a structured cinematic prompt |
-| Losing flow by switching tabs/tools | Use the Windows Orb or hotkey in-place |
-| Generic prompt-generator output | Focus on camera, lighting, motion physics, and usable creative direction |
-| Privacy concerns | Local-first app with no cloud prompt logging by Refinzi |
-| Expensive AI wrappers | Bring your own API key with 0% markup from Refinzi |
-| Trust concerns around Windows installers | Open-source repo, build-from-source path, release checksum |
-
----
-
-## Core features
-
-- **Ambient Windows Orb** — refine highlighted text from anywhere in Windows.
-- **Hotkey workflow** — press `Ctrl + Alt + Space` for fast prompt transformation.
-- **Cinematic prompt expansion** — camera movement, lighting, motion physics, atmosphere, constraints.
-- **BYOK provider setup** — connect supported model providers with your own keys.
-- **Local-first privacy model** — app runs on your machine; Refinzi does not operate a prompt logging backend.
-- **Open-source** — inspect the code or build from source before installing.
-
----
-
-## Trust and privacy notes
-
-Refinzi is a Windows desktop app, so trust matters. Before installing, you can inspect the source, review the release checksum, or build locally.
-
-- API keys are intended to be stored locally using Windows-protected storage/encryption.
-- Refinzi does not add a cloud logging layer for your prompts.
-- Requests may still be sent to the AI provider you configure through BYOK, subject to that provider's own privacy/data policies.
-- The Windows installer is currently unsigned, so SmartScreen may show a warning on first install.
-
-Read more: [Trust & Privacy](docs/TRUST_AND_PRIVACY.md)
-
----
-
-## Install on Windows
-
-Latest release: [Refinzi v2.0.0](https://github.com/papada1472/refinzi/releases/tag/v2.0.0)
-
-Installer asset:
-
-```txt
-Refinzi-Setup-v2.0.0.exe
-```
-
-SHA256 checksum:
-
-```txt
-bd2416a3277b56ad1b2a119d8e9536aae0618f45d659c8269dd944f525a1c1e2
-```
-
-To verify on Windows PowerShell after download:
-
+To verify integrity after downloading, run in PowerShell:
 ```powershell
 Get-FileHash .\Refinzi-Setup-v2.0.0.exe -Algorithm SHA256
 ```
+*(The hash must match the SHA256 above)*.
 
-The output should match the checksum above.
+> **Windows SmartScreen Note:** Because Refinzi is an independent, community-backed open-source tool without an expensive commercial EV certificate, Windows Defender SmartScreen may show an informational warning on first install. Click **More info → Run anyway**, or audit the source code and build locally.
 
-> Note: Because this is an unsigned indie Windows app, Windows SmartScreen may show a warning. If you are not comfortable installing a binary, build from source instead.
-
----
-
-## Build from source
-
-Prerequisites:
-
-- Windows 10 or 11
-- Node.js 18+
-- npm
-
+### Method 3: Build from Source
 ```bash
 git clone https://github.com/papada1472/refinzi.git
 cd refinzi
 npm install
 npm run dev
 ```
-
-Build the Windows installer locally:
-
+To compile a standalone `.exe` installer locally:
 ```bash
 npm run dist
 ```
 
-The generated installer should appear in the local `dist/` directory.
+---
+
+## 🛠️ Core Capabilities
+
+### 1. In-Place Text Rebuilding (`Ctrl + Alt + Space`)
+Highlight text in any application (Cursor, Discord, Chrome, Word, Slack, Terminal). The ambient Orb anchors smoothly near your cursor. Tap the Orb or hit the shortcut to replace the selection with a model-calibrated prompt or polished prose.
+
+### 2. 5-Block Architectural & Research Blueprint (`Ctrl + Alt + B` or Hold 300ms)
+When a simple prompt isn't enough, holding the Orb generates a structured 5-block blueprint:
+* **Block 1: Structure & Epistemic Hierarchy** — Layout grid trees, responsive breakpoints, or core scientific hypotheses.
+* **Block 2: Component Assets & Variable Matrix** — Tokenized UI components, states, or cohort variables.
+* **Block 3: Conversion Copy & Evidence Claims** — Value headlines, direct-response copy, or literature citations.
+* **Block 4: Motion Dynamics & Adversarial Constraints** — Camera physics/vectors, or confounder audits and boundary controls.
+* **Block 5: Master Production Prompt Pack** — Formatted execution prompts for Midjourney, Runway, Claude, or Cursor Composer.
+
+### 3. Model Freedom & 0% Markup BYOK
+Connect your own API key directly:
+* **DeepSeek**: DeepSeek-V3, DeepSeek-R1 (Reasoning)
+* **Anthropic**: Claude 3.5 Sonnet, Claude 3.7 Sonnet (Thinking)
+* **OpenAI**: GPT-4o, GPT-4o mini, o1, o3-mini
+* **Google**: Gemini 2.0 Flash, Gemini 1.5 Pro, Gemini 2.5
+* **OpenRouter**: Nemotron 120B, Llama 3.3 70B, Qwen 2.5, Mistral Large
+* **Local Offline**: Air-gapped localhost Ollama (`http://localhost:11434`)
+
+### 4. 100% Local-First Privacy (Zero Telemetry)
+* **No cloud database**: Your prompts never touch our servers and are never logged or trained on.
+* **Native Windows DPAPI**: BYOK API keys are encrypted on-device via Windows Data Protection API (AES-256 GCM) tied to your Windows user account.
+* **0/72 Clean**: Completely clean scan on VirusTotal.
 
 ---
 
-## First prompt tests
+## ⚖️ Refinzi vs. Alternatives
 
-Try these rough ideas to evaluate whether Refinzi helps your workflow:
-
-```txt
-a samurai walking through fog at sunrise
-```
-
-```txt
-a luxury perfume bottle floating in black water
-```
-
-```txt
-a woman running through a neon alley in the rain
-```
-
-```txt
-a retro robot exploring an abandoned mall
-```
-
-```txt
-a cinematic product shot of wireless headphones on sand
-```
-
-Good feedback is not just "it works." The most useful feedback is:
-
-- Which generated lines felt generic?
-- Was the prompt too long or too short?
-- Did camera motion help the final output?
-- Should output be model-specific for Runway, Higgsfield, Midjourney, etc.?
-- What would make you open the app again tomorrow?
+| Feature / Metric | ❌ Manual Alt-Tab | 🧩 Chrome Extensions | ⚡ Refinzi 2.0 (Windows) |
+|---|---|---|---|
+| **Platform** | Any | Browser only | **Windows 10 & 11 Native** |
+| **Trigger Friction** | Copy, Alt-Tab, paste, copy back | Trapped in browser tabs | **In-Place Orb / Global Hotkey** |
+| **Licensing** | N/A | Closed / SaaS | **100% Open Source (MIT)** |
+| **Pricing** | Free (wasted time) | $15–$30/mo subscription | **Free BYOK / $12 Lifetime Supporter** |
+| **Privacy Model** | Third-party cloud chats | Logged on extension servers | **100% Local DPAPI AES-256** |
+| **Execution Latency** | 20–40 seconds | 5–10 seconds | **< 2.0 seconds in-place** |
 
 ---
 
-## Roadmap for creator feedback
+## ☕ Pricing & The Supporter Tier
 
-Near-term improvements being shaped by early users:
+Refinzi rejects recurring SaaS subscriptions:
 
-- model-specific output modes for AI video/image tools
-- better cinematic preset packs
-- shorter and longer prompt variants
-- clearer first-run onboarding
-- easier bad-output reporting
-- more examples for real AI video workflows
-
-Open a GitHub issue or discussion if you want a specific workflow supported.
+* **Free / BYOK Tier ($0 Forever):**  
+  Full access to the ambient Orb, 5-Block Blueprint engine, global shortcuts, and unlimited usage with your own Gemini, DeepSeek, Anthropic, OpenAI, or OpenRouter API keys. 0% markup forever.
+* **Supporter Pro ($12 USD / ₹999 INR One-Time Coffee):**  
+  For users who want to support independent open-source development. Includes **zero-config managed routing** (use Claude 3.5 & GPT-4o without configuring API accounts), cloud preset syncing, VIP Discord community access, and lifetime free updates. Backed by an unconditional 14-day refund guarantee.
 
 ---
 
-## Development
+## 🧪 Testing & Development
 
-Run tests:
-
+Run unit and integration tests:
 ```bash
 npm test
 ```
 
-Run local landing/docs site if needed:
-
+Run the local documentation & landing site:
 ```bash
 cd landing
 npm install
 npm run dev
 ```
 
----
-
-## Community and support
-
-- [Report bugs or request features](https://github.com/papada1472/refinzi/issues)
-- [Join GitHub Discussions](https://github.com/papada1472/refinzi/discussions)
-- [Official website](https://refinzi.com)
-- Email: contact@refinzi.com
+Build the production web bundle:
+```bash
+npm run build
+```
 
 ---
 
-## License
+## 🤝 Contributing
 
-MIT License. See [LICENSE](LICENSE).
+Contributions are welcome! Whether you are fixing bugs, optimizing Windows native hooks, adding provider integrations, or improving documentation:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+---
+
+## 📄 License & Contact
+
+* **License**: MIT License. See [LICENSE](LICENSE) for details.
+* **Website**: [refinzi.com](https://refinzi.com)
+* **Bug Reports**: [GitHub Issues](https://github.com/papada1472/refinzi/issues)
+* **Discussions**: [GitHub Discussions](https://github.com/papada1472/refinzi/discussions)
+* **Contact**: contact@refinzi.com

@@ -57,7 +57,7 @@ export function FloatingContactWidget() {
   return (
     <div
       ref={widgetRef}
-      className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-40 flex flex-col items-end"
+      className="fixed bottom-28 right-4 sm:bottom-28 sm:right-6 z-40 flex flex-col items-end"
     >
       {/* Speed Dial Menu */}
       {isOpen && (
