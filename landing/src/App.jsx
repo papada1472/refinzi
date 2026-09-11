@@ -49,7 +49,6 @@ import { TermsPage } from "./pages/TermsPage.jsx";
 import { DocsPage } from "./pages/DocsPage.jsx";
 import { FounderSection } from "./components/FounderSection.jsx";
 import { DirectFeedbackSection } from "./components/DirectFeedbackSection.jsx";
-import { FloatingContactWidget } from "./components/FloatingContactWidget.jsx";
 import { RefinziComparison } from "./components/RefinziComparison.jsx";
 import { ThemeToggle } from "./components/ThemeToggle.jsx";
 import { CookieBanner } from "./components/CookieBanner.jsx";
@@ -816,7 +815,6 @@ function OrbMockup() {
 
 function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, osType = "windows", onOpenNonWindows }) {
   const [wingetCopied, setWingetCopied] = useState(false);
-  const [activePersona, setActivePersona] = useState(PERSONAS[0]);
 
   const copyWinget = () => {
     navigator.clipboard.writeText("winget install refinzi");
@@ -825,104 +823,75 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
   };
 
   return (
-    <section className="relative pt-8 pb-12 sm:pt-12 sm:pb-16" id="hero">
+    <section className="relative pt-6 pb-10 sm:pt-10 sm:pb-14" id="hero">
       <HeroGlows />
 
-      <div className="relative mx-auto grid w-full max-w-[1160px] grid-cols-1 items-center gap-10 px-4 sm:px-6 lg:grid-cols-12">
-        {/* Left column (7 cols on desktop for strong copy presence) */}
+      <div className="relative mx-auto grid w-full max-w-[1160px] grid-cols-1 items-start gap-8 px-4 sm:px-6 lg:grid-cols-12">
+        {/* Left column (7 cols on desktop, tightly composed and balanced) */}
         <div className="lg:col-span-7 flex flex-col items-start">
           {/* Top Category Badge */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-300 border border-blue-500/25 shadow-sm">
             <span className="h-2 w-2 rounded-full bg-blue-400 animate-ping" />
-            <span>⚡ Simple Words to Pinpoint Prompts • Native for Windows 10 &amp; 11</span>
+            <span>⚡ Simple Words to Pinpoint Prompts • Windows 10 &amp; 11 Native</span>
           </div>
 
           {/* H1 Headline — Pinpoint prompt from simple words transformation */}
-          <h1 className="mt-4 text-3xl sm:text-4xl lg:text-[46px] font-black leading-[1.12] tracking-tight text-white">
+          <h1 className="mt-3 text-3xl sm:text-4xl lg:text-[44px] font-black leading-[1.12] tracking-tight text-white">
             <span className="block text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.9)]">
               Turn Simple Words Into Pinpoint, Master&#8209;Grade Prompts.
             </span>
-            <span className="block mt-1.5 bg-gradient-to-r from-blue-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent font-black drop-shadow-sm">
+            <span className="block mt-1 bg-gradient-to-r from-blue-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent font-black">
               In 2 Seconds. Anywhere in Windows.
             </span>
           </h1>
 
           {/* Subheadline — Explains the effortless simple words -> pinpoint prompt mechanics */}
-          <p className="mt-4 text-base sm:text-lg text-zinc-200 font-normal leading-relaxed max-w-xl">
-            Type just a few rough, simple words in <strong className="text-white font-semibold">any Windows app</strong>, tap the Orb or press <kbd className="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-800 text-blue-300 border border-blue-500/30">Ctrl+Alt+Space</kbd>, and instantly get a pinpoint, client-grade prompt architecture calibrated for Claude, ChatGPT, Cursor &amp; Midjourney.
+          <p className="mt-3 text-sm sm:text-base text-zinc-300 font-normal leading-relaxed max-w-xl">
+            Type rough thoughts in <strong className="text-white font-semibold">any Windows app</strong>, tap the Orb or press <kbd className="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-800 text-blue-300 border border-blue-500/30">Ctrl+Alt+Space</kbd>, and instantly get a pinpoint, client-grade prompt architecture calibrated for Claude, ChatGPT, Cursor &amp; Midjourney.
           </p>
 
-          {/* 3 Core Objection-Crushing Bullets (Hormozi Framework) */}
-          <div className="mt-5 space-y-2.5 w-full max-w-xl bg-zinc-900/50 border border-white/[0.08] p-3.5 rounded-xl backdrop-blur-sm">
-            <div className="flex items-start gap-2.5 text-xs sm:text-[13px] text-zinc-200">
-              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
+          {/* 3 Core Objection-Crushing Bullets (Clean & Compact) */}
+          <div className="mt-4 space-y-2 text-xs sm:text-[13px] text-zinc-300">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[11px]">
                 ✓
               </span>
               <span>
-                <strong className="text-white font-semibold">From 3 Simple Words to Pinpoint Precision:</strong> Turns messy phrases into structured, 5-block production architectures with zero prompt wrestling.
+                <strong className="text-white font-semibold">Zero Prompting Skill Needed:</strong> Turns 3 messy words into complete 5-block architectures.
               </span>
             </div>
-            <div className="flex items-start gap-2.5 text-xs sm:text-[13px] text-zinc-200">
-              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[11px]">
                 ✓
               </span>
               <span>
-                <strong className="text-white font-semibold">100% Local DPAPI Privacy:</strong> Zero cloud logging, zero prompt telemetry. Your data and API keys never leave your PC.
+                <strong className="text-white font-semibold">100% Local DPAPI Privacy:</strong> Zero cloud logging, zero telemetry. Your data stays on your PC.
               </span>
             </div>
-            <div className="flex items-start gap-2.5 text-xs sm:text-[13px] text-zinc-200">
-              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[11px]">
                 ✓
               </span>
               <span>
-                <strong className="text-white font-semibold">Free Forever with BYOK:</strong> Use free Gemini/DeepSeek keys forever without mandatory monthly fees or card required.
+                <strong className="text-white font-semibold">Free Forever with BYOK:</strong> Unlimited rebuilds with your own free Gemini or DeepSeek API key.
               </span>
-            </div>
-          </div>
-
-          {/* Dynamic 1-Click Persona Customizer */}
-          <div className="w-full max-w-xl">
-            <DynamicPersonaBar
-              activePersonaId={activePersona.id}
-              onSelectPersona={(p) => setActivePersona(p)}
-            />
-
-            {/* Dynamic Real-Time Transformation Preview */}
-            <div className="mt-2 rounded-xl bg-zinc-950/70 border border-white/[0.08] p-2.5 text-xs backdrop-blur-sm transition-all duration-200">
-              <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.05] mb-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
-                  <Sparkles className="h-3 w-3 text-blue-300" />
-                  Live Transformation · {activePersona.label}
-                </span>
-                <span className="text-[10px] text-emerald-400 font-mono">⚡ 2-Sec Rebuild</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono">
-                <div className="rounded-lg bg-zinc-900/60 p-2 border border-white/[0.04]">
-                  <span className="text-[9px] uppercase tracking-wider text-zinc-300 font-bold block mb-0.5">Simple Input Highlight</span>
-                  <p className="text-zinc-300 truncate">"{activePersona.raw}"</p>
-                </div>
-                <div className="rounded-lg bg-blue-950/40 p-2 border border-blue-500/30">
-                  <span className="text-[9px] uppercase tracking-wider text-blue-300 font-bold block mb-0.5">Pinpoint Rebuilt Output</span>
-                  <p className="text-blue-100 truncate">{activePersona.rebuilt.split('\n')[0]}</p>
-                </div>
-              </div>
             </div>
           </div>
 
           {/* Action CTAs — Clear Single Primary Focus */}
-          <div className="mt-6 flex flex-col items-start gap-3 w-full">
-            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-              {/* Dominant Primary Action (70% visual focus) */}
+          <div className="mt-5 flex flex-col items-start gap-2.5 w-full">
+            <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+              {/* Dominant Primary Action */}
               <Button
                 size="lg"
                 variant="primary"
                 onClick={onDownload}
-                className="group relative flex items-center justify-center font-bold text-base sm:text-lg px-8 py-4 shadow-2xl shadow-blue-600/30 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl border border-blue-400/40 cursor-pointer transition-all transform hover:-translate-y-0.5 w-full sm:w-auto"
+                className="group relative flex items-center justify-center font-bold text-sm sm:text-base px-7 py-3.5 shadow-xl shadow-blue-600/30 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl border border-blue-400/40 cursor-pointer transition-all transform hover:-translate-y-0.5 w-full sm:w-auto"
               >
-                <Download className="h-5 w-5 mr-2.5 group-hover:translate-y-0.5 transition-transform" />
+                <Download className="h-4 w-4 mr-2 group-hover:translate-y-0.5 transition-transform" />
                 <div className="flex flex-col items-start text-left">
                   <span>Download Free for Windows</span>
-                  <span className="text-[11px] font-normal text-blue-100/90 -mt-0.5">v2.0.0 • .exe Installer • 0/72 Clean</span>
+                  <span className="text-[10px] font-normal text-blue-100/90 -mt-0.5">v2.0.0 • .exe Installer • 0/72 Clean</span>
                 </div>
               </Button>
 
@@ -959,12 +928,27 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
               </div>
             </div>
 
-            {/* SmartScreen reassurance notice */}
-            <div className="w-full max-w-xl rounded-xl bg-emerald-950/20 border border-emerald-500/20 px-3.5 py-2 text-xs text-zinc-300">
-              <p className="text-[11px] text-zinc-400 leading-snug">
-                🛡️ <strong className="text-emerald-300">100% Clean Software:</strong> Refinzi runs locally. If Windows SmartScreen shows an alert on download, simply click <strong className="text-zinc-200">'More Info' → 'Run Anyway'</strong>.
-              </p>
+            {/* SmartScreen & Trust Line */}
+            <div className="flex flex-wrap items-center gap-3 text-[11px] text-zinc-400 pt-1">
+              <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                <ShieldCheck className="h-3.5 w-3.5" /> VirusTotal Clean (0/72)
+              </span>
+              <span className="text-zinc-600 hidden sm:inline">•</span>
+              <span>Windows 10 &amp; 11 (64-bit)</span>
+              <span className="text-zinc-600 hidden sm:inline">•</span>
+              <a
+                href="https://github.com/papada1472/refinzi"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white transition-colors underline decoration-zinc-700"
+              >
+                ⭐ Built in Public on GitHub
+              </a>
             </div>
+
+            <p className="text-[11px] text-zinc-400 leading-snug max-w-xl">
+              🛡️ Refinzi runs 100% locally. If Windows SmartScreen prompts on first install, click <strong className="text-zinc-200">'More Info' → 'Run Anyway'</strong>.
+            </p>
 
             {/* Mobile / Non-Windows Adaptive Notice */}
             {osType !== "windows" && (
@@ -980,31 +964,9 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
               </div>
             )}
           </div>
-
-          {/* Authentic Trust & Security Badges directly supporting CTA */}
-          <div className="mt-4 flex flex-wrap items-center gap-2.5 text-xs">
-            <a
-              href="https://github.com/papada1472/refinzi/releases/tag/v2.0.0"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/40 border border-emerald-500/30 px-3 py-1 text-[11px] font-semibold text-emerald-400 hover:bg-emerald-900/40 transition-colors"
-            >
-              <ShieldCheck className="h-3.5 w-3.5" />
-              <span>VirusTotal Clean (0/72 Detections)</span>
-            </a>
-            <a
-              href="https://github.com/papada1472/refinzi"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="GitHub Open Source"
-              className="inline-flex items-center gap-1.5 rounded-full bg-zinc-900 border border-white/10 px-3 py-1 text-[11px] font-mono text-zinc-300 hover:text-white transition-colors"
-            >
-              <span>⭐ Built in Public on GitHub</span>
-            </a>
-          </div>
         </div>
 
-        {/* Right column with Live Video Demo & Visual Proof (5 cols on desktop) */}
+        {/* Right column with Live Video Demo & Visual Proof (5 cols on desktop, perfectly top-aligned) */}
         <div className="lg:col-span-5 w-full">
           <HeroVideoPlayer />
         </div>
@@ -2357,13 +2319,11 @@ export default function App() {
         <SocialProofToast onOpenOffer={() => handleOpenCheckout("social_proof_toast")} />
       )}
 
-      {/* Floating Speed Dial Contact Widget */}
-      <FloatingContactWidget />
-
-      {/* 24/7 AI Conversion Concierge & Context-Aware Proactive Nudge Engine */}
+      {/* 24/7 AI Conversion Concierge & Context-Aware Proactive Nudge Engine (Unified Ambient Orb) */}
       <AiConversionConcierge
         osType={osType}
         currency={currency.symbol || "$"}
+        hasStickyBar={showStickyBar}
         onDownload={() => handleTriggerDownload("ai_concierge")}
         onOpenOffer={() => handleOpenCheckout("ai_concierge")}
       />

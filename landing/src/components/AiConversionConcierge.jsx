@@ -34,7 +34,7 @@ const OBJECTION_ANSWERS = {
   },
 };
 
-export function AiConversionConcierge({ onDownload, onOpenOffer, osType = "windows", currency = "$" }) {
+export function AiConversionConcierge({ onDownload, onOpenOffer, osType = "windows", currency = "$", hasStickyBar = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [activeNudge, setActiveNudge] = useState(null);
@@ -50,10 +50,11 @@ export function AiConversionConcierge({ onDownload, onOpenOffer, osType = "windo
       id: "welcome",
       text: "👋 Hey! I'm your 24/7 Refinzi Concierge. Got a question about privacy, pricing, or want to see how Refinzi turns your rough prompt into a master-grade output?",
       chips: [
-        { label: "🛡️ Is it 100% private?", key: "privacy" },
-        { label: "⚡ How does Free BYOK work?", key: "byok" },
-        { label: "💻 SmartScreen help", key: "smartscreen" },
-        { label: "🎯 Test my rough prompt", key: "test_prompt" },
+        { label: "🛡️ 100% Private?", key: "privacy" },
+        { label: "⚡ Free BYOK?", key: "byok" },
+        { label: "💻 SmartScreen Help", key: "smartscreen" },
+        { label: "🎯 Test My Prompt", key: "test_prompt" },
+        { label: "📞 Talk to Founder", key: "contact_founder" },
       ],
     },
   ]);
@@ -171,6 +172,24 @@ export function AiConversionConcierge({ onDownload, onOpenOffer, osType = "windo
           sender: "agent",
           id: `agent-${Date.now()}`,
           text: "Absolutely! Type a few rough words into the box below (e.g., 'cyberpunk sports car' or 'SaaS pricing table') and watch me synthesize a pinpoint master prompt.",
+        },
+      ]);
+      return;
+    }
+
+    if (chipKey === "contact_founder") {
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "user",
+          id: `user-${Date.now()}`,
+          text: "Can I connect with the founder directly?",
+        },
+        {
+          sender: "agent",
+          id: `agent-${Date.now()}`,
+          text: "Rahul (the creator of Refinzi) is available directly. Feel free to book a 30-min call, chat on WhatsApp, or send an email:",
+          contactLinks: true,
         },
       ]);
       return;
@@ -295,7 +314,7 @@ Task: Transform rough objective: "${query}"
   };
 
   return (
-    <div className="fixed bottom-6 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end">
+    <div className={`fixed ${hasStickyBar ? "bottom-20" : "bottom-6"} right-4 sm:right-6 z-50 flex flex-col items-end transition-all duration-300`}>
       {/* Contextual Proactive Nudge Bubble */}
       {activeNudge && !isOpen && (
         <div className="mb-3 max-w-xs sm:max-w-sm rounded-2xl border border-blue-500/30 bg-zinc-950/95 p-3.5 shadow-2xl shadow-blue-900/30 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -419,6 +438,34 @@ Task: Transform rough objective: "${query}"
                         <Sparkles className="h-3 w-3 text-amber-300" />
                         <span>Supporter Pro</span>
                       </button>
+                    </div>
+                  )}
+
+                  {/* Founder Direct Contact Links */}
+                  {msg.contactLinks && (
+                    <div className="mt-2.5 pt-2 border-t border-white/[0.08] flex flex-wrap items-center gap-1.5">
+                      <a
+                        href="https://cal.com/rahul-mangla-r36uxv/30min"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] transition-colors shadow-sm"
+                      >
+                        📅 Book 30-Min Call
+                      </a>
+                      <a
+                        href="https://wa.me/917988358485"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white font-semibold text-[11px] transition-colors shadow-sm"
+                      >
+                        💬 WhatsApp Rahul
+                      </a>
+                      <a
+                        href="mailto:contact@refinzi.com"
+                        className="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[11px] border border-white/10 transition-colors"
+                      >
+                        ✉️ Email
+                      </a>
                     </div>
                   )}
 
