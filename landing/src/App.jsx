@@ -53,6 +53,8 @@ import { FloatingContactWidget } from "./components/FloatingContactWidget.jsx";
 import { RefinziComparison } from "./components/RefinziComparison.jsx";
 import { ThemeToggle } from "./components/ThemeToggle.jsx";
 import { CookieBanner } from "./components/CookieBanner.jsx";
+import { DynamicPersonaBar, PERSONAS } from "./components/DynamicPersonaBar.jsx";
+import { AiConversionConcierge } from "./components/AiConversionConcierge.jsx";
 import { initAnalytics, trackEvent, trackFileDownload } from "./utils/analytics.js";
 import { initPerformanceMonitoring } from "./utils/performance.js";
 import {
@@ -814,6 +816,7 @@ function OrbMockup() {
 
 function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, osType = "windows", onOpenNonWindows }) {
   const [wingetCopied, setWingetCopied] = useState(false);
+  const [activePersona, setActivePersona] = useState(PERSONAS[0]);
 
   const copyWinget = () => {
     navigator.clipboard.writeText("winget install refinzi");
@@ -874,6 +877,35 @@ function Hero({ onOpenOffer, onDownload, currency = SUPPORTED_CURRENCIES.USD, os
               <span>
                 <strong className="text-white font-semibold">Free Forever with BYOK:</strong> Use free Gemini/DeepSeek keys forever without mandatory monthly fees or card required.
               </span>
+            </div>
+          </div>
+
+          {/* Dynamic 1-Click Persona Customizer */}
+          <div className="w-full max-w-xl">
+            <DynamicPersonaBar
+              activePersonaId={activePersona.id}
+              onSelectPersona={(p) => setActivePersona(p)}
+            />
+
+            {/* Dynamic Real-Time Transformation Preview */}
+            <div className="mt-2 rounded-xl bg-zinc-950/70 border border-white/[0.08] p-2.5 text-xs backdrop-blur-sm transition-all duration-200">
+              <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.05] mb-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
+                  <Sparkles className="h-3 w-3 text-blue-300" />
+                  Live Transformation · {activePersona.label}
+                </span>
+                <span className="text-[10px] text-emerald-400 font-mono">⚡ 2-Sec Rebuild</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono">
+                <div className="rounded-lg bg-zinc-900/60 p-2 border border-white/[0.04]">
+                  <span className="text-[9px] uppercase tracking-wider text-zinc-300 font-bold block mb-0.5">Simple Input Highlight</span>
+                  <p className="text-zinc-300 truncate">"{activePersona.raw}"</p>
+                </div>
+                <div className="rounded-lg bg-blue-950/40 p-2 border border-blue-500/30">
+                  <span className="text-[9px] uppercase tracking-wider text-blue-300 font-bold block mb-0.5">Pinpoint Rebuilt Output</span>
+                  <p className="text-blue-100 truncate">{activePersona.rebuilt.split('\n')[0]}</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -2327,6 +2359,14 @@ export default function App() {
 
       {/* Floating Speed Dial Contact Widget */}
       <FloatingContactWidget />
+
+      {/* 24/7 AI Conversion Concierge & Context-Aware Proactive Nudge Engine */}
+      <AiConversionConcierge
+        osType={osType}
+        currency={currency.symbol || "$"}
+        onDownload={() => handleTriggerDownload("ai_concierge")}
+        onOpenOffer={() => handleOpenCheckout("ai_concierge")}
+      />
 
       {/* Modals & Toasts */}
       <NonWindowsModal
