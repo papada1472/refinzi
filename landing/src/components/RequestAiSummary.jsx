@@ -43,8 +43,8 @@ export function RequestAiSummary({ className = "" }) {
 
   return (
     <div className={`flex flex-col items-start gap-2 ${className}`}>
-      <span className="text-[11px] font-medium text-zinc-400">Request AI summary</span>
-      <div className="flex items-center gap-2">
+      <span className="text-[11px] font-semibold text-zinc-300">Ask AI to summarize Refinzi:</span>
+      <div className="flex flex-wrap items-center gap-2">
         {AI_LINKS.map(({ name, url, Logo, hoverClass }) => (
           <a
             key={name}
@@ -52,11 +52,12 @@ export function RequestAiSummary({ className = "" }) {
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => handleClick(name)}
-            title={`Ask ${name} to explain Refinzi (opens in a new tab)`}
-            aria-label={`Ask ${name} to explain Refinzi (opens in a new tab)`}
-            className={`flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-zinc-900/90 text-zinc-400 transition-all hover:bg-zinc-800 ${hoverClass}`}
+            title={`Ask ${name} to evaluate and summarize Refinzi (opens prompt in new tab)`}
+            aria-label={`Ask ${name} to evaluate and summarize Refinzi`}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-white/[0.1] bg-zinc-900/90 text-zinc-300 transition-all hover:bg-zinc-800 text-xs font-medium shadow-sm hover:border-white/20 ${hoverClass}`}
           >
-            <Logo className="h-4 w-4" />
+            <Logo className="h-3.5 w-3.5" />
+            <span>{name}</span>
           </a>
         ))}
       </div>

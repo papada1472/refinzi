@@ -93,8 +93,9 @@ export function FounderSection() {
                     <Calendar className="h-3.5 w-3.5" />
                     <span>Book 15-Min Onboarding Call</span>
                   </button>
-                  <span className="text-[11px] text-zinc-500">
-                    100% Personal 14-day refund guarantee
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 shadow-sm">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                    <span>100% Personal 14-Day Refund Guarantee</span>
                   </span>
                 </div>
               </div>

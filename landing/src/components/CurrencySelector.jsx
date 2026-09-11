@@ -4,17 +4,17 @@ import { SUPPORTED_CURRENCIES } from "../utils/currency.js";
 
 export function CurrencyBadge({ currentCurrency, onSelectCurrency, detectedCountry }) {
   return (
-    <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-900/80 border border-white/[0.08] px-2.5 py-1 text-xs text-zinc-300 shadow-sm backdrop-blur-md">
+    <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-900 border-2 border-blue-500/40 px-3 py-1 text-xs text-white shadow-md shadow-blue-500/10 backdrop-blur-md">
       <span className="text-xs select-none">{currentCurrency.flag}</span>
-      <span className="text-[11px] font-medium text-zinc-300">
-        Prices in <strong className="text-white font-semibold">{currentCurrency.code}</strong> ({currentCurrency.symbol})
+      <span className="text-[11px] font-semibold text-zinc-100">
+        Prices in <strong className="text-blue-400 font-bold underline decoration-blue-400/50">{currentCurrency.code}</strong> ({currentCurrency.symbol})
       </span>
       {detectedCountry && detectedCountry !== "United States" && (
-        <span className="text-[10px] text-blue-400 bg-blue-500/10 px-1.5 py-0.2 rounded font-mono hidden md:inline">
+        <span className="text-[10px] text-blue-300 bg-blue-500/20 px-2 py-0.5 rounded font-mono font-bold hidden md:inline border border-blue-400/30">
           {detectedCountry}
         </span>
       )}
-      <div className="relative ml-0.5">
+      <div className="relative ml-1">
         <select
           value={currentCurrency.code}
           onChange={(e) => {
@@ -23,16 +23,16 @@ export function CurrencyBadge({ currentCurrency, onSelectCurrency, detectedCount
               onSelectCurrency(selected);
             }
           }}
-          className="cursor-pointer appearance-none bg-transparent pr-4 pl-1 text-[11px] font-semibold text-blue-400 hover:text-blue-300 focus:outline-none"
+          className="cursor-pointer appearance-none bg-blue-600/20 border border-blue-400/40 rounded-md py-0.5 pr-5 pl-2 text-[11px] font-bold text-blue-300 hover:text-white hover:bg-blue-600/40 focus:outline-none focus:ring-1 focus:ring-blue-400"
           aria-label="Select pricing currency"
         >
           {Object.values(SUPPORTED_CURRENCIES).map((c) => (
-            <option key={c.code} value={c.code} className="bg-zinc-900 text-zinc-200">
+            <option key={c.code} value={c.code} className="bg-zinc-950 text-zinc-100 font-semibold">
               {c.flag} {c.code} ({c.symbol})
             </option>
           ))}
         </select>
-        <ChevronDown className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 h-3 w-3 text-zinc-500" />
+        <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-blue-400" />
       </div>
     </div>
   );
