@@ -13,7 +13,14 @@ test-data/
 test-*.mjs
 test-*.js
 /scripts/
+!/scripts/
+/scripts/*
+!/scripts/build-extension.js
+!/scripts/lint-extension.js
+!/scripts/verify-release.js
+!/scripts/test-extension-prompts.ts
 !landing/scripts/
+!landing/public/downloads/*.zip
 *audit*.md
 *plan*.md
 *SUMMARY*.md

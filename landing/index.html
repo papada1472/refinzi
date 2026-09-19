@@ -7,24 +7,21 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Refinzi 2.0" />
+    <meta name="apple-mobile-web-app-title" content="Refinzi 2.1.0" />
     <meta name="format-detection" content="telephone=no" />
-    <title>Refinzi 2.0 — Ambient AI Prompt Builder & Research Specs for Windows</title>
+    <title>Refinzi 2.1.0 — Browser-Native AI Prompt Layer | Free WebExtension</title>
     <meta
       name="description"
-      content="Turn rough thoughts into calibrated cinematic video prompts & detailed research specifications in 2 seconds. 1-Click floating Windows Orb for Midjourney, Runway, Claude 3.7, DeepSeek R1 & Cursor."
+      content="Write naturally. Refinzi handles the prompt engineering. The browser-native prompt layer for ChatGPT, Claude, Gemini, and Perplexity. Better prompts in one click, expert prompts when it matters."
     />
     <meta
       name="keywords"
-      content="prompt engineering tool, Windows 11 AI companion, cinematic video prompts, Midjourney v6 prompts, Runway Gen-3 prompt builder, research prompt engineering, DeepSeek R1 prompts, Claude 3.7 reasoning prompts, academic literature review prompts, 5-block prompt blueprint, BYOK AI desktop, ambient AI Orb, prompt synthesis"
+      content="Refinzi, AI prompt enhancer, ChatGPT extension, Claude prompt, Gemini prompt, Perplexity, prompt engineering, browser extension"
     />
-    <meta name="author" content="Rahul Mangla" />
+    <meta name="author" content="Refinzi" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
-    
-    <!-- Google Search Console Verification -->
-    <meta name="google-site-verification" content="GSC_VERIFICATION_TOKEN" />
     
     <!-- Favicon & App Icons -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
@@ -35,25 +32,25 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://refinzi.com" />
-    <meta property="og:site_name" content="Refinzi 2.0" />
+    <meta property="og:site_name" content="Refinzi" />
     <meta property="og:locale" content="en_US" />
-    <meta property="og:title" content="Refinzi 2.0 — Ambient AI Prompt Builder & Research Specs for Windows" />
-    <meta property="og:description" content="Turn rough thoughts into calibrated cinematic video prompts & detailed research specifications in 2 seconds. 1-Click floating Windows Orb for Midjourney, Runway, Claude 3.7, DeepSeek R1 & Cursor." />
+    <meta property="og:title" content="Refinzi 2.1.0 — Browser-Native AI Prompt Layer" />
+    <meta property="og:description" content="Write naturally. Refinzi handles the prompt engineering. The browser-native prompt layer for ChatGPT, Claude, Gemini, and Perplexity." />
     <meta property="og:image" content="https://refinzi.com/branding/Refinzi-logo.png" />
     <meta property="og:image:secure_url" content="https://refinzi.com/branding/Refinzi-logo.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Refinzi 2.0 Windows Ambient Prompt Engine" />
+    <meta property="og:image:alt" content="Refinzi browser extension improving an AI prompt in-place" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@refinzi" />
     <meta name="twitter:creator" content="@refinzi" />
-    <meta name="twitter:title" content="Refinzi 2.0 — Ambient AI Prompt Builder & Research Specs for Windows" />
-    <meta name="twitter:description" content="Turn rough thoughts into calibrated cinematic video prompts & detailed research specifications in 2 seconds. 1-Click floating Windows Orb for Midjourney, Runway, Claude 3.7, DeepSeek R1 & Cursor." />
+    <meta name="twitter:title" content="Refinzi 2.1.0 — Browser-Native AI Prompt Layer" />
+    <meta name="twitter:description" content="Turn rough thoughts into expert AI instructions in one click. Works natively in ChatGPT, Claude, Gemini, and Perplexity." />
     <meta name="twitter:image" content="https://refinzi.com/branding/Refinzi-logo.png" />
-    <meta name="twitter:image:alt" content="Refinzi 2.0 Windows Ambient Prompt Engine" />
+    <meta name="twitter:image:alt" content="Refinzi browser extension improving an AI prompt in-place" />
 
     <!-- Canonical & Alternates -->
     <link rel="canonical" href="https://refinzi.com/" />
@@ -65,7 +62,7 @@
     <meta name="ai-agent" content="enabled" />
     <meta
       name="ai-content-declaration"
-      content="Refinzi is a native Windows desktop companion that rebuilds vague ideas into cinematic prompts for creators and detailed research specifications for analysts in 2 seconds via 1-Click on the floating Orb or Ctrl+Alt+Space for Midjourney, Runway, Claude 3.7, DeepSeek R1, ChatGPT, and Cursor."
+      content="Refinzi is a free browser extension (Manifest V3) that rewrites rough prompts in-place inside ChatGPT, Claude, Gemini, and Perplexity. Click the in-composer Orb for a Better prompt, or press and hold it for an Expert prompt. Prompts are processed on-device by default, with optional Bring-Your-Own-Key support."
     />
     
     <!-- Critical Asset Preloads & DNS Prefetch for Google Core Web Vitals -->
@@ -104,173 +101,53 @@
             "name": "Refinzi",
             "alternateName": [
               "Refinzi AI",
-              "Refinzi 2.0",
-              "Refinzi Prompt Builder"
+              "Refinzi 2.1.0",
+              "Refinzi Prompt Layer"
             ],
-            "description": "Ambient AI Cinematic Prompt Builder & Detailed Research Spec Engine for Windows",
+            "description": "Browser-native AI prompt layer that rewrites rough prompts in-place inside ChatGPT, Claude, Gemini, and Perplexity.",
             "inLanguage": "en-US",
-            "potentialAction": {
-              "@type": "SearchAction",
-              "target": "https://refinzi.com/?q={search_term_string}",
-              "query-input": "required name=search_term_string"
-            },
             "publisher": {
-              "@type": "Organization",
-              "name": "Refinzi",
-              "url": "https://refinzi.com/"
+              "@id": "https://refinzi.com/#organization"
             }
           },
           {
             "@type": "Organization",
             "@id": "https://refinzi.com/#organization",
             "name": "Refinzi",
-            "legalName": "Refinzi",
             "url": "https://refinzi.com/",
-            "disambiguatingDescription": "Refinzi is an ambient Windows desktop artificial intelligence software application and prompt builder, completely separate and distinct from Infinzi accounting services.",
-            "logo": {
-              "@type": "ImageObject",
-              "url": "https://refinzi.com/branding/logo-mark.png",
-              "width": "512",
-              "height": "512"
-            },
-            "brand": {
-              "@type": "Brand",
-              "name": "Refinzi",
-              "alternateName": "Refinzi 2.0",
-              "url": "https://refinzi.com/"
-            },
-            "founder": {
-              "@type": "Person",
-              "name": "Rahul Mangla",
-              "jobTitle": "Creator & Full-Stack Developer",
-              "url": "https://github.com/papada1472"
-            },
+            "logo": "https://refinzi.com/branding/Refinzi-logo.png",
             "sameAs": [
-              "https://github.com/papada1472/refinzi",
-              "https://x.com/refinzi"
-            ],
-            "knowsAbout": [
-              "Artificial Intelligence Prompt Engineering",
-              "Windows 11 Desktop Software",
-              "Cinematic Video Prompts",
-              "DeepSeek R1 and Claude 3.7 Research Specifications"
+              "https://github.com/papada1472/refinzi"
             ]
           },
           {
             "@type": "SoftwareApplication",
             "@id": "https://refinzi.com/#software",
-            "name": "Refinzi 2.0",
-            "operatingSystem": "Windows 10, Windows 11 (64-bit)",
-            "applicationCategory": "DeveloperApplication",
-            "applicationSubCategory": "AI Prompt Engineering",
-            "downloadUrl": "https://github.com/papada1472/refinzi/releases/download/v2.0.0/Refinzi-Setup-v2.0.0.exe",
-            "softwareVersion": "2.0.0",
-            "author": {
-              "@type": "Person",
-              "name": "Rahul Mangla"
-            },
-            "offers": [
-              {
-                "@type": "Offer",
-                "name": "Refinzi Free BYOK",
-                "price": "0",
-                "priceCurrency": "USD",
-                "availability": "https://schema.org/InStock",
-                "description": "Unlimited prompt rebuilding using your own Gemini, DeepSeek or OpenRouter API keys with 0% markup."
-              },
-              {
-                "@type": "Offer",
-                "name": "Refinzi Lifetime Pro",
-                "price": "12.00",
-                "priceCurrency": "USD",
-                "availability": "https://schema.org/InStock",
-                "description": "Lifetime license with built-in managed Claude 3.5 Sonnet & GPT-4o routing, cloud sync, and lifetime updates."
-              }
-            ],
+            "name": "Refinzi",
+            "applicationCategory": "BrowserApplication",
+            "applicationSubCategory": "Browser Extension",
+            "operatingSystem": "Chrome, Microsoft Edge, Mozilla Firefox",
+            "browserRequirements": "Requires Google Chrome, Microsoft Edge, or Mozilla Firefox with Manifest V3 WebExtension support",
+            "softwareVersion": "2.1.0",
+            "url": "https://refinzi.com/",
+            "downloadUrl": "https://refinzi.com/downloads/refinzi-chrome-v2.1.0.zip",
+            "description": "Refinzi is a free browser extension that rewrites rough prompts in-place inside ChatGPT, Claude, Gemini, and Perplexity. Click the in-composer Orb for a Better prompt, or hold it for an Expert prompt. No forms, no questionnaires.",
             "featureList": [
-              "1-Click Ambient Floating Orb for instant in-place prompt rebuilding",
-              "Cinematic video prompts calibrated for Midjourney v6 and Runway Gen-3",
-              "Detailed research specifications and analytical thinking frameworks for DeepSeek R1 and Claude 3.7",
-              "5-Block prompt synthesis blueprint (Role, Context, Architecture, Constraints, Output)",
-              "Zero prompt storage, local-first Windows DPAPI AES-256 key encryption"
+              "In-composer Orb for ChatGPT, Claude, Gemini, and Perplexity",
+              "Click = Better prompt, Hold = Expert prompt",
+              "Automatic in-place prompt replacement with one-click Undo",
+              "Zero-question Expert engine that infers role, constraints, and methodology",
+              "On-device synthesis engine by default, with optional BYOK providers",
+              "Manifest V3 WebExtension for Chrome, Edge, and Firefox"
             ],
-            "description": "An ambient Windows desktop app that rebuilds any AI prompt in 2 seconds. 1-Click on floating Orb or Ctrl+Alt+Space to engineer production prompts in-place for ChatGPT, Gemini, Midjourney, Higgsfield, Cursor & Claude."
-          },
-          {
-            "@type": "BreadcrumbList",
-            "@id": "https://refinzi.com/#breadcrumbs",
-            "itemListElement": [
-              {
-                "@type": "ListItem",
-                "position": 1,
-                "name": "Home",
-                "item": "https://refinzi.com/"
-              },
-              {
-                "@type": "ListItem",
-                "position": 2,
-                "name": "Features & Demo",
-                "item": "https://refinzi.com/#demo"
-              },
-              {
-                "@type": "ListItem",
-                "position": 3,
-                "name": "Pricing",
-                "item": "https://refinzi.com/#pricing"
-              },
-              {
-                "@type": "ListItem",
-                "position": 4,
-                "name": "Documentation",
-                "item": "https://refinzi.com/docs/"
-              }
-            ]
-          },
-          {
-            "@type": "HowTo",
-            "@id": "https://refinzi.com/#howto",
-            "name": "How to Rebuild Any Prompt in 2 Seconds on Windows",
-            "description": "Transform any rough idea into a structured production-grade prompt using Refinzi 2.0.",
-            "step": [
-              {
-                "@type": "HowToStep",
-                "position": 1,
-                "name": "Highlight your rough prompt",
-                "text": "Select your rough prompt text in any Windows application (Discord, Slack, VS Code, Browser, Cursor)."
-              },
-              {
-                "@type": "HowToStep",
-                "position": 2,
-                "name": "Trigger Refinzi 1-Click or Hotkey",
-                "text": "Click the ambient floating Orb next to your selection, or press Ctrl+Alt+Space."
-              },
-              {
-                "@type": "HowToStep",
-                "position": 3,
-                "name": "Get 5-Block Blueprint Synthesis",
-                "text": "Refinzi analyzes the context and replaces or copies an optimized 5-block prompt calibrated for ChatGPT, Claude, Midjourney, or Cursor in 2 seconds."
-              }
-            ]
-          },
-          {
-            "@type": "VideoObject",
-            "@id": "https://refinzi.com/#demo-video",
-            "name": "Refinzi 2.0 Ambient Prompt Engine Live Workflow Demo",
-            "description": "Watch how Refinzi rebuilds rough prompts into calibrated 5-block blueprints for Midjourney, Runway, Claude 3.7, and DeepSeek in 2 seconds on Windows 10/11.",
-            "thumbnailUrl": [
-              "https://refinzi.com/branding/Refinzi-logo.png"
-            ],
-            "uploadDate": "2026-09-01T08:00:00+00:00",
-            "contentUrl": "https://refinzi.com/refinzi-demo.mp4",
-            "embedUrl": "https://refinzi.com/#demo",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD",
+              "availability": "https://schema.org/InStock"
+            },
             "publisher": {
-              "@type": "Organization",
-              "name": "Refinzi",
-              "url": "https://refinzi.com/",
-              "logo": {
-                "@type": "ImageObject",
-                "url": "https://refinzi.com/branding/logo-mark.png"
-              }
+              "@id": "https://refinzi.com/#organization"
             }
           },
           {
@@ -279,90 +156,34 @@
             "mainEntity": [
               {
                 "@type": "Question",
-                "name": "How does Refinzi actually work?",
+                "name": "How does Refinzi work?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Refinzi uses an Ambient Orb that lives near your cursor without interrupting your workflow. Highlight text in any Windows app (or press Ctrl + Alt + Space), and the Orb instantly drops in, analyzes the context, and lets you rebuild it in 2 seconds."
+                  "text": "Refinzi runs as a lightweight browser extension. When you type in ChatGPT, Claude, Gemini or Perplexity, the Refinzi Orb appears. Click it for a better prompt, or hold it for an expert one. The improved prompt automatically replaces your text in-place."
                 }
               },
               {
                 "@type": "Question",
-                "name": "What exactly do I get when I Rebuild?",
+                "name": "What is the difference between Click and Hold?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "You don't just get a wall of text. Refinzi outputs a structured Rebuild Pack containing 5 architectural sections: Structure & Layout, Component Assets, Creative Copy & Hooks, Motion & Interactions, and an Implementation Prompt Pack specifically formatted for Cursor, Claude, or v0."
+                  "text": "Clicking triggers an instant 1-click refiner that structures your draft and adds missing context. Holding triggers deep, autonomous calibration that infers role, constraints, methodology and output format automatically."
                 }
               },
               {
                 "@type": "Question",
-                "name": "Which AI models power the rebuilds?",
+                "name": "Do I need an API key to use Refinzi?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Refinzi 2.0 features a fast model-switcher with 1-click access to DeepSeek V3, DeepSeek R1, Gemini 1.5 Flash, Claude 3.5 Sonnet, and Nemotron 120B."
+                  "text": "No. Refinzi works out of the box with its built-in on-device synthesis engine, with no account and no key required. You can optionally configure your own OpenAI, Anthropic, Gemini or OpenRouter API key in the extension settings for complete control."
                 }
               },
               {
                 "@type": "Question",
-                "name": "What happens when my included usage runs out?",
+                "name": "Which browsers are supported?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "We don't hit you with a hard paywall. You can instantly switch to BYOK (Bring Your Own Key). Just add your DeepSeek, Gemini, or OpenRouter key to keep rebuilding indefinitely."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "Do you store my API keys or my prompts?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Zero logging, zero prompt storage. If you use BYOK, your API keys are encrypted locally on your machine using Windows DPAPI / AES-256. They never touch our servers."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "Is it a subscription?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "No. Pro is a one-time payment of $12 (or ₹999 in India). Pay once, own it forever with lifetime updates."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "Is it safe? Will my antivirus flag it?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "It is a clean, standard Windows executable (0/72 on VirusTotal) and built in public on GitHub. Diagnostic logs automatically mask sensitive data."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "Is it available on Mac?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Not yet. Refinzi 2.0 is native to Windows 10/11. Mac and Linux builds are in active development."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "Can I use Refinzi inside Cursor IDE, VS Code, Discord, and Slack?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Yes. Refinzi operates at the native Windows OS level. Highlight text or code inside Cursor, VS Code, Discord, Slack, Chrome, or Obsidian, and 1-click the floating Orb or press Ctrl + Alt + Space to engineer an in-place prompt without switching windows."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "How does the 5-Block Prompt Blueprint work?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Refinzi synthesizes vague ideas into 5 production blocks: 1) System Role & Objective, 2) Context & Inputs, 3) Architecture Tree, 4) Strict Negative Constraints, and 5) Implementation Output Pack. This eliminates AI hallucinations and model drift on the very first try."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "Do I need to pay for AI tokens to use Refinzi?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "No. Refinzi includes starter rebuilds, and you can connect your own free Google Gemini API key or pay-as-you-go DeepSeek/OpenRouter keys with 0% token markup. You never pay a mandatory recurring subscription."
+                  "text": "Refinzi is built on the cross-browser WebExtensions standard (Manifest V3). Production packages are available for Google Chrome, Microsoft Edge and Mozilla Firefox."
                 }
               }
             ]
@@ -384,306 +205,186 @@
       <!-- Semantic Static Shell for Search Engines, Accessibility Audits & Non-JS Clients -->
       <header class="sticky top-0 z-40 w-full border-b border-white/[0.06] bg-[#08090c]/85 backdrop-blur-xl">
         <nav aria-label="Main Navigation" class="mx-auto flex h-14 max-w-[1140px] items-center justify-between px-4 sm:px-6">
-          <a href="/" aria-label="Refinzi 2.0 Homepage" class="flex items-center gap-2.5 text-base font-bold text-zinc-50">
-            <img src="/branding/logo-mark.webp" alt="Refinzi 2.0 Logo" width="28" height="28" class="h-7 w-7 rounded-lg object-contain" />
-            <span class="tracking-tight font-bold text-white">Refinzi <span class="text-[10px] font-semibold text-blue-400 bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-500/20">2.0</span></span>
+          <a href="/" aria-label="Refinzi homepage" class="flex items-center gap-2.5 text-base font-bold text-zinc-50">
+            <img src="/branding/logo-mark.webp" alt="Refinzi logo" width="28" height="28" class="h-7 w-7 rounded-lg object-contain" />
+            <span class="tracking-tight font-bold text-white">Refinzi</span>
+            <span class="text-[10px] font-semibold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">2.1.0</span>
           </a>
-
-          <ul class="hidden items-center gap-6 md:flex list-none">
-            <li><a href="#features" class="text-xs text-zinc-400 hover:text-zinc-100 font-medium">Features</a></li>
-            <li><a href="#demo" class="text-xs text-zinc-400 hover:text-zinc-100 font-medium">AI Demo</a></li>
-            <li><a href="#pricing" class="text-xs text-zinc-400 hover:text-zinc-100 font-medium">Pricing</a></li>
-            <li><a href="#faq" class="text-xs text-zinc-400 hover:text-zinc-100 font-medium">FAQ</a></li>
-            <li><a href="/docs/" class="text-xs text-zinc-400 hover:text-zinc-100 font-medium">Documentation</a></li>
-            <li><a href="/privacy/" class="text-xs text-zinc-400 hover:text-zinc-100 font-medium">Privacy Policy</a></li>
+          <ul class="hidden md:flex items-center gap-6 text-sm text-zinc-300">
+            <li><a href="#how-it-works" class="hover:text-white">How it Works</a></li>
+            <li><a href="#platforms" class="hover:text-white">Supported Sites</a></li>
+            <li><a href="#privacy" class="hover:text-white">Privacy</a></li>
+            <li><a href="#faq" class="hover:text-white">FAQ</a></li>
           </ul>
-
-          <div class="flex items-center gap-2.5">
-            <a
-              href="https://github.com/papada1472/refinzi"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-zinc-300 hover:text-white"
-            >
-              ⭐ Star GitHub
-            </a>
-            <a
-              href="#download"
-              class="inline-flex items-center justify-center rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3.5 py-2 shadow-md shadow-blue-500/20"
-              aria-label="Download Refinzi Free for Windows"
-            >
-              Download Free (Windows)
-            </a>
-          </div>
+          <a href="/downloads/refinzi-chrome-v2.1.0.zip" download class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500">
+            Add to Chrome — Free
+          </a>
         </nav>
       </header>
 
-      <main id="main-content" class="pb-24">
-        <!-- Hero Section with Primary H1 Landmark & Prominent CTAs -->
-        <section class="py-12 sm:py-16 mx-auto max-w-[1140px] px-4 sm:px-6" id="hero">
-          <div class="max-w-3xl">
-            <div class="inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-blue-500/10 px-3 py-1 text-xs text-blue-300 mb-3 font-mono">
-              <span>Ambient Windows Prompt Layer • v2.0</span>
-            </div>
-
-            <!-- Primary H1 Heading Landmark -->
-            <h1 class="text-3xl sm:text-4xl lg:text-[44px] font-black leading-[1.12] tracking-tight text-white">
-              Turn Simple Words Into Pinpoint, Master&#8209;Grade Prompts.
-              <span class="block mt-1 text-blue-400 font-black">
-                In 2 Seconds. Anywhere in Windows.
-              </span>
-            </h1>
-
-            <p class="mt-3.5 text-sm sm:text-base text-zinc-300 font-normal leading-relaxed max-w-xl">
-              Type rough thoughts in <strong class="text-white font-semibold">any Windows app</strong>, tap the Orb or press <kbd class="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-800 text-blue-300 border border-blue-500/30">Ctrl+Alt+Space</kbd>, and instantly get a pinpoint, client-grade prompt architecture calibrated for Claude, ChatGPT, Cursor &amp; Midjourney.
-            </p>
-
-            <!-- Primary High-Contrast Call-to-Action Buttons -->
-            <div class="mt-6 flex flex-wrap items-center gap-3">
-              <a
-                href="#download"
-                class="inline-flex items-center justify-center font-bold text-sm sm:text-base px-7 py-3.5 shadow-xl shadow-blue-600/25 bg-blue-600 hover:bg-blue-500 text-white rounded-xl border border-blue-400/40"
-                aria-label="Download Refinzi Free for Windows (.exe)"
-              >
-                Download Free for Windows (.exe)
-              </a>
-
-              <a
-                href="#pricing"
-                class="font-semibold text-xs sm:text-sm px-5 py-3.5 bg-transparent hover:bg-white/[0.06] text-zinc-100 border border-white/20 rounded-xl flex items-center gap-2"
-                aria-label="Get Lifetime Pro Deal"
-              >
-                Get Lifetime Pro — ₹999 / $12
-              </a>
-
-              <a
-                href="#pricing"
-                class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300"
-              >
-                🛡️ 14-Day Money-Back • Satisfaction Guaranteed
-              </a>
-            </div>
-
-            <!-- Technical Trust Signals -->
-            <div class="mt-4 flex flex-wrap items-center gap-2 text-xs text-zinc-300">
-              <span class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300 font-semibold">
-                🛡️ VirusTotal: 0/72 Clean
-              </span>
-              <span class="rounded-lg border border-blue-500/30 bg-blue-500/10 px-2.5 py-1 text-blue-300 font-semibold">
-                🔒 Security: DPAPI AES-256
-              </span>
-              <span class="rounded-lg border border-purple-500/30 bg-purple-500/10 px-2.5 py-1 text-purple-300 font-semibold">
-                ✓ Privacy: Zero Cloud Logging
-              </span>
-              <span class="rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-amber-300 font-semibold">
-                ⚡ Pricing: 0% Markup BYOK
-              </span>
-            </div>
+      <main id="main-content">
+        <!-- Hero -->
+        <section class="mx-auto max-w-[1140px] px-4 sm:px-6 pt-14 pb-10 sm:pt-20 text-center">
+          <p class="inline-block rounded-full border border-indigo-500/25 bg-indigo-500/10 px-3.5 py-1.5 text-xs font-bold text-indigo-300 uppercase tracking-wider">
+            🌐 THE UNIVERSAL BROWSER TEXT LAYER • MANIFEST V3 • 100% PRIVATE
+          </p>
+          <h1 class="mt-5 text-3xl sm:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight text-white">
+            Stop Babysitting Your AI.
+            <span class="block mt-1 text-indigo-400 font-black">Get Senior-Level Outputs on the First Try.</span>
+          </h1>
+          <p class="mx-auto mt-6 max-w-3xl text-sm sm:text-base text-zinc-300 leading-relaxed font-normal">
+            You know what you want. The AI doesn't. Refinzi is the invisible calibration layer that lives in your browser. Type your messy thought. Click the Orb for instant structure. Hold the Orb for an expert brief.
+          </p>
+          <p class="mt-3 text-xs sm:text-sm font-semibold text-emerald-400">
+            No forms. No prompt engineering degrees. No questions asked.
+          </p>
+          <div class="mt-8 flex flex-wrap items-center justify-center gap-3.5">
+            <a href="/downloads/refinzi-chrome-v2.1.0.zip" download class="inline-flex items-center justify-center rounded-xl border border-indigo-400/40 bg-indigo-600 px-7 py-3.5 text-sm sm:text-base font-bold text-white shadow-xl shadow-indigo-600/25 hover:bg-indigo-500">
+              📥 Add to Chrome — It's 100% Free
+            </a>
+            <a href="#pricing" class="rounded-xl border border-emerald-500/30 bg-[#151620] px-6 py-3.5 text-sm font-bold text-emerald-400 hover:bg-[#1B1C28]">
+              ⚡ Unlock Lifetime Pro — $12 (One-Time)
+            </a>
           </div>
+          <p class="mt-4 text-xs text-zinc-400">
+            ⚡ Installs in 5 seconds • 🔒 Zero prompt logging • Works in ChatGPT, Claude, Gemini &amp; everywhere else.
+          </p>
+          <p class="mt-4 text-xs font-semibold text-amber-400">
+            🔥 14,208 prompts calibrated today • ⭐⭐⭐⭐⭐ 4.9/5 from early access power-users
+          </p>
         </section>
 
-        <!-- Section 2: AI Prompt Transformation Presets & System Specs -->
-        <section class="py-12 sm:py-16 border-t border-white/[0.06] mx-auto max-w-[1140px] px-4 sm:px-6" id="demo">
+        <!-- The Agitation -->
+        <section class="mx-auto max-w-[1140px] border-t border-white/[0.06] px-4 py-12 sm:px-6 sm:py-16">
           <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white text-center">
-            AI Prompt Transformation Presets &amp; System Specs
+            The &ldquo;Prompt Engineering&rdquo; Lie is Costing You Hours Every Week.
           </h2>
-          <p class="mt-2 text-zinc-300 text-xs sm:text-sm text-center max-w-xl mx-auto">
-            Explore production-tested system prompt blueprints engineered specifically for each AI architecture.
-          </p>
-
-          <div class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <article class="rounded-xl border border-white/10 bg-zinc-900/60 p-4">
-              <h3 class="font-bold text-white text-sm">Midjourney Photoreal Optics Spec</h3>
-              <p class="text-xs text-zinc-300 mt-1">35mm anamorphic lens physics, raytraced reflections, and v6.0 raw parameters.</p>
-              <a href="#download" class="text-xs text-blue-400 hover:underline mt-2 inline-block font-semibold">Try Midjourney with Refinzi →</a>
+          <div class="mt-8 grid gap-5 sm:grid-cols-2">
+            <article class="rounded-2xl border border-rose-500/20 bg-[#12131C] p-6">
+              <h3 class="text-lg font-bold text-white">The Lazy Route</h3>
+              <p class="mt-2 text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                You type a vague prompt, get a generic, robotic answer, and spend 20 minutes tweaking it until it's usable.
+              </p>
             </article>
-            <article class="rounded-xl border border-white/10 bg-zinc-900/60 p-4">
-              <h3 class="font-bold text-white text-sm">Higgsfield &amp; Runway Motion Spec</h3>
-              <p class="text-xs text-zinc-300 mt-1">3D orbital camera vectors, temporal velocity, and bioluminescent lighting physics.</p>
-              <a href="#download" class="text-xs text-blue-400 hover:underline mt-2 inline-block font-semibold">Try Higgsfield with Refinzi →</a>
-            </article>
-            <article class="rounded-xl border border-white/10 bg-zinc-900/60 p-4">
-              <h3 class="font-bold text-white text-sm">Cursor React 19 Architecture Spec</h3>
-              <p class="text-xs text-zinc-300 mt-1">Compound architecture patterns, strict state tokens, and zero layout shift constraints.</p>
-              <a href="#download" class="text-xs text-blue-400 hover:underline mt-2 inline-block font-semibold">Try Cursor with Refinzi →</a>
-            </article>
-            <article class="rounded-xl border border-white/10 bg-zinc-900/60 p-4">
-              <h3 class="font-bold text-white text-sm">Claude Direct-Response Copy Spec</h3>
-              <p class="text-xs text-zinc-300 mt-1">3-phase open loop copywriting, quantifiable ROI frameworks, and founder deal urgency.</p>
-              <a href="#download" class="text-xs text-blue-400 hover:underline mt-2 inline-block font-semibold">Try Claude with Refinzi →</a>
+            <article class="rounded-2xl border border-amber-500/20 bg-[#12131C] p-6">
+              <h3 class="text-lg font-bold text-white">The Mega-Prompt Route</h3>
+              <p class="mt-2 text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                You spend 15 minutes writing a massive 500-word prompt... and the AI still hallucinates or ignores half your instructions.
+              </p>
             </article>
           </div>
         </section>
 
-        <!-- Section 3: Workflow Mechanism -->
-        <section class="py-12 border-t border-white/[0.06] mx-auto max-w-[1140px] px-4 sm:px-6" id="features">
+        <!-- Mechanism -->
+        <section id="mechanism" class="mx-auto max-w-[1140px] border-t border-white/[0.06] px-4 py-12 sm:px-6 sm:py-16">
           <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white text-center">
-            How Refinzi Works in Windows: 3-Step Execution
+            Never Ask. Infer → Assume → Execute.
           </h2>
-          <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="rounded-xl border border-white/10 bg-zinc-900/50 p-5">
-              <h3 class="text-base font-bold text-white">1. Highlight your rough idea</h3>
-              <p class="text-xs text-zinc-300 mt-1">Type whatever is in your head in ChatGPT, Discord, Cursor, or Slack. Then highlight it.</p>
-            </div>
-            <div class="rounded-xl border border-white/10 bg-zinc-900/50 p-5">
-              <h3 class="text-base font-bold text-white">2. 1-Click the floating Orb</h3>
-              <p class="text-xs text-zinc-300 mt-1">Click the glowing Orb that appears right at your cursor (or press Ctrl+Alt+Space).</p>
-            </div>
-            <div class="rounded-xl border border-white/10 bg-zinc-900/50 p-5">
-              <h3 class="text-base font-bold text-white">3. Done in 2 seconds</h3>
-              <p class="text-xs text-zinc-300 mt-1">Refinzi replaces your text in-place with a production-grade prompt. Zero copy-pasting.</p>
+          <p class="mx-auto mt-2 max-w-2xl text-center text-xs sm:text-sm text-zinc-300">
+            Refinzi reads your rough draft, understands your intent, and automatically injects the exact missing dimensions the AI needs to nail the job.
+          </p>
+          <div class="mt-8 grid gap-5 sm:grid-cols-3">
+            <article class="rounded-2xl border border-white/[0.08] bg-[#12131C] p-6">
+              <h3 class="text-base font-bold text-white">🖱️ CLICK THE ORB → ⚡ BETTER PROMPT</h3>
+              <p class="mt-2 text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                Instantly structures your thought. Adds the 1 to 3 critical missing constraints. Strips the fluff. Keeps your exact voice. Perfect for 90% of daily tasks.
+              </p>
+            </article>
+            <article class="rounded-2xl border border-emerald-500/30 bg-[#12131C] p-6">
+              <h3 class="text-base font-bold text-white">🖱️ HOLD THE ORB → 🧠 EXPERT BRIEF</h3>
+              <p class="mt-2 text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                Triggers deep, autonomous calibration. Locks scope so the AI doesn't hallucinate. Strips prestige jargon. Adds defensible assumptions.
+              </p>
+            </article>
+            <article class="rounded-2xl border border-white/[0.08] bg-[#12131C] p-6">
+              <h3 class="text-base font-bold text-white">✅ AUTO-APPLY → DONE</h3>
+              <p class="mt-2 text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                The perfected prompt drops straight into your text box. Native Ctrl+Z undo stack remains intact. Hit enter. Get a masterpiece.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <!-- Grand Slam Offer -->
+        <section id="pricing" class="mx-auto max-w-[1140px] border-t border-white/[0.06] px-4 py-12 sm:px-6 sm:py-16 text-center">
+          <h2 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
+            Pay Once. Use It Forever. No Monthly Subscriptions.
+          </h2>
+          <p class="mx-auto mt-2 max-w-2xl text-xs sm:text-sm text-zinc-300">
+            Get the complete Refinzi Lifetime Pro Pass for $12 (One-Time Payment. Never increases).
+          </p>
+          <div class="mx-auto mt-8 max-w-lg rounded-2xl border border-white/10 bg-[#141520] p-6 text-left text-xs sm:text-sm space-y-2">
+            <p>✓ The Core Calibration Engine (Click for Better) — $97 Value</p>
+            <p>✓ The Expert Scope-Lock Engine (Hold for Expert) — $197 Value</p>
+            <p>✓ Anti-Prestige Jargon Filter — $47 Value</p>
+            <p>✓ Local-First Privacy Vault — Priceless</p>
+            <p>✓ Bring-Your-Own-Key (BYOK) Support — $97 Value</p>
+            <p>✓ Lifetime Updates &amp; New Site Adapters — $147/yr Value</p>
+            <div class="pt-4 border-t border-white/10 font-bold flex justify-between text-base">
+              <span>Price Today:</span>
+              <span class="text-emerald-400 text-2xl font-mono">$12</span>
             </div>
           </div>
         </section>
 
-        <!-- Section 4: Blueprint Engine -->
-        <section class="py-12 border-t border-white/[0.06] mx-auto max-w-[1140px] px-4 sm:px-6" id="blueprint">
-          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white text-center">
-            The 5-Block Architectural Blueprint Engine
+        <!-- Guarantee -->
+        <section class="mx-auto max-w-[1140px] border-t border-white/[0.06] px-4 py-12 sm:px-6 sm:py-16 text-center">
+          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+            The &ldquo;10-Hour&rdquo; Iron-Clad Guarantee
           </h2>
-          <p class="mt-2 text-zinc-300 text-xs sm:text-sm text-center max-w-xl mx-auto">
-            Vague prompts lead to broken code and generic fluff. Refinzi synthesizes five production blocks.
-          </p>
-          <div class="mt-6 grid grid-cols-1 sm:grid-cols-5 gap-3 text-center">
-            <div class="rounded-lg border border-white/10 bg-zinc-900/60 p-3"><span class="text-xs font-bold text-white">1. Layout Scaffolding</span></div>
-            <div class="rounded-lg border border-white/10 bg-zinc-900/60 p-3"><span class="text-xs font-bold text-white">2. State Token Matrix</span></div>
-            <div class="rounded-lg border border-white/10 bg-zinc-900/60 p-3"><span class="text-xs font-bold text-white">3. Conversion Copy</span></div>
-            <div class="rounded-lg border border-white/10 bg-zinc-900/60 p-3"><span class="text-xs font-bold text-white">4. Motion Physics</span></div>
-            <div class="rounded-lg border border-white/10 bg-zinc-900/60 p-3"><span class="text-xs font-bold text-white">5. Prompt Pack</span></div>
-          </div>
-        </section>
-
-        <!-- Section 5: Comparison -->
-        <section class="py-12 border-t border-white/[0.06] mx-auto max-w-[1140px] px-4 sm:px-6" id="stack-layer">
-          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white text-center">
-            Don't Replace Your AI Stack. Stop Wasting It.
-          </h2>
-          <p class="mt-2 text-zinc-300 text-xs sm:text-sm text-center max-w-xl mx-auto">
-            You already pay for ChatGPT Plus, Cursor Pro, or Midjourney. Refinzi sits between your brain and your models.
+          <p class="mx-auto mt-3 max-w-2xl text-xs sm:text-sm text-zinc-300 leading-relaxed">
+            Use the Pro features for 14 full days. If it doesn't save you at least 10 hours of wasted tweaking, rewriting, and AI-babysitting... send us a one-line email. We will refund your $12 immediately. No questions asked.
           </p>
         </section>
 
-        <!-- Section 6: Pricing -->
-        <section class="py-14 sm:py-20 border-t border-white/[0.06] mx-auto max-w-[1140px] px-4 sm:px-6" id="pricing">
-          <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white text-center">
-            Simple, Transparent Pricing: Pay Once, Own Forever
-          </h2>
-          <p class="mt-2 text-zinc-300 text-xs sm:text-sm text-center max-w-xl mx-auto">
-            No recurring monthly subscriptions. Use Refinzi free forever with your own API key, or unlock Pro with a one-time coffee purchase.
-          </p>
-
-          <div class="mt-10 grid max-w-4xl mx-auto grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Free Plan -->
-            <div class="rounded-2xl bg-[#121620] border border-white/10 p-6 sm:p-8 flex flex-col justify-between">
-              <div>
-                <span class="text-[10px] font-bold uppercase text-zinc-300 bg-white/10 px-2.5 py-0.5 rounded-full">Free Forever</span>
-                <h3 class="text-xl font-bold text-white mt-2">Free / BYOK</h3>
-                <p class="text-xs text-zinc-300 mt-1">For developers &amp; power users bringing their own keys.</p>
-                <div class="mt-4"><span class="text-4xl font-extrabold text-white">$0</span> <span class="text-xs text-zinc-400">/ forever</span></div>
-              </div>
-              <div class="mt-6">
-                <a href="#download" class="block w-full text-center font-bold text-sm py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl border border-white/20" aria-label="Download Free Now">
-                  Download Free Now (.exe)
-                </a>
-              </div>
-            </div>
-
-            <!-- Pro Plan -->
-            <div class="rounded-2xl bg-[#121620] border-2 border-blue-500/50 p-6 sm:p-8 flex flex-col justify-between">
-              <div>
-                <span class="text-[10px] font-bold uppercase text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-full">⚡ Most Popular</span>
-                <h3 class="text-xl font-bold text-white mt-2">Lifetime Pro</h3>
-                <p class="text-xs text-zinc-300 mt-1">Zero setup required. Ready to use out of the box.</p>
-                <div class="mt-4"><span class="text-4xl font-extrabold text-white">₹999 / $12</span> <span class="text-xs text-zinc-300">one-time</span></div>
-              </div>
-              <div class="mt-6">
-                <div class="mb-3 text-center text-xs font-semibold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 py-1.5 rounded-lg">
-                  🛡️ 14-Day 100% Satisfaction &amp; Money-Back Guarantee
-                </div>
-                <a href="#pricing" class="block w-full text-center font-extrabold text-sm py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-xl shadow-blue-500/30" aria-label="Buy Lifetime Pro Now">
-                  Buy Lifetime Pro Now — ₹999 / $12
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Section 7: Social Proof -->
-        <section class="py-12 border-t border-white/[0.06] mx-auto max-w-[1140px] px-4 sm:px-6" id="testimonials">
-          <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white text-center">
-            Loved by Builders Who Refuse to Waste Time
-          </h2>
-          <p class="mt-2 text-xs sm:text-sm text-zinc-300 text-center">
-            ★★★★★ Rated 4.9/5 by 100+ builders across Windows
-          </p>
-        </section>
-
-        <!-- Section 8: FAQ -->
-        <section class="py-12 border-t border-white/[0.06] mx-auto max-w-[1140px] px-4 sm:px-6" id="faq">
+        <!-- FAQ -->
+        <section id="faq" class="mx-auto max-w-[1140px] border-t border-white/[0.06] px-4 py-12 sm:px-6 sm:py-16">
           <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white text-center">
             Frequently Asked Questions
           </h2>
-          <div class="mt-8 max-w-2xl mx-auto space-y-4">
-            <details class="rounded-xl border border-white/10 bg-zinc-900/60 p-4">
-              <summary class="font-bold text-white text-sm cursor-pointer">How does Refinzi work in Windows?</summary>
-              <p class="text-xs text-zinc-200 mt-2 leading-relaxed">Highlight text in any Windows app (or press Ctrl + Alt + Space), and the floating Orb synthesizes a pinpoint 5-block prompt in 2 seconds.</p>
-            </details>
-            <details class="rounded-xl border border-white/10 bg-zinc-900/60 p-4">
-              <summary class="font-bold text-white text-sm">Do you store my API keys or prompts?</summary>
-              <p class="text-xs text-zinc-200 mt-2 leading-relaxed">Zero logging, zero prompt storage. API keys are encrypted on-device via Windows DPAPI AES-256. They never touch our servers.</p>
-            </details>
-            <details class="rounded-xl border border-white/10 bg-zinc-900/60 p-4">
-              <summary class="font-bold text-white text-sm">Is Refinzi a recurring subscription?</summary>
-              <p class="text-xs text-zinc-200 mt-2 leading-relaxed">No. Refinzi is free with BYOK, or ₹999 ($12) one-time for Lifetime Pro with lifetime updates.</p>
-            </details>
-          </div>
-        </section>
-
-        <!-- Section 9: Direct Feedback -->
-        <section class="py-10 border-t border-white/[0.06] mx-auto max-w-[1140px] px-4 sm:px-6" id="feedback">
-          <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-white text-center">
-            Direct Feedback &amp; Founder Channels
-          </h2>
-          <p class="mt-1 text-zinc-300 text-xs text-center">
-            Chat directly on WhatsApp or email the engineering team.
-          </p>
-        </section>
-
-        <!-- Section 10: Final CTA -->
-        <section class="py-12 text-center border-t border-white/[0.06] mx-auto max-w-[1140px] px-4 sm:px-6" id="download">
-          <h2 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
-            Your AI Deserves Better Prompts: Get Started in 2 Seconds
-          </h2>
-          <p class="mt-2 text-xs sm:text-sm text-zinc-300 max-w-lg mx-auto">
-            Get flawless outputs from ChatGPT, Midjourney, Higgsfield, Gemini &amp; Cursor on the very first try.
-          </p>
-          <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <a
-              href="#download"
-              class="inline-flex items-center justify-center font-bold text-sm px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg"
-              aria-label="Download Refinzi Free for Windows"
-            >
-              Download Free for Windows (.exe)
-            </a>
+          <div class="mx-auto mt-8 max-w-2xl space-y-4">
+            <article class="rounded-xl border border-white/[0.06] bg-[#14151F] p-5">
+              <h3 class="text-sm font-bold text-white">Is my data private? Are you reading my prompts?</h3>
+              <p class="mt-2 text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                100% Local-First. Refinzi processes your text locally in your browser. We do not log, store, or train on your prompts.
+              </p>
+            </article>
+            <article class="rounded-xl border border-white/[0.06] bg-[#14151F] p-5">
+              <h3 class="text-sm font-bold text-white">Will this slow down my browser?</h3>
+              <p class="mt-2 text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                Nope. It's built on Manifest V3. It sits quietly in the background and only wakes up when you interact with a text box.
+              </p>
+            </article>
+            <article class="rounded-xl border border-white/[0.06] bg-[#14151F] p-5">
+              <h3 class="text-sm font-bold text-white">Do I need to pay for ChatGPT Plus to use this?</h3>
+              <p class="mt-2 text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                No. Refinzi works beautifully with free tiers of AI tools. If you have Plus or Pro, it just makes those tools perform 10x better.
+              </p>
+            </article>
+            <article class="rounded-xl border border-white/[0.06] bg-[#14151F] p-5">
+              <h3 class="text-sm font-bold text-white">Is the $12 really a one-time payment?</h3>
+              <p class="mt-2 text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                Yes. We are doing this to build a massive, loyal user base quickly. Once we hit our capacity cap, this switches to a standard yearly subscription.
+              </p>
+            </article>
           </div>
         </section>
       </main>
 
-      <!-- Semantic Footer with Legal Compliance & Navigation -->
       <footer class="border-t border-white/[0.06] bg-[#07080b] py-10">
-        <div class="mx-auto max-w-[1140px] px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div class="text-xs text-zinc-400">
-            Refinzi © 2026 • Windows 10 &amp; 11 Desktop Prompt Utility
-          </div>
+        <div class="mx-auto flex max-w-[1140px] flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6">
+          <p class="text-xs text-zinc-400">
+            Refinzi 2.1.0 • Better prompts in one click. Expert prompts when it matters. • Open
+            Source MIT
+          </p>
           <nav aria-label="Footer Legal Navigation" class="flex flex-wrap items-center gap-4 text-xs">
-            <a href="/privacy/" class="text-zinc-300 hover:text-white underline" title="Refinzi Privacy Policy">Privacy Policy</a>
-            <a href="/terms/" class="text-zinc-300 hover:text-white underline" title="Refinzi Terms of Service">Terms of Service</a>
-            <a href="/docs/" class="text-zinc-300 hover:text-white underline" title="Refinzi Documentation">Documentation</a>
+            <a href="/privacy/" class="text-zinc-300 hover:text-white underline">Privacy Policy</a>
+            <a href="/terms/" class="text-zinc-300 hover:text-white underline">Terms of Service</a>
+            <a href="/docs/" class="text-zinc-300 hover:text-white underline">Documentation</a>
             <a href="https://github.com/papada1472/refinzi" target="_blank" rel="noopener noreferrer" class="text-zinc-300 hover:text-white underline">GitHub Repository</a>
           </nav>
         </div>
       </footer>
-
       <!-- Accessible GDPR Cookie & Local Storage Consent Notice Landmark -->
       <div
         id="cookie-notice"
@@ -695,7 +396,7 @@
           <div class="flex-1 space-y-1">
             <p class="font-bold text-white text-xs">Local-First &amp; Privacy Guaranteed</p>
             <p class="text-[11px] text-zinc-400 leading-relaxed">
-              Refinzi uses local storage and essential cookies to remember your theme &amp; currency preferences. Zero prompt tracking or telemetry.
+              Refinzi uses local storage to remember your preferences. Zero prompt tracking or telemetry.
             </p>
             <div class="pt-2 flex items-center gap-3">
               <button

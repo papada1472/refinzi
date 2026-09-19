@@ -1,9 +1,9 @@
 # Environment
 
-* O/S: 64-bit Windows 11
-* Browser: Chrome
+* O/S: any modern desktop (Windows, macOS, Linux) — Refinzi itself ships only as a browser extension and requires no desktop runtime
+* Browser: Google Chrome (with Microsoft Edge and Mozilla Firefox as secondary targets)
 
-Avoid generating instructions for Linux, macOS, WSL, Bash, or alternative environments unless explicitly requested.
+Avoid generating instructions for Linux, WSL, or Bash-based toolchains unless explicitly requested.
 
 ---
 

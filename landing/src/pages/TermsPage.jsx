@@ -1,118 +1,82 @@
 import React from "react";
-import { ArrowLeft, FileText, CheckCircle2, ShieldCheck, AlertCircle, RefreshCw, Mail } from "lucide-react";
+import { ArrowLeft, FileText, CheckCircle, ShieldAlert } from "lucide-react";
 
-export function TermsPage({ onNavigateHome }) {
+export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-[#08090c] text-zinc-300 font-sans selection:bg-blue-500/30 selection:text-white">
-      {/* Top Navigation */}
+    <div className="min-h-screen bg-[#08090c] text-zinc-300 font-sans selection:bg-indigo-500/30 selection:text-white">
       <header className="sticky top-0 z-30 border-b border-white/[0.08] bg-[#08090c]/90 backdrop-blur-xl px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-[900px] items-center justify-between">
-          <button
-            onClick={onNavigateHome}
+          <a
+            href="/"
             className="flex items-center gap-2 text-xs font-semibold text-zinc-300 hover:text-white transition-colors"
           >
-            <ArrowLeft className="h-4 w-4 text-blue-400" />
+            <ArrowLeft className="h-4 w-4 text-indigo-400" />
             <span>Back to Home</span>
-          </button>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-            <img src="/branding/logo-mark.webp" alt="Refinzi" width="20" height="20" loading="lazy" decoding="async" className="h-5 w-5 rounded object-contain" />
-            <span>Refinzi 2.0</span>
+          </a>
+          <div className="flex items-center gap-2 text-xs font-bold text-white">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" />
+            <span>Refinzi 2.1.0</span>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="mx-auto max-w-[900px] px-4 py-12 sm:px-6 sm:py-16">
-        <div className="flex items-center gap-2 text-xs font-semibold text-blue-400 uppercase tracking-widest mb-3">
+        <div className="flex items-center gap-2 text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-3">
           <FileText className="h-4 w-4" />
           <span>Legal Agreement</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-          Terms of Service
+          Terms of Service — Refinzi 2.1.0
         </h1>
-        <p className="mt-2 text-xs text-zinc-500">
-          Last Updated: September 1, 2026 · Effective Date: September 1, 2026
+        <p className="mt-2 text-xs text-zinc-500 font-mono">
+          Last Updated: September 19, 2026 • License: MIT Open Source
         </p>
 
         <div className="my-8 border-t border-white/[0.08]" />
 
         <div className="space-y-8 text-sm leading-relaxed">
-          <section className="rounded-2xl border border-white/[0.08] bg-zinc-900/60 p-5 space-y-2">
-            <h2 className="text-base font-bold text-white">1. Agreement to Terms</h2>
+          <section className="rounded-2xl border border-white/[0.08] bg-[#14151F] p-6 space-y-3">
+            <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-emerald-400" />
+              1. Open Source License (MIT)
+            </h2>
             <p className="text-xs sm:text-sm text-zinc-300">
-              By downloading, installing, or using Refinzi 2.0 ("the Software") or visiting <a href="https://refinzi.com" className="text-blue-400 underline">refinzi.com</a>, you agree to be bound by these Terms of Service. If you do not agree to these terms, do not install or use the software.
+              Refinzi is open-source software released under the MIT License. You are free to inspect, run, modify, and distribute the software subject to the terms of the MIT License.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-bold text-white">2. Acceptable Use</h2>
+            <p className="text-xs sm:text-sm text-zinc-300">
+              Refinzi is provided to enhance prompt creation in web-based text environments. You agree not to use the software for any unlawful activities or to generate malicious prompts intended to bypass security safeguards of third-party AI models.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-bold text-white">3. Third-Party AI Services</h2>
+            <p className="text-xs sm:text-sm text-zinc-300">
+              Refinzi connects directly to third-party services (such as OpenAI, Anthropic, Google Gemini, and OpenRouter) when configured by the user via BYOK. Your use of these services is subject to their respective terms of service and acceptable use policies.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-emerald-400" />
-              2. License Grant & Ownership
-            </h2>
-            <ul className="list-disc pl-5 space-y-1.5 text-zinc-300 text-xs sm:text-sm">
-              <li><strong>Lifetime Pro License:</strong> Purchasing a Refinzi Pro license grants you a perpetual, non-exclusive, worldwide license to install and use the software on your personal and work Windows devices.</li>
-              <li><strong>Free / BYOK License:</strong> The free tier grants non-commercial and commercial usage when bringing your own API keys.</li>
-              <li><strong>Output Ownership:</strong> 100% of all prompts, blueprints, code, and creative outputs generated with Refinzi belong exclusively to you. We claim zero copyright, royalties, or ownership over your prompts.</li>
-            </ul>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <RefreshCw className="h-4 w-4 text-blue-400" />
-              3. Refund Policy (14-Day Money-Back Guarantee)
+              <ShieldAlert className="h-4 w-4 text-amber-400" />
+              4. Disclaimer of Warranties
             </h2>
             <p className="text-xs sm:text-sm text-zinc-300">
-              We stand behind Refinzi 100%. If Refinzi does not significantly speed up your prompt workflows or meet your expectations, email <code className="text-blue-300 font-mono">contact@refinzi.com</code> within <strong>14 days of purchase</strong> for a full, no-questions-asked refund.
+              The software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and noninfringement.
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-amber-400" />
-              4. Disclaimer of Warranty & Limitations
-            </h2>
+            <h2 className="text-lg font-bold text-white">5. Contact</h2>
             <p className="text-xs sm:text-sm text-zinc-300">
-              Refinzi 2.0 is provided "as is" without warranty of any kind. While we rigorously test for stability and safety, Refinzi is not liable for downstream outputs generated by third-party AI models (e.g. OpenAI, Anthropic, Midjourney, Google).
+              If you have any questions regarding these terms, please contact us at <a href="mailto:contact@refinzi.com" className="text-indigo-400 underline">contact@refinzi.com</a>.
             </p>
-          </section>
-
-          <section className="rounded-2xl border border-white/[0.08] bg-zinc-900/60 p-5 space-y-3">
-            <div className="flex items-center gap-2 text-white font-bold">
-              <Mail className="h-4 w-4 text-blue-400" />
-              <span>Questions, Refunds & Legal Support</span>
-            </div>
-            <p className="text-xs text-zinc-400">
-              For any questions regarding these Terms, instant 14-day refunds, or business licensing, reach out to Rahul directly:
-            </p>
-            <div className="flex flex-wrap items-center gap-3 pt-1">
-              <a
-                href="https://wa.me/919971271291?text=Hi%20Rahul,%20I'm%20reaching%20out%20about%20Refinzi%20Terms/Support!"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1.5 rounded-xl hover:bg-emerald-900/60 transition-colors"
-              >
-                💬 WhatsApp +91-9971271291
-              </a>
-              <a
-                href="https://cal.com/rahul-mangla-ub8se9/30min"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded-xl transition-colors"
-              >
-                📅 Schedule 30-Min Call
-              </a>
-              <a
-                href="mailto:contact@refinzi.com"
-                className="text-xs font-mono text-blue-400 hover:text-blue-300 underline"
-              >
-                contact@refinzi.com
-              </a>
-            </div>
           </section>
         </div>
       </main>
     </div>
   );
 }
-
-export default TermsPage;

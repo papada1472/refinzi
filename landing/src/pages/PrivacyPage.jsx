@@ -1,129 +1,171 @@
 import React from "react";
-import { ArrowLeft, Shield, Lock, EyeOff, Server, Database, Mail } from "lucide-react";
+import { ArrowLeft, Shield, Lock, EyeOff, Server, Database, Mail, CheckCircle } from "lucide-react";
 
-export function PrivacyPage({ onNavigateHome }) {
+export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-[#08090c] text-zinc-300 font-sans selection:bg-blue-500/30 selection:text-white">
-      {/* Top Navigation */}
+    <div className="min-h-screen bg-[#08090c] text-zinc-300 font-sans selection:bg-indigo-500/30 selection:text-white">
+      {/* Top Header */}
       <header className="sticky top-0 z-30 border-b border-white/[0.08] bg-[#08090c]/90 backdrop-blur-xl px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-[900px] items-center justify-between">
-          <button
-            onClick={onNavigateHome}
+          <a
+            href="/"
             className="flex items-center gap-2 text-xs font-semibold text-zinc-300 hover:text-white transition-colors"
           >
-            <ArrowLeft className="h-4 w-4 text-blue-400" />
+            <ArrowLeft className="h-4 w-4 text-indigo-400" />
             <span>Back to Home</span>
-          </button>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-            <img src="/branding/logo-mark.webp" alt="Refinzi" width="20" height="20" loading="lazy" decoding="async" className="h-5 w-5 rounded object-contain" />
-            <span>Refinzi 2.0</span>
+          </a>
+          <div className="flex items-center gap-2 text-xs font-bold text-white">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" />
+            <span>Refinzi 2.1.0</span>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="mx-auto max-w-[900px] px-4 py-12 sm:px-6 sm:py-16">
-        <div className="flex items-center gap-2 text-xs font-semibold text-blue-400 uppercase tracking-widest mb-3">
+        <div className="flex items-center gap-2 text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-3">
           <Shield className="h-4 w-4" />
-          <span>Legal & Privacy</span>
+          <span>Chrome Web Store &amp; User Data Compliance</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-          Privacy Policy
+          Privacy Policy — Refinzi 2.1.0
         </h1>
-        <p className="mt-2 text-xs text-zinc-500">
-          Last Updated: September 1, 2026 · Effective Date: September 1, 2026
+        <p className="mt-2 text-xs text-zinc-500 font-mono">
+          Effective Date: September 19, 2026 • Version: 2.1.0 (WebExtension MV3)
         </p>
 
         <div className="my-8 border-t border-white/[0.08]" />
 
         <div className="space-y-8 text-sm leading-relaxed">
-          <section className="rounded-2xl border border-blue-500/20 bg-blue-950/10 p-5">
-            <div className="flex items-center gap-2 text-white font-bold mb-2">
-              <Lock className="h-4 w-4 text-blue-400" />
-              <span>Core Privacy Philosophy: Local-First & Zero Logging</span>
+          {/* Mandatory Chrome Web Store Declarations */}
+          <section className="rounded-2xl border border-emerald-500/30 bg-emerald-950/15 p-6 space-y-3">
+            <div className="flex items-center gap-2 text-emerald-400 font-bold text-base">
+              <Lock className="h-5 w-5" />
+              <span>Core Privacy Guarantees &amp; Reviewer Declarations</span>
             </div>
+            <p className="text-zinc-200 text-sm font-medium">
+              <strong>Refinzi does not collect, store, or transmit user keystrokes, passwords, or prompt history to external servers.</strong>
+            </p>
             <p className="text-zinc-300 text-xs sm:text-sm">
-              Refinzi 2.0 was architected from day one as an ambient desktop tool. We believe your prompts, code snippets, confidential documents, and creative ideas belong exclusively to you. <strong>Refinzi never stores, logs, intercepts, or trains models on the text you highlight or rebuild.</strong>
+              <strong>Refinzi is a user-initiated productivity tool. It only modifies text when the user explicitly clicks the Orb or uses a keyboard shortcut. It does not auto-submit forms or scrape AI outputs.</strong>
             </p>
           </section>
 
+          {/* Single Purpose */}
+          <section className="space-y-3">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-indigo-400" />
+              1. Single Purpose Specification
+            </h2>
+            <p className="text-zinc-300 text-xs sm:text-sm">
+              Refinzi operates strictly under Chrome Web Store's Single Purpose Policy: to serve as a user-initiated in-composer prompt layer. It reads user-entered drafts solely when the user clicks or holds the Refinzi Orb, replaces the text in-place with a structured prompt, and provides an instant undo affordance.
+            </p>
+          </section>
+
+          {/* Information We Do Not Collect */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <EyeOff className="h-4 w-4 text-purple-400" />
-              1. Information We Do NOT Collect
+              2. Information We Do NOT Collect or Transmit
             </h2>
-            <ul className="list-disc pl-5 space-y-1.5 text-zinc-300 text-xs sm:text-sm">
-              <li><strong>Your Highlighted Prompts:</strong> Text selected with <code className="text-blue-300 font-mono">Ctrl+Alt+Space</code> is processed in memory and never written to disk or sent to Refinzi servers.</li>
-              <li><strong>Your API Keys:</strong> In BYOK (Bring Your Own Key) mode, your Gemini or OpenRouter API keys are stored locally on your device in Windows encrypted storage.</li>
-              <li><strong>Keystrokes or Screen Recording:</strong> Refinzi only listens for the registered global shortcut. It does not monitor or log background keystrokes.</li>
+            <ul className="list-disc pl-5 space-y-2 text-zinc-300 text-xs sm:text-sm">
+              <li>
+                <strong>No Keystroke Logging:</strong> Refinzi does not listen to or record keystrokes. It only detects user interaction when the cursor focuses on an input element or when the Orb is explicitly clicked.
+              </li>
+              <li>
+                <strong>No Password or Sensitive Field Access:</strong> Password fields (<code className="font-mono text-indigo-300">type="password"</code>), credit card inputs, hidden fields, and sensitive forms are completely excluded from detection.
+              </li>
+              <li>
+                <strong>No Prompt Database on External Servers:</strong> Default prompt synthesis runs entirely locally on-device inside your browser using bundled logic. Your text never leaves your machine unless you explicitly configure an external BYOK API key.
+              </li>
+              <li>
+                <strong>No Automated Scraping or Auto-Submission:</strong> Refinzi never automatically submits forms, never presses "Send", and never scrapes web pages or AI model answers.
+              </li>
+              <li>
+                <strong>No Analytics or Content Telemetry:</strong> We do not track what you write, who you talk to, or your prompt topics.
+              </li>
             </ul>
           </section>
 
+          {/* Permissions Justifications */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <Server className="h-4 w-4 text-emerald-400" />
-              2. Information We Collect & Why
+              3. Extension Permissions &amp; Technical Justifications
             </h2>
-            <p className="text-xs sm:text-sm">
-              We collect minimal, non-personally identifiable operational telemetry to maintain high app performance:
+            <p className="text-xs sm:text-sm text-zinc-300">
+              Refinzi adheres to the principle of least privilege. In accordance with Chrome Web Store developer policies, each permission is justified as follows:
             </p>
-            <ul className="list-disc pl-5 space-y-1.5 text-zinc-300 text-xs sm:text-sm">
-              <li><strong>Anonymized Website Analytics:</strong> Basic page load metrics (FCP, LCP), country-level location for currency display, and conversion counts.</li>
-              <li><strong>License Verification:</strong> When activating Refinzi Pro, your license key is verified against our secure billing registry to grant perpetual updates.</li>
-            </ul>
+            <div className="space-y-3 mt-2">
+              <div className="p-4 rounded-xl bg-[#14151F] border border-white/[0.06]">
+                <p className="font-mono text-xs font-bold text-indigo-400 mb-1">storage</p>
+                <p className="text-xs text-zinc-300">
+                  Used strictly to store the user's local preferences (theme, hold duration, auto-apply toggle), recent prompt transformation history, and locally encrypted Bring-Your-Own-Key (BYOK) API credentials on the device. Data is stored in <code className="font-mono text-zinc-200">chrome.storage.local</code> and is never synced to external servers.
+                </p>
+              </div>
+              <div className="p-4 rounded-xl bg-[#14151F] border border-white/[0.06]">
+                <p className="font-mono text-xs font-bold text-indigo-400 mb-1">host_permissions (http://*/*, https://*/*)</p>
+                <p className="text-xs text-zinc-300">
+                  Required to detect user-focused editable text areas across ChatGPT, Claude, Google Gemini, Perplexity, GitHub, Notion, Gmail, and custom web composers, and inject the floating calibration Orb UI directly adjacent to the active input. It does not read, scrape, or transmit page content.
+                </p>
+              </div>
+            </div>
           </section>
 
+          {/* BYOK */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <Database className="h-4 w-4 text-amber-400" />
-              3. Third-Party AI Service Providers
+              4. Bring-Your-Own-Key (BYOK) Data Flow
             </h2>
-            <p className="text-xs sm:text-sm">
-              When you rebuild a prompt, the request routes directly between your Windows client and the selected AI API provider:
+            <p className="text-xs sm:text-sm text-zinc-300">
+              Refinzi includes an optional BYOK mode for users who wish to use their own OpenAI, Anthropic, Google Gemini, DeepSeek, or OpenRouter API keys:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-zinc-300 text-xs sm:text-sm">
-              <li><strong>Google Gemini API:</strong> Governed by Google Cloud's Enterprise Data Privacy policy.</li>
-              <li><strong>OpenRouter / Anthropic / OpenAI:</strong> Governed by their respective API zero-data-retention terms.</li>
+              <li>API keys are stored exclusively in your local browser extension storage.</li>
+              <li>Network requests are dispatched directly over encrypted HTTPS from the extension background service worker to the designated provider's official API endpoint.</li>
+              <li>Web pages and host DOM contexts never have access to your API keys.</li>
+              <li>Refinzi operates zero intermediary proxy servers — there is no man-in-the-middle.</li>
             </ul>
           </section>
 
+          {/* User Rights & Deletion */}
           <section className="space-y-3">
-            <h2 className="text-lg font-bold text-white">4. GDPR & CCPA Compliance</h2>
-            <p className="text-xs sm:text-sm">
-              Under GDPR and CCPA regulations, you have the right to request deletion of any billing records associated with your email. Since Refinzi stores zero user content on remote servers, there is no personal prompt database to export or delete.
+            <h2 className="text-lg font-bold text-white">5. Data Retention &amp; User Control</h2>
+            <p className="text-xs sm:text-sm text-zinc-300">
+              Because all history and settings are stored locally on your device in <code className="font-mono text-indigo-300">chrome.storage.local</code>, you retain 100% control over your data:
             </p>
+            <ul className="list-disc pl-5 space-y-1 text-zinc-300 text-xs sm:text-sm">
+              <li>You can clear your entire prompt transformation history with one click inside the extension popup.</li>
+              <li>You can remove stored BYOK API keys at any time.</li>
+              <li>Uninstalling Refinzi immediately and permanently removes all stored data from your browser.</li>
+            </ul>
           </section>
 
-          <section className="rounded-2xl border border-white/[0.08] bg-zinc-900/60 p-5 space-y-3">
+          {/* Contact */}
+          <section className="rounded-2xl border border-white/[0.08] bg-[#14151F] p-6 space-y-3">
             <div className="flex items-center gap-2 text-white font-bold">
-              <Mail className="h-4 w-4 text-blue-400" />
-              <span>Contact Privacy Officer & Founder</span>
+              <Mail className="h-4 w-4 text-indigo-400" />
+              <span>Contact &amp; Questions</span>
             </div>
             <p className="text-xs text-zinc-400">
-              For any questions regarding privacy, data rights, or architecture verification, reach out to Rahul directly:
+              For any questions regarding this Privacy Policy or Chrome Web Store compliance, contact the maintainer:
             </p>
-            <div className="flex flex-wrap items-center gap-3 pt-1">
-              <a
-                href="https://wa.me/919971271291?text=Hi%20Rahul,%20I'm%20reaching%20out%20about%20Refinzi%20Privacy!"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 px-3 py-1.5 rounded-xl hover:bg-emerald-900/60 transition-colors"
-              >
-                💬 WhatsApp +91-9971271291
-              </a>
-              <a
-                href="https://cal.com/rahul-mangla-ub8se9/30min"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded-xl transition-colors"
-              >
-                📅 Schedule 30-Min Call
-              </a>
+            <div className="flex flex-wrap items-center gap-4 pt-1">
               <a
                 href="mailto:contact@refinzi.com"
-                className="text-xs font-mono text-blue-400 hover:text-blue-300 underline"
+                className="text-xs font-mono text-indigo-400 hover:text-indigo-300 underline"
               >
                 contact@refinzi.com
+              </a>
+              <span className="text-zinc-600">•</span>
+              <a
+                href="https://github.com/papada1472/refinzi"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-zinc-300 hover:text-white underline"
+              >
+                GitHub Repository
               </a>
             </div>
           </section>
@@ -132,5 +174,3 @@ export function PrivacyPage({ onNavigateHome }) {
     </div>
   );
 }
-
-export default PrivacyPage;

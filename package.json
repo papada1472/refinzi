@@ -1,9 +1,8 @@
 {
   "name": "refinzi",
   "productName": "Refinzi",
-  "version": "2.0.0",
-  "description": "Ambient Windows desktop execution layer that turns inspiration into production-ready blueprints and code.",
-  "main": "src/main/main.js",
+  "version": "2.1.0",
+  "description": "Refinzi — the browser-native AI prompt layer. Click the Orb for a Better prompt, hold for an Expert one. Works in ChatGPT, Claude, Gemini, and Perplexity.",
   "type": "module",
   "author": "",
   "license": "MIT",
@@ -17,63 +16,21 @@
   },
   "private": true,
   "scripts": {
-    "start": "electron .",
-    "dev": "electron .",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder",
-    "test-models": "node scripts/test-models.js",
+    "build": "node scripts/build-extension.js all",
+    "build:chrome": "node scripts/build-extension.js chrome",
+    "build:edge": "node scripts/build-extension.js edge",
+    "build:firefox": "node scripts/build-extension.js firefox",
+    "build:extension": "node scripts/build-extension.js all",
+    "lint": "node scripts/lint-extension.js",
+    "typecheck": "tsc --noEmit -p extension/tsconfig.json",
     "test": "vitest run",
-    "test:release": "npm test && node scripts/test-gateway-release.js && npm run pack",
-    "test:watch": "vitest"
-  },
-  "dependencies": {
-    "@google/genai": "^2.7.0",
-    "@google/generative-ai": "^0.24.1",
-    "@nut-tree-fork/nut-js": "^4.2.6",
-    "ai": "^6.0.204",
-    "dotenv": "^17.4.2",
-    "electron-store": "^11.0.2",
-    "pdf-parse": "^2.4.5"
+    "test:watch": "vitest",
+    "test:release": "npm test && npm run build"
   },
   "devDependencies": {
-    "electron": "^32.2.1",
-    "electron-builder": "^24.13.3",
-    "jimp": "^1.6.1",
+    "@types/chrome": "^0.3.0",
+    "esbuild": "^0.25.0",
     "jsdom": "^29.1.1",
-    "playwright": "^1.62.1",
-    "png-to-ico": "^3.0.1",
     "vitest": "^3.0.0"
-  },
-  "build": {
-    "appId": "com.refinzi.app",
-    "productName": "Refinzi",
-    "asar": true,
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "src/**/*",
-      "assets/**/*",
-      "package.json"
-    ],
-    "win": {
-      "icon": "assets/icons/app.ico",
-      "forceCodeSigning": false,
-      "target": [
-        "nsis"
-      ]
-    },
-    "nsis": {
-      "oneClick": true,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": false,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Refinzi",
-      "artifactName": "Refinzi-Setup-v${version}.exe"
-    }
-  },
-  "allowScripts": {
-    "electron@32.3.3": true
   }
 }

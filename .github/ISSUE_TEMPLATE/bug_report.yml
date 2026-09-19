@@ -13,13 +13,28 @@ body:
     validations:
       required: true
   - type: dropdown
-    id: os
+    id: browser
     attributes:
-      label: Windows OS Version
+      label: Browser
+      description: Which browser are you running Refinzi in?
       options:
-        - Windows 11 (64-bit)
-        - Windows 10 (64-bit)
-        - Other
+        - Google Chrome
+        - Microsoft Edge
+        - Mozilla Firefox
+        - Other (Chromium-based)
+    validations:
+      required: true
+  - type: dropdown
+    id: site
+    attributes:
+      label: AI Site
+      description: Where did the problem occur?
+      options:
+        - ChatGPT (chatgpt.com)
+        - Claude (claude.ai)
+        - Google Gemini (gemini.google.com)
+        - Perplexity (perplexity.ai)
+        - Other / generic page
     validations:
       required: true
   - type: textarea
@@ -34,8 +49,9 @@ body:
     attributes:
       label: Steps to Reproduce
       placeholder: |
-        1. Select text in...
-        2. Press Ctrl+Alt+Space or click Orb
-        3. See error...
+        1. Go to chatgpt.com
+        2. Type a rough prompt in the composer
+        3. Click (or press and hold) the Refinzi Orb
+        4. See error...
     validations:
       required: true

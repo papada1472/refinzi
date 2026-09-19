@@ -1,6 +1,7 @@
-# Direct edge redirect rules for Windows installer
-/download/windows  https://github.com/papada1472/refinzi/releases/download/v2.0.0/Refinzi-Setup-v2.0.0.exe 302!
-/download/exe      https://github.com/papada1472/refinzi/releases/download/v2.0.0/Refinzi-Setup-v2.0.0.exe 302!
+# Direct download / route rules for browser extension packages
+/download/chrome  https://github.com/papada1472/refinzi/releases/download/v2.1.0/refinzi-chrome-v2.1.0.zip 302
+/download/edge    https://github.com/papada1472/refinzi/releases/download/v2.1.0/refinzi-edge-v2.1.0.zip 302
+/download/firefox https://github.com/papada1472/refinzi/releases/download/v2.1.0/refinzi-firefox-v2.1.0.zip 302
 
 # SPA Fallback
 /* /index.html 200

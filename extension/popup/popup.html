@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Refinzi Control Center</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-shell">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <span class="brand-orb-icon">◉</span>
+        <div class="brand-text">
+          <span class="brand-name">Refinzi</span>
+          <span class="brand-sub">AI Prompt Assistant</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="status-pill" id="global-status-pill" title="Engine Status">
+          <span class="status-dot online"></span>
+          <span class="status-text" id="global-status-text">Local Ready</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Views -->
+    <main class="views-wrapper">
+      <!-- ==========================================
+           TAB 1: HOME
+           ========================================== -->
+      <section class="tab-view active" id="tab-home">
+        <!-- Time Period Segmented Toggle (Default: Week) -->
+        <div class="period-toggle-group" role="tablist" aria-label="Metrics time range">
+          <button type="button" class="period-btn" data-period="Today">Today</button>
+          <button type="button" class="period-btn active" data-period="Week">Week</button>
+          <button type="button" class="period-btn" data-period="Month">Month</button>
+          <button type="button" class="period-btn" data-period="All Time">All Time</button>
+        </div>
+
+        <!-- Four Primary Metrics Grid -->
+        <div class="metrics-grid-four">
+          <!-- Metric 1: Prompts Enhanced -->
+          <div class="dash-card" id="card-prompts-enhanced">
+            <div class="dash-card-header">
+              <span class="dash-card-label">PROMPTS ENHANCED</span>
+              <span class="stat-mini-icon">✨</span>
+            </div>
+            <div class="dash-card-body">
+              <div class="dash-card-val" id="metric-total-prompts">0</div>
+              <div class="dash-card-sub text-muted" id="metric-prompts-sub">+0 this week</div>
+            </div>
+          </div>
+
+          <!-- Metric 2: Estimated Time Saved -->
+          <div class="dash-card" id="card-time-saved">
+            <div class="dash-card-header">
+              <span class="dash-card-label">EST. TIME SAVED</span>
+              <span class="info-tooltip-trigger" id="tooltip-time-saved" title="Estimated from the average time assumed for manually refining a prompt.">⏱️</span>
+            </div>
+            <div class="dash-card-body">
+              <div class="dash-card-val" id="metric-time-saved">~0m</div>
+              <div class="dash-card-sub text-emerald" id="metric-time-sub">estimated</div>
+            </div>
+          </div>
+
+          <!-- Metric 3: Estimated Cost Saved -->
+          <div class="dash-card" id="card-cost-saved">
+            <div class="dash-card-header">
+              <span class="dash-card-label">EST. COST SAVED</span>
+              <span class="info-tooltip-trigger" id="tooltip-cost-saved" title="Estimated from AI usage/iteration costs available to Refinzi. Actual savings may vary.">💡</span>
+            </div>
+
+            <div class="dash-card-body">
+              <div class="dash-card-val" id="metric-cost-saved">—</div>
+              <div class="dash-card-sub text-muted" id="metric-cost-sub">Cost estimate unavailable</div>
+            </div>
+          </div>
+
+          <!-- Metric 4: Better / Expert Usage -->
+          <div class="dash-card" id="card-usage-split">
+            <div class="dash-card-header">
+              <span class="dash-card-label">BETTER / EXPERT</span>
+              <span class="stat-mini-icon">⚡🧠</span>
+            </div>
+            <div class="dash-card-body">
+              <div class="dash-card-val" id="metric-better-expert-val">0 / 0</div>
+              <div class="dash-card-sub text-muted" id="metric-better-expert-sub">this week</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Period Activity Breakdown Bar -->
+        <div class="period-activity-bar">
+          <div class="activity-pill better-pill">
+            <span class="activity-dot better"></span>
+            <span class="activity-name">Better</span>
+            <span class="activity-num" id="period-better-count">0</span>
+            <span class="activity-pct text-muted" id="period-better-pct">(0%)</span>
+          </div>
+          <div class="activity-divider">/</div>
+          <div class="activity-pill expert-pill">
+            <span class="activity-dot expert"></span>
+            <span class="activity-name">Expert</span>
+            <span class="activity-num" id="period-expert-count">0</span>
+            <span class="activity-pct text-muted" id="period-expert-pct">(0%)</span>
+          </div>
+        </div>
+
+        <!-- BYOK Engine Status Banner -->
+        <div class="engine-banner" id="home-engine-banner">
+          <div class="engine-info">
+            <span class="engine-tag" id="engine-tag">Engine</span>
+            <span class="engine-name" id="engine-name">Instant Local Engine</span>
+          </div>
+          <button type="button" class="btn-ghost-small" id="btn-quick-provider">Configure →</button>
+        </div>
+
+        <!-- Recent Activity Section -->
+        <div class="content-group">
+          <div class="group-header">
+            <span class="group-title">Recent Calibrations</span>
+            <button type="button" class="group-action-link" id="link-view-all-history">View all</button>
+          </div>
+          <div class="recent-list" id="home-recent-list">
+            <div class="empty-state">
+              <span class="empty-icon">⚡</span>
+              <p class="empty-title">Ready to calibrate</p>
+              <p class="empty-desc">Write your prompt in ChatGPT, Claude, Gemini, or Perplexity and click the Orb.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           TAB 2: HISTORY
+           ========================================== -->
+      <section class="tab-view" id="tab-history">
+        <div class="history-controls">
+          <input type="text" id="history-search" class="search-input" placeholder="Search past prompts…">
+          <button type="button" class="btn-subtle-danger" id="btn-clear-history-top" title="Clear History">Clear</button>
+        </div>
+
+        <div class="history-list" id="full-history-list">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- History Detail Drawer Modal -->
+        <div class="history-detail-modal hidden" id="history-detail-modal">
+          <div class="detail-card">
+            <div class="detail-header">
+              <span class="detail-mode-badge" id="detail-mode-badge">⚡ Better</span>
+              <button type="button" class="btn-close-detail" id="btn-close-detail">✕</button>
+            </div>
+            <div class="detail-meta">
+              <span id="detail-target-ai">ChatGPT</span> · <span id="detail-timestamp">Just now</span>
+            </div>
+
+            <div class="detail-section">
+              <label class="detail-label">Original Prompt</label>
+              <div class="detail-text-box original" id="detail-original-text"></div>
+            </div>
+
+            <div class="detail-section">
+              <label class="detail-label">Calibrated Prompt</label>
+              <div class="detail-text-box refined" id="detail-refined-text"></div>
+            </div>
+
+            <div class="detail-footer">
+              <button type="button" class="btn-action-primary" id="btn-copy-detail">📋 Copy Calibrated</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           TAB 3: SETTINGS
+           ========================================== -->
+      <section class="tab-view" id="tab-settings">
+        <!-- AI Provider Group -->
+        <div class="settings-card">
+          <div class="settings-card-title">AI Provider & BYOK Configuration</div>
+
+          <div class="setting-row">
+            <label class="setting-label" for="setting-provider">Default Engine</label>
+            <select id="setting-provider" class="select-field">
+              <option value="gemini" selected>Google Gemini (Gemini Flash — Recommended)</option>
+              <option value="openai">OpenAI (GPT-4o Mini / o3-mini)</option>
+              <option value="deepseek">DeepSeek (V3 / R1 Reasoner)</option>
+              <option value="openrouter">OpenRouter (Multi-Model & Free)</option>
+              <option value="local">✨ Instant Local Engine (0ms, Offline)</option>
+              <option value="gateway">Refinzi Cloud Gateway</option>
+            </select>
+          </div>
+
+          <!-- Interactive Provider Guide Book -->
+          <div class="provider-guidebook" id="provider-guidebook">
+            <div class="guidebook-header">
+              <div class="guidebook-title">
+                <span class="guidebook-icon" id="guidebook-icon">⚡</span>
+                <span class="guidebook-name" id="guidebook-name">Google Gemini Flash Setup</span>
+              </div>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="guidebook-link" id="guidebook-link">
+                Get API Key ↗
+              </a>
+            </div>
+            <ol class="guidebook-steps" id="guidebook-steps">
+              <li>Open Google AI Studio with your Google account.</li>
+              <li>Click <strong>Create API Key</strong> and copy your new key.</li>
+              <li>Paste below and click <strong>Verify</strong> to activate.</li>
+            </ol>
+            <div class="guidebook-footer">
+              <span class="guidebook-badge">🔒 Stored locally in encrypted sandbox</span>
+              <span class="guidebook-tier" id="guidebook-tier">Free Tier Available</span>
+            </div>
+          </div>
+
+          <div class="setting-row" id="setting-key-row">
+            <label class="setting-label" for="setting-api-key">API Key</label>
+            <div class="input-with-action">
+              <input type="password" id="setting-api-key" class="text-field" placeholder="Paste your Gemini API key…">
+              <button type="button" class="btn-field-action" id="btn-test-provider">Verify</button>
+            </div>
+            <span class="field-feedback" id="provider-test-feedback"></span>
+          </div>
+
+          <div class="setting-row" id="setting-model-row">
+            <label class="setting-label" for="setting-model">Model</label>
+            <input type="text" id="setting-model" class="text-field" list="model-presets" placeholder="gemini-2.5-flash">
+            <datalist id="model-presets">
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash (Ultra-fast, High Intelligence)</option>
+              <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+              <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+              <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+              <option value="gpt-4o-mini">GPT-4o Mini</option>
+              <option value="gpt-4o">GPT-4o</option>
+              <option value="o3-mini">o3-mini</option>
+              <option value="deepseek-chat">DeepSeek-V3 (deepseek-chat)</option>
+              <option value="deepseek-reasoner">DeepSeek-R1 (deepseek-reasoner)</option>
+              <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B (Free)</option>
+            </datalist>
+          </div>
+        </div>
+
+        <!-- Orb Interaction Group -->
+        <div class="settings-card">
+          <div class="settings-card-title">Orb Interaction & Onboarding</div>
+
+          <div class="setting-toggle-row">
+            <div>
+              <div class="toggle-title">Auto-Replace In-Place</div>
+              <div class="toggle-sub">Replace prompt immediately on trigger (Zero friction)</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="setting-auto-apply" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <label class="setting-label" for="setting-hold-time">Hold Duration for Expert</label>
+            <select id="setting-hold-time" class="select-field">
+              <option value="300">300ms (Very Fast)</option>
+              <option value="350" selected>350ms (Balanced / Recommended)</option>
+              <option value="450">450ms (Deliberate)</option>
+              <option value="600">600ms (Slow)</option>
+            </select>
+          </div>
+
+          <div class="setting-row">
+            <label class="setting-label" for="setting-default-mode">Default Mode</label>
+            <select id="setting-default-mode" class="select-field">
+              <option value="better">⚡ Better Mode (Task Calibration)</option>
+              <option value="expert">🧠 Expert Mode (Specification Briefing)</option>
+            </select>
+          </div>
+
+          <div class="setting-action-row" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="btn-subtle" id="btn-replay-onboarding">▶ Replay Onboarding Guide</button>
+            <button type="button" class="btn-subtle" id="btn-reset-orb-pos">Reset Orb Position</button>
+            <span class="action-feedback" id="orb-pos-feedback"></span>
+          </div>
+        </div>
+
+        <!-- Privacy Group -->
+        <div class="settings-card">
+          <div class="settings-card-title">Privacy & Storage</div>
+
+          <div class="setting-toggle-row">
+            <div>
+              <div class="toggle-title">Save Prompt History</div>
+              <div class="toggle-sub">Store recent calibrations locally on this device</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="setting-save-history" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-action-row">
+            <button type="button" class="btn-subtle-danger" id="btn-clear-all-data">Clear All History & Cache</button>
+            <span class="action-feedback" id="privacy-feedback"></span>
+          </div>
+        </div>
+
+        <!-- Advanced Group -->
+        <div class="settings-card">
+          <div class="settings-card-title">About Refinzi</div>
+          <div class="about-info">
+            <div class="about-row">
+              <span>Version</span>
+              <span class="badge">v2.1.0</span>
+            </div>
+            <div class="about-row">
+              <span>Supported Sites</span>
+              <span>ChatGPT, Claude, Gemini, Perplexity</span>
+            </div>
+            <div class="about-row">
+              <span>Security</span>
+              <span>Isolated Background Service Worker</span>
+            </div>
+            <p class="about-tagline">"Better prompts in one click. Expert prompts when it matters."</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <button type="button" class="nav-btn active" data-tab="tab-home">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+      </button>
+      <button type="button" class="nav-btn" data-tab="tab-history">
+        <span class="nav-icon">🕒</span>
+        <span class="nav-label">History</span>
+      </button>
+      <button type="button" class="nav-btn" data-tab="tab-settings">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Settings</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

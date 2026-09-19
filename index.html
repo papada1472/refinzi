@@ -3,277 +3,372 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Refinzi — Ambient AI Desktop Utility</title>
-  <meta name="description" content="Improve and add context to any text without leaving the app you are using. Highlight. Refine. Continue.">
+  <title>Refinzi 2.1.0 — Browser-Native AI Prompt Layer | Free WebExtension</title>
+  <meta name="description" content="Write naturally. Refinzi handles the prompt engineering. The browser-native prompt layer for ChatGPT, Claude, Gemini, and Perplexity. Better prompts in one click, expert prompts when it matters.">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    :root {
+      --bg: #090A0E;
+      --card: #13141B;
+      --border: rgba(255, 255, 255, 0.08);
+      --accent-blue: #6366F1;
+      --accent-green: #10B981;
+      --text: #F1F5F9;
+      --muted: #94A3B8;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .header {
+      border-bottom: 1px solid var(--border);
+      padding: 16px 0;
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      background: rgba(9, 10, 14, 0.85);
+      z-index: 100;
+    }
+    .header-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-weight: 700;
+      font-size: 18px;
+      color: #FFF;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      font-size: 11px;
+      background: rgba(99, 102, 241, 0.15);
+      color: #A5B4FC;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .hero {
+      padding: 72px 0 48px;
+      text-align: center;
+    }
+    .hero-title {
+      font-size: clamp(32px, 5vw, 56px);
+      font-weight: 800;
+      line-height: 1.15;
+      margin: 20px 0 16px;
+      letter-spacing: -0.02em;
+    }
+    .hero-title span {
+      background: linear-gradient(135deg, #818CF8, #C084FC);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-desc {
+      font-size: clamp(16px, 2vw, 19px);
+      color: var(--muted);
+      max-width: 720px;
+      margin: 0 auto 32px;
+    }
+    .hero-actions {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      text-decoration: none;
+      transition: all 0.15s;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary {
+      background: #4F46E5;
+      color: #FFF;
+      border: 1px solid #6366F1;
+    }
+    .btn-primary:hover {
+      background: #4338CA;
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: #181922;
+      color: #E2E8F0;
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      background: #232532;
+    }
+    /* Platform bar */
+    .platforms {
+      margin: 48px 0 64px;
+      text-align: center;
+    }
+    .platforms-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #64748B;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+    .platforms-grid {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .platform-pill {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .platform-pill .dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-green);
+      border-radius: 50%;
+    }
+    /* Two Modes Comparison Grid */
+    .modes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin: 48px 0;
+    }
+    .mode-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      position: relative;
+    }
+    .mode-tag {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    .tag-better {
+      background: rgba(99, 102, 241, 0.15);
+      color: #818CF8;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+    .tag-expert {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34D399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .mode-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 10px;
+    }
+    .mode-desc {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .mode-features {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 13px;
+    }
+    .mode-features li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #CBD5E1;
+    }
+    .check {
+      color: var(--accent-green);
+      font-weight: bold;
+    }
+    /* Privacy section */
+    .privacy-banner {
+      background: #111218;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px;
+      margin: 64px 0;
+      text-align: center;
+    }
+    .privacy-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .privacy-desc {
+      color: var(--muted);
+      max-width: 650px;
+      margin: 0 auto;
+      font-size: 14px;
+    }
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 0;
+      text-align: center;
+      color: #64748B;
+      font-size: 12px;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- Minimal Sticky Navigation Header -->
   <header class="header">
     <div class="container header-container">
-      <a href="#" class="logo" aria-label="Refinzi Home" style="display: flex; align-items: center; gap: 8px;">
-        <img src="assets/branding/logo-mark.png" alt="Refinzi Logo" width="24" height="24" style="border-radius: 6px; object-fit: contain;">
-        <span>Refinzi</span>
+      <a href="#" class="logo">
+        <span>✨ Refinzi</span>
       </a>
-
-      <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle Navigation Menu">
-        ☰
-      </button>
-
-      <nav class="nav" id="navMenu">
-        <ul class="nav-links">
-          <li><a href="#philosophy" class="nav-link">Philosophy</a></li>
-          <li><a href="#workflow" class="nav-link">Workflow</a></li>
-          <li><a href="#features" class="nav-link">Features</a></li>
-          <li><a href="#pricing" class="nav-link">Pricing</a></li>
-          <li><a href="#download" class="nav-link">Download</a></li>
-        </ul>
-        <a href="#download" class="btn btn-primary">Get Refinzi</a>
-      </nav>
+      <span class="badge">Refinzi 2.1.0</span>
+      <a href="https://refinzi.com/downloads/refinzi-chrome-v2.1.0.zip" class="btn btn-primary" style="padding: 6px 14px; font-size: 12px;">Download Extension</a>
     </div>
   </header>
 
-  <main>
-    <!-- Section 1: Hero -->
-    <section class="hero fade-in-up">
-      <div class="container text-container">
-        <span class="hero-tag">Ambient AI Utility</span>
-        <h1 class="hero-title">Your thoughts, refined with AI.</h1>
-        <p class="hero-description">
-          Add context to any text directly inside ChatGPT, Claude, Gmail, or Notion without switching apps or copying prompts.
-        </p>
+  <main class="container">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="badge">✨ Universal Browser Prompt Layer</div>
+      <h1 class="hero-title">
+        Better prompts in one click.<br>
+        <span>Expert prompts when it matters.</span>
+      </h1>
+      <p class="hero-desc">
+        Write naturally. Refinzi handles the prompt engineering. A lightweight browser extension that detects your prompt inside ChatGPT, Claude, Gemini, and Perplexity, elevating it in seconds.
+      </p>
+      <div class="hero-actions">
+        <a href="https://refinzi.com/downloads/refinzi-chrome-v2.1.0.zip" class="btn btn-primary">
+          <span>⚡ Download for Chrome (Free)</span>
+        </a>
+        <a href="https://refinzi.com/downloads/refinzi-firefox-v2.1.0.zip" class="btn btn-secondary">
+          <span>🦊 Firefox Add-on</span>
+        </a>
+        <a href="https://refinzi.com/downloads/refinzi-edge-v2.1.0.zip" class="btn btn-secondary">
+          <span>🌐 Microsoft Edge</span>
+        </a>
+      </div>
+    </section>
 
-        <div class="hero-actions">
-          <a href="#download" class="btn btn-primary btn-large">
-            <span>Download for Windows</span>
-          </a>
-          <a href="#workflow" class="btn btn-secondary btn-large">
-            <span>See how it works</span>
-          </a>
-        </div>
-        <p class="platform-note">Refinzi 2.0 • Lightweight Windows Tray Utility</p>
+    <!-- Supported Platforms -->
+    <section class="platforms">
+      <div class="platforms-label">Universal Browser Prompt Layer</div>
+      <div class="platforms-grid">
+        <div class="platform-pill"><span class="dot"></span> ChatGPT</div>
+        <div class="platform-pill"><span class="dot"></span> Claude</div>
+        <div class="platform-pill"><span class="dot"></span> Google Gemini</div>
+        <div class="platform-pill"><span class="dot"></span> Perplexity</div>
+      </div>
+    </section>
+
+    <!-- Two Modes Breakdown -->
+    <section>
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h2 style="font-size: 28px; font-weight: 700; margin: 0 0 8px;">Two Materially Different Modes</h2>
+        <p style="color: var(--muted); font-size: 15px;">Never settle for generic fluff or a one-size-fits-all prompt template.</p>
       </div>
 
-      <!-- Single High-Quality Focal Image Visual -->
-      <div class="container">
-        <div class="hero-visual-frame">
-          <img src="assets/hero-visual.png" alt="Refinzi ambient interface floating orb preview" class="hero-visual-img" width="1140" height="640">
+      <div class="modes-grid">
+        <!-- Better Mode -->
+        <div class="mode-card">
+          <span class="mode-tag tag-better">⚡ Click: Instant Quality</span>
+          <h3 class="mode-title">Better Prompt</h3>
+          <p class="mode-desc">"Make what I wrote better in one click." Instant transformation with zero mandatory questions.</p>
+          <ul class="mode-features">
+            <li><span class="check">✓</span> Preserves your exact intent, language, and core terminology</li>
+            <li><span class="check">✓</span> Adds concrete structure, deliverables, and format criteria</li>
+            <li><span class="check">✓</span> Eliminates cliché AI filler and vague ambiguity</li>
+            <li><span class="check">✓</span> Concise and impactful — no 1,000-word mega-prompt bloat</li>
+            <li><span class="check">✓</span> Instant on-device synthesis engine or direct model BYOK</li>
+          </ul>
+        </div>
+
+        <!-- Expert Mode -->
+        <div class="mode-card">
+          <span class="mode-tag tag-expert">🧠 Hold: Flagship Briefing</span>
+          <h3 class="mode-title">Expert Prompt</h3>
+          <p class="mode-desc">"Think through what I need and calibrate like a senior practitioner. Never ask — infer, assume, execute."</p>
+          <ul class="mode-features">
+            <li><span class="check">✓</span> Zero questions, forms, or questionnaires — ever</li>
+            <li><span class="check">✓</span> Identifies domain: Code, Marketing, Business, Research, Writing</li>
+            <li><span class="check">✓</span> Locks deliverable scope &amp; preserves exact task directive</li>
+            <li><span class="check">✓</span> Transparently states operational assumptions</li>
+            <li><span class="check">✓</span> Appends out-of-scope strategic observations separately</li>
+          </ul>
         </div>
       </div>
     </section>
 
-    <!-- Section 2: Core Philosophy -->
-    <section class="statement-section fade-in-up" id="philosophy">
-      <div class="container text-container">
-        <p class="statement-text">
-          People do not want another AI app. <span>People want less interruption.</span> Refinzi eliminates copy-pasting and prompt writing so you stay in flow.
-        </p>
+    <!-- 3-Step Flow -->
+    <section style="margin: 64px 0;">
+      <div style="text-align: center; margin-bottom: 32px;">
+        <h2 style="font-size: 26px; font-weight: 700;">How Refinzi Works</h2>
       </div>
-    </section>
-
-    <!-- Section 3: Interactive Workflow Showcase -->
-    <section class="orb-demo-section fade-in-up" id="workflow">
-      <div class="container text-container">
-        <span class="section-label">Effortless Workflow</span>
-        <h2 class="section-title">Highlight. Refine. Continue.</h2>
-        <p class="section-sub">
-          Highlight text anywhere. Tap the floating sparkle orb to inject context instantly, or hold to structure an expert prompt.
-        </p>
-      </div>
-
-      <div class="container">
-        <div class="orb-playground">
-          <div class="mock-text-area">
-            "Draft an email to the engineering team summarizing our launch targets for Q3 and request..."
-            <mark class="highlighted-phrase">summarizing our launch targets</mark>
-          </div>
-
-          <!-- Interactive Sparkle Orb Element -->
-          <div class="sparkle-orb-widget" id="sparkleOrb" role="button" tabindex="0" aria-label="Interactive Refinzi Orb Preview">
-            <div class="orb-icon"></div>
-            <span class="orb-status-text" id="orbStatus">✨ Tap or hold sparkle</span>
-          </div>
-
-          <p class="demo-instruction" id="orbPromptPreview">
-            Click once to add context • Hold 0.5s to generate expert prompt
-          </p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+        <div style="background: var(--card); padding: 24px; border-radius: 12px; border: 1px solid var(--border);">
+          <div style="font-size: 24px; margin-bottom: 12px;">1. Type Naturally</div>
+          <p style="color: var(--muted); font-size: 13px;">Write your raw thoughts inside ChatGPT, Claude, Gemini, or any browser input.</p>
+        </div>
+        <div style="background: var(--card); padding: 24px; border-radius: 12px; border: 1px solid var(--border);">
+          <div style="font-size: 24px; margin-bottom: 12px;">2. Click or Hold Orb</div>
+          <p style="color: var(--muted); font-size: 13px;">Click for instant Better refinement, or press and hold for deep Expert calibration.</p>
+        </div>
+        <div style="background: var(--card); padding: 24px; border-radius: 12px; border: 1px solid var(--border);">
+          <div style="font-size: 24px; margin-bottom: 12px;">3. Auto-Replaces in Place</div>
+          <p style="color: var(--muted); font-size: 13px;">Refinzi automatically replaces your text in-composer. Press Ctrl+Z anytime to undo.</p>
         </div>
       </div>
     </section>
 
-    <!-- Section 4: Features Grid -->
-    <section class="features-section fade-in-up" id="features">
-      <div class="container text-container text-center">
-        <span class="section-label">Design Principles</span>
-        <h2 class="section-title">Built for deep focus.</h2>
-        <p class="section-sub">
-          Refinzi sits quietly in your system tray until you need it.
-        </p>
-      </div>
-
-      <div class="container">
-        <div class="features-grid">
-          <div class="feature-item">
-            <span class="feature-num">01</span>
-            <h3 class="feature-heading">Zero Context Switching</h3>
-            <p class="feature-desc">
-              Never leave your active window. Refinzi refines text directly inside your writing space.
-            </p>
-          </div>
-
-          <div class="feature-item">
-            <span class="feature-num">02</span>
-            <h3 class="feature-heading">Ambient Intelligence</h3>
-            <p class="feature-desc">
-              No chat prompts to format or token limits to calculate. AI disappears into your workflow.
-            </p>
-          </div>
-
-          <div class="feature-item">
-            <span class="feature-num">03</span>
-            <h3 class="feature-heading">Your Choice of AI</h3>
-            <p class="feature-desc">
-              Seamlessly bring your own API key for Gemini, OpenRouter, Claude, or local models.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 5: Experience Comparison -->
-    <section class="comparison-section fade-in-up">
-      <div class="container text-container text-center">
-        <h2 class="section-title">A calm alternative.</h2>
-      </div>
-
-      <div class="container">
-        <div class="comparison-grid">
-          <div class="comparison-col old">
-            <h3 class="comparison-title">Traditional AI Workflows</h3>
-            <ul class="comparison-list">
-              <li>✕ Open browser tab and log into chatbot</li>
-              <li>✕ Copy-paste text back and forth</li>
-              <li>✕ Spend 2 minutes writing prompt instructions</li>
-              <li>✕ Lose focus and break deep work flow</li>
-            </ul>
-          </div>
-
-          <div class="comparison-col new">
-            <h3 class="comparison-title">The Refinzi Layer</h3>
-            <ul class="comparison-list">
-              <li>✓ Highlight text in any application</li>
-              <li>✓ Tap the floating sparkle</li>
-              <li>✓ AI refines intent directly in place</li>
-              <li>✓ Continue working uninterrupted</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 6: Pricing (2-Tier Layout) -->
-    <section class="pricing-section fade-in-up" id="pricing">
-      <div class="container text-container text-center">
-        <h2 class="section-title">Start Rebuilding Today</h2>
-        <p class="section-sub">
-          No credit card required. Keep your keys, or let us manage them.
-        </p>
-      </div>
-
-      <div class="container">
-        <div class="pricing-grid">
-          <!-- Tier 1: Unlimited BYOK -->
-          <div class="pricing-card">
-            <h3 class="pricing-card-title">Free / BYOK</h3>
-            <div class="pricing-price-row">
-              <span class="pricing-price">$0</span>
-            </div>
-            <ul class="pricing-features">
-              <li>Unlimited usage via your own API keys</li>
-              <li>Daily limit via free Refinzi Gateway</li>
-              <li>All 5-Block features</li>
-              <li>Standard Exports</li>
-            </ul>
-            <a href="#download" class="btn btn-secondary btn-large pricing-btn">Download Free</a>
-          </div>
-
-          <!-- Tier 2: Pro Managed (Highlighted) -->
-          <div class="pricing-card pro">
-            <span class="pricing-badge">⭐ Most Popular</span>
-            <h3 class="pricing-card-title">Pro Managed</h3>
-            <div class="pricing-price-row">
-              <span class="pricing-price">$12</span>
-              <span class="pricing-strike">$45</span>
-            </div>
-            <ul class="pricing-features">
-              <li>Specialized Claude 3.5 / GPT-4o routing</li>
-              <li>Cloud sync</li>
-              <li>Priority email support</li>
-              <li>Early access to targets</li>
-              <li>Lifetime updates</li>
-            </ul>
-            <a href="#" class="btn btn-primary btn-large pricing-btn">Upgrade to Pro - $12</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 7: Download CTA -->
-
-    <section class="cta-section fade-in-up" id="download">
-      <div class="container text-container">
-        <h2 class="cta-title">Stay in flow.</h2>
-        <p class="cta-sub">
-          Experience zero-interruption Rebuild on Windows. Included usage out-of-the-box.
-        </p>
-
-        <div>
-          <a href="#" class="btn btn-primary btn-large">
-            <span>Download Refinzi for Windows</span>
-          </a>
-        </div>
-      </div>
+    <!-- Privacy Banner -->
+    <section class="privacy-banner">
+      <div style="font-size: 28px; margin-bottom: 8px;">🔒</div>
+      <h3 class="privacy-title">Zero Prompt Storage. Complete Privacy.</h3>
+      <p class="privacy-desc">
+        Refinzi never stores your prompts, logs conversation histories, or sends your content to telemetry servers. Supports Bring-Your-Own-Key (BYOK) for OpenAI, Google Gemini, DeepSeek, and OpenRouter, or runs completely offline with our built-in instant synthesis engine.
+      </p>
     </section>
   </main>
 
-  <!-- Clean Minimal Footer -->
-  <footer class="footer">
-    <div class="container footer-container">
-      <div class="footer-brand" style="display: flex; align-items: center; gap: 8px;">
-        <img src="assets/branding/logo-mark.png" alt="Refinzi Logo" width="20" height="20" style="border-radius: 4px; object-fit: contain;">
-        <span>Refinzi © 2026</span>
-      </div>
-
-      <ul class="footer-links">
-        <li><a href="#philosophy">Philosophy</a></li>
-        <li><a href="#workflow">Workflow</a></li>
-        <li><a href="#features">Features</a></li>
-        <li><a href="#pricing">Pricing</a></li>
-        <li><a href="#download">Download</a></li>
-        <li><a href="/privacy/">Privacy Policy</a></li>
-      </ul>
+  <footer>
+    <div class="container">
+      Refinzi 2.1.0 • Better prompts in one click. Expert prompts when it matters. • Open Source MIT
     </div>
   </footer>
 
-  <!-- GDPR Cookie Notice Banner -->
-  <div id="cookie-notice" role="region" aria-label="Privacy and Cookie Notice" style="position: fixed; bottom: 16px; right: 16px; max-width: 420px; background: rgba(15, 17, 23, 0.96); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 14px 18px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); z-index: 9999; font-family: system-ui, -apple-system, sans-serif; color: #e4e4e7; font-size: 12px; backdrop-filter: blur(12px);">
-    <div style="font-weight: 700; color: #fff; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-      🛡️ Privacy & Cookie Policy
-    </div>
-    <div style="color: #a1a1aa; line-height: 1.4; margin-bottom: 10px;">
-      Refinzi is local-first. We use essential local storage for theme and currency settings with zero personal data collection or cloud telemetry.
-    </div>
-    <div style="display: flex; align-items: center; gap: 12px;">
-      <button type="button" onclick="document.getElementById('cookie-notice').style.display='none'" style="background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: 5px 12px; font-weight: 600; font-size: 11px; cursor: pointer;">
-        Got it
-      </button>
-      <a href="/privacy/" style="color: #93c5fd; text-decoration: underline; font-size: 11px;">
-        Read Privacy Policy
-      </a>
-    </div>
-  </div>
-
-  <script src="main.js"></script>
 </body>
 </html>

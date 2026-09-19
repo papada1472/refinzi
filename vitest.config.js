@@ -6,27 +6,25 @@ export default defineConfig({
     globals: true,
     // No global setup — each test file handles its own mocking
     setupFiles: [],
-    // Test file include pattern — only test files under src/main/tests
-    include: ["src/main/tests/**/*.test.{js,ts}"],
+    include: [
+      "extension/test/**/*.test.{js,ts}"
+    ],
     // Coverage configuration
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
       reportsDirectory: "./coverage",
       include: [
-        "src/main/**/*.js",
-        "!src/main/tests/**",
-        "!src/main/main.js",
+        "extension/src/**/*.ts",
+        "!extension/test/**",
       ],
       thresholds: {
         global: {
-          statements: 75,
-          branches: 75,
-          functions: 75,
-          lines: 75,
+          statements: 60,
+          branches: 60,
+          functions: 60,
+          lines: 60,
         },
-        "src/main/services/metricsService.js": { statements: 85 },
-        "src/main/clipboardFlow.js": { statements: 85 },
       },
     },
   },

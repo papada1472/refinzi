@@ -10,9 +10,10 @@
 ## 🔒 Security Architecture
 
 Refinzi is built strictly with **local-first client-side security**:
-- **API Keys**: Encrypted on-device using Windows DPAPI (AES-256). They are never transmitted to Refinzi servers.
-- **Prompt Isolation**: Highlighted text is processed in-memory and instantly replaced or copied. Zero prompt logging.
-- **Zero Cloud Telemetry**: Refinzi does not monitor keystrokes or record screen context.
+- **API Keys**: Stored exclusively in the extension's own `chrome.storage.local` sandbox and isolated inside the background service worker. Web pages never see raw credentials, and keys are never transmitted to Refinzi servers.
+- **Prompt Isolation**: Your prompt is processed in-memory and written straight back into the composer. Zero prompt logging.
+- **Zero Cloud Telemetry**: Refinzi does not monitor keystrokes, record screen context, or send content anywhere.
+- **On-Device Default**: The built-in synthesis engine runs locally, so prompt refinement works with no API key and no network request at all.
 
 ## 🚨 Reporting a Vulnerability
 

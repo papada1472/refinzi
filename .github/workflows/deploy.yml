@@ -32,6 +32,10 @@ jobs:
       - name: Install dependencies
         working-directory: landing
         run: npm ci
+      - name: Install extension build dependencies
+        run: npm ci
+      - name: Build extension and sync download zips
+        run: npm run build:extension
       - name: Build site
         working-directory: landing
         run: npm run build

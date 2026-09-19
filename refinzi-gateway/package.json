@@ -1,6 +1,6 @@
 {
   "name": "refinzi-gateway",
-  "description": "Refinzi 2.0 — Serverless Edge Failover API Gateway",
+  "description": "Refinzi 2.1.0 — Serverless Edge Failover API Gateway",
   "version": "1.0.0",
   "type": "module",
   "homepage": "https://refinzi.com",

@@ -1,155 +1,142 @@
-# Refinzi 2.0 — The Ambient AI Layer for Windows
+# Refinzi 2.1.0
 
-> 100% Free, open-source, and local-first. Refinzi sits ambiently on Windows 10 & 11 to transform rough 1-line ideas, polish writing, and scaffold deep 5-block architecture blueprints in under 2 seconds directly in-place across any Windows application.
+> **"Grammarly for prompts."**  
+> *"It doesn't just rewrite your words. It understands what you're trying to accomplish and turns that rough thought into a prompt the AI can execute better."*
 
-[![GitHub release](https://img.shields.io/github/v/release/papada1472/refinzi?color=blue&style=flat-square)](https://github.com/papada1472/refinzi/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg?style=flat-square)](LICENSE)
-[![VirusTotal Clean](https://img.shields.io/badge/VirusTotal-0%2F72%20Clean-success?style=flat-square)](https://refinzi.com)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-blue?style=flat-square)](https://refinzi.com)
-[![Privacy](https://img.shields.io/badge/Privacy-100%25%20Local%20DPAPI-purple?style=flat-square)](docs/TRUST_AND_PRIVACY.md)
+[![Version](https://img.shields.io/badge/version-2.1.0-indigo.svg)](package.json)
+[![Manifest](https://img.shields.io/badge/Manifest-V3-emerald.svg)](extension/manifest.json)
+ [![Browsers](https://img.shields.io/badge/Browsers-Chrome%20%7C%20Edge%20%7C%20Firefox-blue.svg)](dist/)
+[![Tests](https://img.shields.io/badge/Tests-39%20Passed-brightgreen.svg)](extension/test/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[Website](https://refinzi.com) · [Documentation](https://refinzi.com/docs/) · [LLMs Context](https://refinzi.com/llms-full.txt) · [Releases](https://github.com/papada1472/refinzi/releases) · [Issues](https://github.com/papada1472/refinzi/issues) · [Discussions](https://github.com/papada1472/refinzi/discussions)
-
----
-
-## ⚡ The Problem Refinzi Solves
-
-In modern AI workflows on Windows, users are left with clunky friction:
-1. **The Alt-Tab Tax**: Constantly switching away from your work into ChatGPT or Claude web tabs, copy-pasting back and forth, losing creative flow.
-2. **Locked Browser Extensions**: Extensions only work inside Chrome/Edge tabs. They cannot touch your desktop IDEs (Cursor, VS Code), Discord, Slack, Obsidian, Notion desktop, or PDF readers.
-3. **The Diminishing Prompt Bottleneck**: When you type a vague 1-liner into Midjourney, Runway, Kling, or frontier reasoning models (DeepSeek R1, Claude 3.7 Thinking), you get hallucinations, generic output, or burned render credits because the model lacked camera physics, epistemic boundaries, or structural specs.
-
-**Refinzi 2.0 brings a native, instant ambient execution layer to Windows:**  
-Highlight any text in **any** application, 1-click the subtle floating Orb (or press `Ctrl + Alt + Space`), and your text is refined in-place in under 2 seconds.
+Refinzi is a cross-browser native WebExtension (Manifest V3) for Chrome, Edge, and Firefox. 
 
 ---
 
-## 🚀 Quick Install
+## ◉ The Frozen Product Flow
 
-### Method 1: Windows Package Manager (winget)
-```powershell
-winget install refinzi
+```text
+                 VAGUE PROMPT
+                      ◉
+                    /   \
+               CLICK     HOLD
+                 ↓         ↓
+              BETTER     EXPERT
+              PROMPT     PROMPT
+                 \         /
+                  ↓       ↓
+                   NEW PROMPT
+                       ↓
+                    AI OUTPUT
 ```
 
-### Method 2: Direct Setup Binary (.exe)
-Download the standalone Windows setup executable:
-* **Release Asset:** [`Refinzi-Setup-v2.0.0.exe`](https://github.com/papada1472/refinzi/releases/download/v2.0.0/Refinzi-Setup-v2.0.0.exe)
-* **SHA256 Checksum:** `bd2416a3277b56ad1b2a119d8e9536aae0618f45d659c8269dd944f525a1c1e2`
+### What the user experiences:
+1. **User writes naturally** into ChatGPT, Claude, Gemini, or Perplexity:
+   > *"GTM to enter in US market"*  
+   Zero prompt-engineering knowledge required.
+2. **Click Orb (< 350ms) $\rightarrow$ ⚡ Better Mode**:  
+   Refinzi understands the actual task and intent, identifies high-value missing dimensions, and calibrates the instruction.
+3. **Hold Orb ($\ge$ 350ms) $\rightarrow$ 🧠 Expert Mode**:  
+   Refinzi performs deep task reconstruction (*Understand $\rightarrow$ Infer $\rightarrow$ Assume $\rightarrow$ Execute*), assembling an expert-grade briefing with defensible assumptions. **Never asks the user questions.**
+4. **Automatic In-Place Replacement**:  
+   The prompt is automatically replaced in-place directly inside the AI composer (Grammarly-style).
+   - No separate window.
+   - No questionnaire.
+   - No mandatory Apply clicks.
+   - Preserves original draft with a floating `[↩ Undo]` toast.
+5. **Send to AI normally**:  
+   User simply presses Enter / Send in their AI tool to receive superior AI output.
 
-To verify integrity after downloading, run in PowerShell:
-```powershell
-Get-FileHash .\Refinzi-Setup-v2.0.0.exe -Algorithm SHA256
+---
+
+## 🏗️ Architecture
+
+```text
+Natural Thought in AI Composer
+            ↓
+       Refinzi Core
+            ↓
+   Intent Understanding & Granular Task Detection
+            ↓
+       Better / Expert Calibration Engine
+            ↓
+     BYOK Background Provider (OpenAI, Gemini, DeepSeek, Local)
+            ↓
+       New Calibrated Prompt
+            ↓
+  Automatic In-Place Injection (ProseMirror / Lexical / Textarea)
+            ↓
+     Floating [↩ Undo] Toast Feedback
+            ↓
+         Target AI
 ```
-*(The hash must match the SHA256 above)*.
 
-> **Windows SmartScreen Note:** Because Refinzi is an independent, community-backed open-source tool without an expensive commercial EV certificate, Windows Defender SmartScreen may show an informational warning on first install. Click **More info → Run anyway**, or audit the source code and build locally.
+### Core Principles:
+- **Ambient Orb**: Primary interface docked near the active AI composer. Movable by dragging (> 6px); double-click resets position.
+- **Click = Better, Hold = Expert**: Single unified physical control.
+- **Direct In-Place Replacement**: Grammarly-style zero-friction text substitution with instant undo.
+- **Zero Questions**: Never pauses to interrogate the user. Makes defensible assumptions autonomously.
+- **Bring-Your-Own-Key (BYOK)**: User API keys and network calls are isolated inside the background service worker. Webpages never see raw credentials.
+- **Zero Drop**: Legacy file drops, questionnaires, and upload zones have been completely removed.
+- **Zero Generic Templates**: Better Mode dynamically tailors dimensions for the exact prompt, never outputting generic marketing/coding boilerplate.
 
-### Method 3: Build from Source
+---
+
+## 🌐 Supported AI Platforms
+
+| Platform | Composer Target | In-Place Injection Strategy |
+| :--- | :--- | :--- |
+| **ChatGPT** (`chatgpt.com`) | ProseMirror contenteditable & textareas | Caret range insertion + input prototype setter |
+| **Claude** (`claude.ai`) | ProseMirror & fieldset wrapped contenteditable | Synthetic selection + execCommand & input events |
+| **Gemini** (`gemini.google.com`) | rich-textarea & Quill contenteditable | Subtree element selection + prototype setter |
+| **Perplexity** (`perplexity.ai`) | Query textareas & follow-up inputs | Native value descriptor setter + input/change dispatch |
+| **Generic Web** | Any web textarea or `contenteditable` | Automatic fallback adapter |
+
+---
+
+## 🎛️ Extension Control Center
+
+Clicking the browser extension icon opens a compact control center (380px $\times$ 560px, Raycast $\times$ Linear $\times$ Arc design):
+- **Home**: Today's Better/Expert usage counters, active BYOK engine status, and recent calibrations.
+- **History**: Searchable log of past prompt transformations with a prompt inspection drawer and 1-click copy.
+- **Settings**: Provider & model selection, secure API key entry with inline verification, hold duration adjustment (300–600ms), auto-apply toggle, and privacy controls.
+
+---
+
+## 💻 Building & Testing
+
+### Automated Test Suite
 ```bash
-git clone https://github.com/papada1472/refinzi.git
-cd refinzi
-npm install
-npm run dev
-```
-To compile a standalone `.exe` installer locally:
-```bash
-npm run dist
-```
+# Run the complete test suite (39 unit & integration tests)
+npx vitest run extension/test
 
----
+# Run TypeScript typecheck
+npm run typecheck
 
-## 🛠️ Core Capabilities
-
-### 1. In-Place Text Rebuilding (`Ctrl + Alt + Space`)
-Highlight text in any application (Cursor, Discord, Chrome, Word, Slack, Terminal). The ambient Orb anchors smoothly near your cursor. Tap the Orb or hit the shortcut to replace the selection with a model-calibrated prompt or polished prose.
-
-### 2. 5-Block Architectural & Research Blueprint (`Ctrl + Alt + B` or Hold 300ms)
-When a simple prompt isn't enough, holding the Orb generates a structured 5-block blueprint:
-* **Block 1: Structure & Epistemic Hierarchy** — Layout grid trees, responsive breakpoints, or core scientific hypotheses.
-* **Block 2: Component Assets & Variable Matrix** — Tokenized UI components, states, or cohort variables.
-* **Block 3: Conversion Copy & Evidence Claims** — Value headlines, direct-response copy, or literature citations.
-* **Block 4: Motion Dynamics & Adversarial Constraints** — Camera physics/vectors, or confounder audits and boundary controls.
-* **Block 5: Master Production Prompt Pack** — Formatted execution prompts for Midjourney, Runway, Claude, or Cursor Composer.
-
-### 3. Model Freedom & 0% Markup BYOK
-Connect your own API key directly:
-* **DeepSeek**: DeepSeek-V3, DeepSeek-R1 (Reasoning)
-* **Anthropic**: Claude 3.5 Sonnet, Claude 3.7 Sonnet (Thinking)
-* **OpenAI**: GPT-4o, GPT-4o mini, o1, o3-mini
-* **Google**: Gemini 2.0 Flash, Gemini 1.5 Pro, Gemini 2.5
-* **OpenRouter**: Nemotron 120B, Llama 3.3 70B, Qwen 2.5, Mistral Large
-* **Local Offline**: Air-gapped localhost Ollama (`http://localhost:11434`)
-
-### 4. 100% Local-First Privacy (Zero Telemetry)
-* **No cloud database**: Your prompts never touch our servers and are never logged or trained on.
-* **Native Windows DPAPI**: BYOK API keys are encrypted on-device via Windows Data Protection API (AES-256 GCM) tied to your Windows user account.
-* **0/72 Clean**: Completely clean scan on VirusTotal.
-
----
-
-## ⚖️ Refinzi vs. Alternatives
-
-| Feature / Metric | ❌ Manual Alt-Tab | 🧩 Chrome Extensions | ⚡ Refinzi 2.0 (Windows) |
-|---|---|---|---|
-| **Platform** | Any | Browser only | **Windows 10 & 11 Native** |
-| **Trigger Friction** | Copy, Alt-Tab, paste, copy back | Trapped in browser tabs | **In-Place Orb / Global Hotkey** |
-| **Licensing** | N/A | Closed / SaaS | **100% Open Source (MIT)** |
-| **Pricing** | Free (wasted time) | $15–$30/mo subscription | **Free BYOK / $12 Lifetime Supporter** |
-| **Privacy Model** | Third-party cloud chats | Logged on extension servers | **100% Local DPAPI AES-256** |
-| **Execution Latency** | 20–40 seconds | 5–10 seconds | **< 2.0 seconds in-place** |
-
----
-
-## ☕ Pricing & The Supporter Tier
-
-Refinzi rejects recurring SaaS subscriptions:
-
-* **Free / BYOK Tier ($0 Forever):**  
-  Full access to the ambient Orb, 5-Block Blueprint engine, global shortcuts, and unlimited usage with your own Gemini, DeepSeek, Anthropic, OpenAI, or OpenRouter API keys. 0% markup forever.
-* **Supporter Pro ($12 USD / ₹999 INR One-Time Coffee):**  
-  For users who want to support independent open-source development. Includes **zero-config managed routing** (use Claude 3.5 & GPT-4o without configuring API accounts), cloud preset syncing, VIP Discord community access, and lifetime free updates. Backed by an unconditional 14-day refund guarantee.
-
----
-
-## 🧪 Testing & Development
-
-Run unit and integration tests:
-```bash
-npm test
-```
-
-Run the local documentation & landing site:
-```bash
-cd landing
-npm install
-npm run dev
-```
-
-Build the production web bundle:
-```bash
+# Build all browser extension targets (Chrome, Edge, Firefox)
 npm run build
+
+# Verify release packages
+node scripts/verify-release.js
 ```
 
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Whether you are fixing bugs, optimizing Windows native hooks, adding provider integrations, or improving documentation:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+### Loading Unpacked in Chrome / Edge / Brave
+1. Open `chrome://extensions/` (or `edge://extensions/`, `brave://extensions/`).
+2. Enable **Developer mode** in the top-right corner.
+3. Click **Load unpacked**.
+4. Select `dist/chrome/` (or `dist/edge/`).
+5. Open ChatGPT, Claude, Gemini, or Perplexity to see the Refinzi Orb.
 
 ---
 
-## 📄 License & Contact
+## 🔒 Privacy & Security
 
-* **License**: MIT License. See [LICENSE](LICENSE) for details.
-* **Website**: [refinzi.com](https://refinzi.com)
-* **Bug Reports**: [GitHub Issues](https://github.com/papada1472/refinzi/issues)
-* **Discussions**: [GitHub Discussions](https://github.com/papada1472/refinzi/discussions)
-* **Contact**: contact@refinzi.com
+- **Direct HTTPS**: All BYOK API requests are sent directly to the configured provider endpoint from the extension background service worker.
+- **Zero Prompt Storage**: User prompts are never sent to external servers or logged.
+- **Client-Side History**: History is saved exclusively in `chrome.storage.local` on your machine and can be cleared with one click.
+
+---
+
+## 📄 License
+
+MIT License. Copyright (c) 2026 Refinzi Team.

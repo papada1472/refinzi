@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Refinzi — Universal Browser Text Layer Test Page</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-bright: #f0f6fc;
+      --gold: #ffd700;
+      --accent: #58a6ff;
+      --danger: #f85149;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 40px 20px;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 880px;
+      margin: 0 auto;
+    }
+    header {
+      margin-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+    h1 {
+      color: var(--text-bright);
+      margin: 0 0 8px 0;
+      font-size: 26px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .badge {
+      font-size: 12px;
+      background: rgba(255, 215, 0, 0.15);
+      color: var(--gold);
+      border: 1px solid rgba(255, 215, 0, 0.4);
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: normal;
+    }
+    p.subtitle {
+      margin: 0;
+      color: #8b949e;
+      font-size: 14px;
+    }
+    .test-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .test-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+    }
+    .test-card h2 {
+      font-size: 16px;
+      margin: 0 0 8px 0;
+      color: var(--text-bright);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-meta {
+      font-size: 12px;
+      color: #8b949e;
+      margin-bottom: 14px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-bright);
+    }
+    textarea, input[type="text"], input[type="email"], input[type="search"], input[type="password"] {
+      width: 100%;
+      background: #090d13;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-bright);
+      padding: 12px 14px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    textarea:focus, input:focus, .editable-surface:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
+    }
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+    .editable-surface {
+      min-height: 90px;
+      background: #090d13;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-bright);
+      padding: 12px 14px;
+      font-size: 14px;
+      outline: none;
+    }
+    .btn-action {
+      background: #21262d;
+      border: 1px solid var(--border);
+      color: var(--text-bright);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 500;
+      margin-top: 10px;
+      transition: background 0.15s;
+    }
+    .btn-action:hover {
+      background: #30363d;
+    }
+    .tag-excluded {
+      color: var(--danger);
+      font-size: 11px;
+      font-weight: bold;
+    }
+    .rich-toolbar {
+      display: flex;
+      gap: 6px;
+      background: #1c2128;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      padding: 6px 10px;
+    }
+    .rich-toolbar button {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .rich-toolbar button:hover {
+      background: #30363d;
+      color: #fff;
+    }
+    .rich-editor-box {
+      border-top-left-radius: 0 !important;
+      border-top-right-radius: 0 !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>⚡ Refinzi Browser-Wide Text Layer Test <span class="badge">Generic Test</span></h1>
+      <p class="subtitle">Verifies that Click = Better and Hold = Expert work across arbitrary editable surfaces without AI sites.</p>
+    </header>
+
+    <div class="test-grid">
+      <!-- 1. Standard Textarea -->
+      <div class="test-card" id="card-textarea">
+        <h2>1. Standard &lt;textarea&gt;</h2>
+        <div class="card-meta">Test full-text prompt calibration and auto-replacement.</div>
+        <label for="test-textarea-1">Type: "write a professional email asking for payment"</label>
+        <textarea id="test-textarea-1" placeholder="Type your raw thought here...">write a professional email asking for payment</textarea>
+      </div>
+
+      <!-- 2. Text Input -->
+      <div class="test-card" id="card-input">
+        <h2>2. Standard &lt;input type="text"&gt;</h2>
+        <div class="card-meta">Single-line text inputs (search, comments, descriptions).</div>
+        <label for="test-input-1">Query / Thought Input</label>
+        <input type="text" id="test-input-1" value="GTM to enter in US market" placeholder="Enter topic...">
+      </div>
+
+      <!-- 3. ContentEditable -->
+      <div class="test-card" id="card-ce">
+        <h2>3. ContentEditable Container</h2>
+        <div class="card-meta">Simulates modern web apps (Notion, Gmail compose, Twitter, Jira).</div>
+        <label>Rich Body</label>
+        <div class="editable-surface" id="test-ce-1" contenteditable="true">
+          write landing page hero for developer tool
+        </div>
+      </div>
+
+      <!-- 4. Dynamically Created Textarea -->
+      <div class="test-card" id="card-dynamic-textarea">
+        <h2>4. Dynamically Created &lt;textarea&gt;</h2>
+        <div class="card-meta">Verifies SPA dynamic form generation and lazy surface attachment.</div>
+        <button type="button" class="btn-action" id="btn-create-textarea">+ Spawn Dynamic Textarea</button>
+        <div id="dynamic-textarea-container" style="margin-top: 12px;"></div>
+      </div>
+
+      <!-- 5. Dynamically Created ContentEditable -->
+      <div class="test-card" id="card-dynamic-ce">
+        <h2>5. Dynamically Created ContentEditable</h2>
+        <div class="card-meta">Verifies dynamic rich-text modal creation.</div>
+        <button type="button" class="btn-action" id="btn-create-ce">+ Spawn Dynamic ContentEditable</button>
+        <div id="dynamic-ce-container" style="margin-top: 12px;"></div>
+      </div>
+
+      <!-- 6. Multiple Textboxes (Active-Surface Tracking) -->
+      <div class="test-card" id="card-multiple">
+        <h2>6. Multiple Textboxes (Single Orb Model)</h2>
+        <div class="card-meta">Switching focus between fields must move the single Orb without duplicate Orbs.</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label for="multi-box-1">Subject</label>
+            <input type="text" id="multi-box-1" value="Partnership Proposal">
+          </div>
+          <div>
+            <label for="multi-box-2">Recipient Role</label>
+            <input type="text" id="multi-box-2" value="VP of Engineering">
+          </div>
+        </div>
+        <div style="margin-top: 12px;">
+          <label for="multi-box-3">Email Body</label>
+          <textarea id="multi-box-3" style="min-height: 70px;">follow up on our sync yesterday</textarea>
+        </div>
+      </div>
+
+      <!-- 7. Rich-Text Editor Simulation -->
+      <div class="test-card" id="card-rich">
+        <h2>7. Rich-Text Editor Simulation (ProseMirror / Quill style)</h2>
+        <div class="card-meta">Includes simulated formatting toolbar and ProseMirror class.</div>
+        <div class="rich-toolbar">
+          <button type="button" onclick="document.execCommand('bold')">B</button>
+          <button type="button" onclick="document.execCommand('italic')">I</button>
+          <button type="button" onclick="document.execCommand('insertUnorderedList')">• List</button>
+        </div>
+        <div class="editable-surface rich-editor-box ProseMirror" id="test-rich-editor" contenteditable="true" role="textbox">
+          create a 90 day onboarding checklist for new senior developers
+        </div>
+      </div>
+
+      <!-- 8. Password Field (Safety Exclusion) -->
+      <div class="test-card" id="card-password">
+        <h2>8. Password Field <span class="tag-excluded">SAFETY EXCLUSION — ZERO ATTACHMENT</span></h2>
+        <div class="card-meta">Refinzi must NEVER activate, mount the Orb, or read sensitive inputs.</div>
+        <label for="test-password">Password / Secret</label>
+        <input type="password" id="test-password" value="SuperSecretPassword123!" autocomplete="current-password">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Dynamic Textarea Spawner
+    document.getElementById('btn-create-textarea').addEventListener('click', () => {
+      const container = document.getElementById('dynamic-textarea-container');
+      const ta = document.createElement('textarea');
+      ta.id = 'dynamic-ta-' + Date.now();
+      ta.placeholder = 'Dynamically spawned textarea...';
+      ta.value = 'analyze churn rate for B2B SaaS startup';
+      container.appendChild(ta);
+      ta.focus();
+    });
+
+    // Dynamic ContentEditable Spawner
+    document.getElementById('btn-create-ce').addEventListener('click', () => {
+      const container = document.getElementById('dynamic-ce-container');
+      const ce = document.createElement('div');
+      ce.className = 'editable-surface';
+      ce.setAttribute('contenteditable', 'true');
+      ce.id = 'dynamic-ce-' + Date.now();
+      ce.innerHTML = 'draft a memo on AI agent governance';
+      container.appendChild(ce);
+      ce.focus();
+    });
+  </script>
+</body>
+</html>

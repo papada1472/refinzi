@@ -1,0 +1,11 @@
+{
+  "extension_name": "Refinzi",
+  "short_description": "The AI prompt calibration layer. Write naturally, click to structure, hold for expert briefs. Works across the web.",
+  "detailed_description": "Refinzi is a browser-native text and prompt calibration layer. Write naturally, click the floating Orb to structure your draft, or hold for an expert brief. Works across popular AI composers and any web text input.\n\nRefinzi is a user-initiated productivity tool. It only modifies text when the user explicitly clicks the Orb or uses a keyboard shortcut. It does not auto-submit forms or scrape AI outputs.\n\n⚡ CLICK = BETTER PROMPT\nInstant 1-click refiner. Preserves your exact intent and terminology while structuring deliverables, fixing ambiguity, and adding key execution context.\n\n🧠 HOLD = EXPERT PROMPT\nHold for 350ms to generate a comprehensive senior practitioner task briefing. Never asks questions or questionnaires — autonomously infers role, constraints, methodology, and format while stating defensible assumptions.\n\n🌐 WORKS ACROSS ANY TEXT INPUT\nDocks unobtrusively next to active input fields across popular AI tools (ChatGPT, Claude, Gemini, Perplexity) as well as GitHub, Notion, Gmail, and custom web textareas.\n\n↩ NATIVE UNDO PRESERVED\nText replacements use native browser insertion APIs so your Ctrl+Z (Undo) stack remains completely intact, backed by an instant floating [↩ Undo] toast.\n\n🔒 LOCAL-FIRST & ZERO PROMPT LOGGING\nRefinzi does not collect, store, or transmit user keystrokes, passwords, or prompt history to external servers. By default, prompt synthesis runs 100% locally on-device inside your browser. Optional Bring-Your-Own-Key (BYOK) connects directly to your chosen provider over HTTPS with zero intermediary logging.",
+  "category": "Productivity",
+  "languages": ["English"],
+  "pricing": "Free",
+  "support_url": "https://github.com/papada1472/refinzi/issues",
+  "privacy_policy_url": "https://refinzi.com/privacy/",
+  "website_url": "https://refinzi.com"
+}

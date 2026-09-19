@@ -9,17 +9,35 @@ const indexPath = path.join(distDir, "index.html");
 
 const ROUTE_METADATA = {
   docs: {
-    title: "Documentation & User Manual — Refinzi 2.0",
-    description: "Complete user manual, shortcuts, 5-block blueprint framework, BYOK API setup, and model configuration for Refinzi on Windows 10/11.",
+    title: "Documentation & User Manual — Refinzi 2.1.0",
+    description: "Complete user manual, the 1-Click Refinzi Orb workflow, Click versus Hold modes, and Bring-Your-Own-Key (BYOK) setup for OpenAI, Anthropic, Gemini, and OpenRouter.",
     canonical: "https://refinzi.com/docs/",
+    bodyHtml: `
+      <main id="main-content" class="mx-auto max-w-[900px] px-4 py-12 sm:px-6 sm:py-16 text-zinc-300">
+        <div class="mb-3 text-xs font-semibold text-blue-400 uppercase tracking-widest">User Manual &amp; Architecture Guide</div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Refinzi 2.1.0 Documentation</h1>
+        <p class="mt-2 text-xs text-zinc-500 font-mono">Universal Browser Prompt Layer • Manifest V3</p>
+        <div class="my-8 border-t border-white/[0.08]"></div>
+        <div class="space-y-6 text-sm leading-relaxed">
+          <h2 class="text-xl font-bold text-white">How Refinzi Works</h2>
+          <p>Refinzi docks a subtle Orb next to any active text input across ChatGPT, Claude, Gemini, Perplexity, GitHub, Notion, Gmail, and custom web composers.</p>
+          <ul class="list-disc pl-5 space-y-2">
+            <li><strong>Click (&lt; 350ms) — Better Mode:</strong> Extracts raw objective, fixes ambiguity, and structures deliverables with zero questionnaires. Instant 1-click execution.</li>
+            <li><strong>Hold (≥ 350ms) — Expert Mode:</strong> Performs deep task reconstruction (Understand → Infer → Assume → Execute). Locks scope, states operational assumptions, and outputs senior practitioner briefings.</li>
+            <li><strong>In-Place Replacement &amp; Undo:</strong> Uses native <code>insertText</code> API calls to preserve the browser's native Undo stack (<kbd>Ctrl+Z</kbd>) and provides a floating <kbd>[↩ Undo]</kbd> toast.</li>
+            <li><strong>Shortcuts:</strong> <kbd>Ctrl+Shift+B</kbd> for Better Mode, <kbd>Ctrl+Shift+E</kbd> for Expert Mode.</li>
+          </ul>
+        </div>
+      </main>
+    `,
     schema: {
       "@context": "https://schema.org",
       "@graph": [
         {
           "@type": "TechArticle",
-          "headline": "Refinzi 2.0 Official Documentation & User Manual",
+          "headline": "Refinzi 2.1.0 Official Documentation & User Manual",
           "url": "https://refinzi.com/docs/",
-          "description": "User guide covering 1-Click floating Orb, Ctrl+Alt+Space shortcuts, 5-Block Blueprint engine, and BYOK setup on Windows 10/11.",
+          "description": "User guide covering the 1-Click Refinzi Orb, Click for Better vs Hold for Expert modes, and Bring-Your-Own-Key (BYOK) setup for OpenAI, Anthropic, Gemini, and OpenRouter.",
           "author": {
             "@type": "Person",
             "name": "Rahul Mangla"
@@ -46,17 +64,61 @@ const ROUTE_METADATA = {
     }
   },
   privacy: {
-    title: "Privacy Policy — Refinzi 2.0",
-    description: "Refinzi Privacy Policy. Learn about our local-first architecture, Windows DPAPI encryption, zero prompt logging, and data safety guarantees.",
+    title: "Privacy Policy — Refinzi 2.1.0",
+    description: "Refinzi Privacy Policy. Learn about our local-first architecture, on-device synthesis, zero prompt logging, and BYOK data safety guarantees.",
     canonical: "https://refinzi.com/privacy/",
+    bodyHtml: `
+      <main id="main-content" class="mx-auto max-w-[900px] px-4 py-12 sm:px-6 sm:py-16 text-zinc-300">
+        <div class="mb-3 text-xs font-semibold text-blue-400 uppercase tracking-widest">Chrome Web Store &amp; User Data Compliance</div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Privacy Policy — Refinzi 2.1.0</h1>
+        <p class="mt-2 text-xs text-zinc-500 font-mono">Effective Date: September 19, 2026 • Version: 2.1.0 (WebExtension MV3)</p>
+        <div class="my-8 border-t border-white/[0.08]"></div>
+
+        <div class="rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-6 space-y-3 mb-8">
+          <h2 class="text-emerald-400 font-bold text-base">Core Privacy Guarantees &amp; Reviewer Declarations</h2>
+          <p class="text-white text-sm font-medium"><strong>Refinzi does not collect, store, or transmit user keystrokes, passwords, or prompt history to external servers.</strong></p>
+          <p class="text-zinc-300 text-xs sm:text-sm"><strong>Refinzi is a user-initiated productivity tool. It only modifies text when the user explicitly clicks the Orb or uses a keyboard shortcut. It does not auto-submit forms or scrape AI outputs.</strong></p>
+        </div>
+
+        <section class="space-y-4 text-sm leading-relaxed">
+          <h2 class="text-xl font-bold text-white">1. Single Purpose Specification</h2>
+          <p>Refinzi operates strictly under Chrome Web Store's Single Purpose Policy: to serve as a user-initiated in-composer prompt layer. It reads user-entered drafts solely when the user clicks or holds the Refinzi Orb, replaces the text in-place with a structured prompt, and provides an instant undo affordance.</p>
+
+          <h2 class="text-xl font-bold text-white">2. Information We Do NOT Collect or Transmit</h2>
+          <ul class="list-disc pl-5 space-y-1.5 text-xs sm:text-sm text-zinc-300">
+            <li><strong>No Keystroke Logging:</strong> Refinzi does not listen to or record keystrokes. It only detects user interaction when the cursor focuses on an editable input element or when the Orb is explicitly clicked.</li>
+            <li><strong>No Password or Sensitive Field Access:</strong> Password fields (<code>type="password"</code>), credit card inputs, hidden fields, and sensitive forms are completely excluded from detection.</li>
+            <li><strong>No Prompt Database on External Servers:</strong> Default prompt synthesis runs entirely locally on-device inside your browser using bundled logic. Your text never leaves your machine unless you explicitly configure an external BYOK API key.</li>
+            <li><strong>No Automated Scraping or Auto-Submission:</strong> Refinzi never automatically submits forms, never presses "Send", and never scrapes web pages or AI model answers.</li>
+            <li><strong>No Analytics or Content Telemetry:</strong> We do not track what you write, who you talk to, or your prompt topics.</li>
+          </ul>
+
+          <h2 class="text-xl font-bold text-white">3. Extension Permissions &amp; Technical Justifications</h2>
+          <p>Refinzi adheres to the principle of least privilege:</p>
+          <ul class="list-disc pl-5 space-y-1.5 text-xs sm:text-sm text-zinc-300">
+            <li><strong>storage:</strong> Used strictly to store the user's local preferences (theme, hold duration, auto-apply toggle), recent prompt transformation history, and locally encrypted Bring-Your-Own-Key (BYOK) API credentials on the device. Data is stored in <code>chrome.storage.local</code> and is never synced to external servers.</li>
+            <li><strong>host_permissions (http://*/*, https://*/*):</strong> Required to detect user-focused editable text areas across ChatGPT, Claude, Google Gemini, Perplexity, GitHub, Notion, Gmail, and custom web composers, and inject the floating calibration Orb UI directly adjacent to the active input. It does not read, scrape, or transmit page content.</li>
+          </ul>
+
+          <h2 class="text-xl font-bold text-white">4. Bring-Your-Own-Key (BYOK) Data Flow</h2>
+          <p>When an optional BYOK API key is configured (OpenAI, Anthropic, Gemini, DeepSeek, OpenRouter), HTTPS API requests travel directly between the browser's background service worker and the chosen provider's official API endpoint. Host web pages and DOM scripts never have access to your credentials.</p>
+
+          <h2 class="text-xl font-bold text-white">5. Data Retention &amp; User Control</h2>
+          <p>Users can delete individual prompt history entries or clear all local extension storage with a single click inside the popup settings. Uninstalling the extension immediately purges all local keys and stored data.</p>
+
+          <h2 class="text-xl font-bold text-white">6. Contact &amp; Privacy Inquiries</h2>
+          <p>For any questions regarding this Privacy Policy or Chrome Web Store compliance, contact: <a href="mailto:contact@refinzi.com" class="text-blue-400 underline">contact@refinzi.com</a> or visit our open-source repository at <a href="https://github.com/papada1472/refinzi" class="text-blue-400 underline">GitHub</a>.</p>
+        </section>
+      </main>
+    `,
     schema: {
       "@context": "https://schema.org",
       "@graph": [
         {
           "@type": "WebPage",
-          "name": "Privacy Policy — Refinzi 2.0",
+          "name": "Privacy Policy — Refinzi 2.1.0",
           "url": "https://refinzi.com/privacy/",
-          "description": "Refinzi Privacy Policy explaining local-first architecture, zero prompt logs, and local key encryption."
+          "description": "Refinzi Privacy Policy explaining local-first architecture, on-device synthesis, zero prompt logs, and Bring-Your-Own-Key data safety."
         },
         {
           "@type": "BreadcrumbList",
@@ -79,15 +141,31 @@ const ROUTE_METADATA = {
     }
   },
   terms: {
-    title: "Terms of Service — Refinzi 2.0",
-    description: "Refinzi Terms of Service, software licensing details, and Lifetime Pro access policy.",
+    title: "Terms of Service — Refinzi 2.1.0",
+    description: "Refinzi Terms of Service, software licensing details, and extension usage terms.",
     canonical: "https://refinzi.com/terms/",
+    bodyHtml: `
+      <main id="main-content" class="mx-auto max-w-[900px] px-4 py-12 sm:px-6 sm:py-16 text-zinc-300">
+        <div class="mb-3 text-xs font-semibold text-blue-400 uppercase tracking-widest">Legal Agreement</div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Terms of Service — Refinzi 2.1.0</h1>
+        <p class="mt-2 text-xs text-zinc-500 font-mono">Last Updated: September 19, 2026 • License: MIT Open Source</p>
+        <div class="my-8 border-t border-white/[0.08]"></div>
+        <div class="space-y-6 text-sm leading-relaxed">
+          <h2 class="text-xl font-bold text-white">1. Open Source License (MIT)</h2>
+          <p>Refinzi is open-source software released under the MIT License. You are free to inspect, run, modify, and distribute the software subject to the terms of the MIT License.</p>
+          <h2 class="text-xl font-bold text-white">2. Acceptable Use</h2>
+          <p>Refinzi is provided to enhance prompt creation in web-based text environments. You agree not to use the software for any unlawful activities.</p>
+          <h2 class="text-xl font-bold text-white">3. Third-Party AI Services</h2>
+          <p>Refinzi connects directly to third-party services (such as OpenAI, Anthropic, Google Gemini, and OpenRouter) when configured by the user via BYOK. Your use of these services is subject to their respective terms.</p>
+        </div>
+      </main>
+    `,
     schema: {
       "@context": "https://schema.org",
       "@graph": [
         {
           "@type": "WebPage",
-          "name": "Terms of Service — Refinzi 2.0",
+          "name": "Terms of Service — Refinzi 2.1.0",
           "url": "https://refinzi.com/terms/",
           "description": "Refinzi Terms of Service and Software License Agreement."
         },
@@ -160,139 +238,18 @@ if (fs.existsSync(indexPath)) {
       );
     }
 
+    if (meta.bodyHtml) {
+      customHtml = customHtml.replace(
+        /<main id="main-content">[\s\S]*?<\/main>/,
+        meta.bodyHtml.trim()
+      );
+    }
+
     fs.writeFileSync(path.join(routeDir, "index.html"), customHtml, "utf8");
     console.log(`Generated customized static route: /${route}/index.html`);
   }
 
-  // Generate /download/windows/index.html & /download/exe/index.html (Edge / GitHub Pages Redirector)
-  const downloadExeUrl =
-    "https://github.com/papada1472/refinzi/releases/download/v2.0.0/Refinzi-Setup-v2.0.0.exe";
-  const downloadFileName = "Refinzi-Setup-v2.0.0.exe";
-  const gaId = "G-T496C1YCYB";
-
-  const downloadHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Downloading RefInzi 2.0 for Windows...</title>
-  <meta name="robots" content="noindex, nofollow">
-  <meta http-equiv="refresh" content="2; url=${downloadExeUrl}">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <!-- Google Analytics 4 -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=${gaId}"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', '${gaId}', { send_page_view: true });
-  </script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: #08090c;
-      color: #f4f4f5;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-    .card {
-      background: rgba(24, 24, 27, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 20px;
-      padding: 40px 32px;
-      max-width: 480px;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(12px);
-    }
-    .spinner {
-      width: 48px;
-      height: 48px;
-      margin: 0 auto 20px;
-      border: 3px solid rgba(59, 130, 246, 0.2);
-      border-top-color: #3b82f6;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    h1 { font-size: 20px; font-weight: 700; margin-bottom: 12px; color: #fff; }
-    p { font-size: 14px; color: #a1a1aa; line-height: 1.6; margin-bottom: 20px; }
-    .btn {
-      display: inline-block;
-      background: #2563eb;
-      color: #fff;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 10px 20px;
-      border-radius: 10px;
-      text-decoration: none;
-      transition: background 0.15s ease;
-    }
-    .btn:hover { background: #1d4ed8; }
-    .file-badge {
-      display: inline-block;
-      margin-top: 14px;
-      font-family: monospace;
-      font-size: 11px;
-      color: #60a5fa;
-      background: rgba(37, 99, 235, 0.15);
-      padding: 4px 10px;
-      border-radius: 6px;
-      border: 1px solid rgba(59, 130, 246, 0.3);
-    }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="spinner"></div>
-    <h1>Your RefInzi 2.0 Download is Starting...</h1>
-    <p>The 64-bit Windows setup binary will download automatically. If your download doesn't start in a few seconds, click below:</p>
-    <a href="${downloadExeUrl}" class="btn" id="manual-btn">Download RefInzi 2.0 (.exe)</a>
-    <div><span class="file-badge">${downloadFileName} · 111.8 MB</span></div>
-  </div>
-
-  <script>
-    (function() {
-      // 1. Dispatch GA4 event if gtag is present
-      try {
-        if (typeof window.gtag === "function") {
-          var urlParams = new URLSearchParams(window.location.search);
-          var source = urlParams.get("source") || "static_redirector";
-          window.gtag("event", "file_download", {
-            file_name: "${downloadFileName}",
-            file_extension: "exe",
-            link_url: "${downloadExeUrl}",
-            download_source: source,
-            transport_type: "beacon"
-          });
-        }
-      } catch (e) {}
-
-      // 2. Trigger immediate download replace
-      setTimeout(function() {
-        window.location.replace("${downloadExeUrl}");
-      }, 400);
-    })();
-  </script>
-</body>
-</html>`;
-
-  const redirectRoutes = ["download/windows", "download/exe"];
-  for (const relRoute of redirectRoutes) {
-    const targetDir = path.join(distDir, relRoute);
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true });
-    }
-    fs.writeFileSync(path.join(targetDir, "index.html"), downloadHtml, "utf8");
-    console.log(`Generated customized static route: /${relRoute}/index.html`);
-  }
-
-  // Also write dist/404.html
+  // Generate dist/404.html
   fs.writeFileSync(path.join(distDir, "404.html"), baseHtml, "utf8");
   console.log("Generated dist/404.html");
 }
