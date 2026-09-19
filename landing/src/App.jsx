@@ -1,186 +1,297 @@
-import React, { useEffect, useRef, useState } from "react";
-import {
-  AlertTriangle,
-  Brain,
-  Check,
-  CheckCircle2,
-  ChevronDown,
-  Download,
-  Flame,
-  Globe,
-  Lock,
-  Receipt,
-  RotateCcw,
-  ShieldCheck,
-  Star,
-  Users,
-  X,
-  XCircle,
-  Zap,
-} from "lucide-react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { ChevronDown, ChevronLeft, ChevronRight, Download, RotateCcw, X, Zap, Brain, Lock, Check, ArrowRight } from "lucide-react";
 import PrivacyPage from "./pages/PrivacyPage.jsx";
 import TermsPage from "./pages/TermsPage.jsx";
 import DocsPage from "./pages/DocsPage.jsx";
 
-/* ─── Constants ──────────────────────────────────────────────────────── */
-
-const PLATFORMS = [
-  { id: "chatgpt", name: "ChatGPT" },
-  { id: "claude", name: "Claude" },
-  { id: "gemini", name: "Google Gemini" },
-  { id: "perplexity", name: "Perplexity" },
-];
-
+/* ─── Downloads ────────────────────────────────────────────── */
 const DOWNLOADS = {
   chrome: "/downloads/refinzi-chrome-v2.1.0.zip",
   firefox: "/downloads/refinzi-firefox-v2.1.0.zip",
   edge: "/downloads/refinzi-edge-v2.1.0.zip",
 };
 
-const DEMO_INPUT = "make a marketing plan for my b2b saas";
-const HOLD_MS = 350;
+/* ─── Platform SVG Logos ───────────────────────────────────── */
+const LogoChatGPT = () => (
+  <svg viewBox="0 0 41 41" fill="currentColor" className="w-5 h-5">
+    <path d="M37.532 16.87a9.963 9.963 0 0 0-.856-8.184 10.078 10.078 0 0 0-10.855-4.835 9.964 9.964 0 0 0-6.4-2.983 10.079 10.079 0 0 0-9.63 6.988 9.967 9.967 0 0 0-6.67 4.818 10.079 10.079 0 0 0 1.24 11.817 9.965 9.965 0 0 0 .856 8.185 10.079 10.079 0 0 0 10.855 4.835 9.965 9.965 0 0 0 6.4 2.984 10.079 10.079 0 0 0 9.63-6.992 9.967 9.967 0 0 0 6.67-4.818 10.079 10.079 0 0 0-1.24-11.813zm-17.317 24.063a7.48 7.48 0 0 1-4.811-1.73c.061-.033.168-.091.237-.134l7.964-4.6a1.294 1.294 0 0 0 .655-1.134V19.054l3.366 1.944a.12.12 0 0 1 .066.092v9.299a7.505 7.505 0 0 1-7.477 7.544zm-16.103-6.904a7.471 7.471 0 0 1-.894-5.023c.06.036.162.099.237.141l7.964 4.6a1.297 1.297 0 0 0 1.308 0l9.724-5.614v3.888a.12.12 0 0 1-.048.103l-8.051 4.649a7.504 7.504 0 0 1-10.24-2.744zm-2.09-17.46a7.47 7.47 0 0 1 3.919-3.285c0 .068-.004.19-.004.274v9.201a1.294 1.294 0 0 0 .654 1.132l9.723 5.614-3.366 1.944a.12.12 0 0 1-.114.012L8.589 25.373a7.504 7.504 0 0 1-6.567-8.904zm27.693 6.44L19.992 17.39l3.366-1.944a.12.12 0 0 1 .114-.012l8.048 4.648a7.498 7.498 0 0 1-1.158 13.528v-9.476a1.293 1.293 0 0 0-.655-1.132zm3.35-5.043c-.059-.037-.162-.099-.236-.141l-7.965-4.6a1.298 1.298 0 0 0-1.308 0l-9.723 5.614v-3.888a.12.12 0 0 1 .048-.103l8.05-4.645a7.497 7.497 0 0 1 11.135 7.763zm-21.063 6.929-3.367-1.944a.12.12 0 0 1-.065-.092v-9.299a7.497 7.497 0 0 1 12.293-5.756 6.94 6.94 0 0 0-.236.134l-7.965 4.6a1.294 1.294 0 0 0-.654 1.132zm1.829-3.943 4.33-2.501 4.332 2.5v4.999l-4.331 2.5-4.331-2.5z"/>
+  </svg>
+);
 
-const BETTER_OUTPUT = `Develop a practical go-to-market strategy for B2B SaaS.
+const LogoClaude = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+    <path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128-4.72 2.647zM9.429 13.1l.08.23 4.72 2.648-.08-.23-4.72-2.648zm4.8 2.855L9.509 13.33l-.08.23 4.72 2.647.08-.23v-.022zm-4.8-5.7l4.72 2.647.08-.23-4.72-2.647-.08.23zM4.709 9.432l4.72 2.647.08-.23-4.72-2.647-.08.23zm4.8-2.855L4.789 9.225l-.08.23 4.72-2.647.08-.23v-.001zm4.8 2.855l-4.72-2.647-.08.23 4.72 2.647.08-.23zm0 2.878l-4.72-2.647-.08.23 4.72 2.647.08-.23zM4.709 12.693l4.72-2.647.08-.23-4.72 2.647-.08.23zM12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.12 16.24l-5.07 2.843a.116.116 0 0 1-.1 0L6.88 16.24a.116.116 0 0 1-.058-.1V7.86a.116.116 0 0 1 .058-.1l5.07-2.843a.116.116 0 0 1 .1 0l5.07 2.843a.116.116 0 0 1 .058.1v8.28a.116.116 0 0 1-.058.1z"/>
+  </svg>
+);
 
-Define:
-1. Ideal customer profile (ICP) & core buyer pain points.
-2. Recommended market-entry approach & positioning against incumbents.
-3. Highest-leverage acquisition channels (organic search, outbound, partnerships).
-4. Phased 90-day execution roadmap and conversion KPIs.
+const LogoGemini = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+    <path d="M11.04 1.5C11.35.6 12.65.6 12.96 1.5L15.1 7.9a1 1 0 0 0 .63.63l6.4 2.14c.9.3.9 1.6 0 1.9l-6.4 2.14a1 1 0 0 0-.63.63L12.96 21.5c-.31.9-1.61.9-1.92 0L8.9 15.34a1 1 0 0 0-.63-.63L1.87 12.57c-.9-.3-.9-1.6 0-1.9L8.27 8.53a1 1 0 0 0 .63-.63L11.04 1.5z"/>
+  </svg>
+);
 
-Clearly state any operational assumptions where product context is unavailable.`;
+const LogoPerplexity = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+    <path d="M22 12C22 17.523 17.523 22 12 22C6.477 22 2 17.523 2 12C2 6.477 6.477 2 12 2C17.523 2 22 6.477 22 12ZM8 9L12 6L16 9V15L12 18L8 15V9Z"/>
+  </svg>
+);
 
-const EXPERT_OUTPUT = `Execution Directive: Develop a 90-day go-to-market strategy for B2B SaaS
+const LogoNotion = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+    <path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.981-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.374.466zm.793 3.08v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.841-.046.935-.56.935-1.167V6.354c0-.606-.233-.933-.748-.887l-15.177.887c-.56.047-.747.327-.747.933zm14.337.745c.093.42 0 .84-.42.888l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.748 0-.935-.234-1.495-.933l-4.577-7.186v6.952L12.21 19s0 .84-1.168.84l-3.222.186c-.093-.186 0-.653.327-.746l.84-.233V9.854L7.822 9.76c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279v-6.44l-1.215-.14c-.093-.514.28-.887.747-.933zM1.936 1.035l13.31-.98c1.634-.14 2.055-.047 3.082.7l4.249 2.986c.7.513.934.653.934 1.213v16.378c0 1.026-.373 1.634-1.68 1.726l-15.458.934c-.98.047-1.448-.093-1.962-.747l-3.129-4.06c-.56-.747-.793-1.306-.793-1.96V2.667c0-.839.374-1.54 1.447-1.632z"/>
+  </svg>
+);
 
-Scope & Architecture:
-- Beachhead Segment: Mid-market B2B decision-makers with 30-90 day discovery cycles
-- Value Proposition: Quantifiable ROI metrics and positioning against legacy alternatives
-- Distribution Channels: Founder-led outbound, high-intent search, and strategic partner ecosystem
-- Phased Milestones: 0-30 day validation, 30-60 day acquisition loops, 60-90 day scale
-- Performance KPIs: Pipeline velocity, customer acquisition cost (CAC), and trial-to-paid conversion
+const LogoGitHub = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+    <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+  </svg>
+);
 
-Assumptions: Mid-market B2B buyer (stated in prompt as assumption).
+const LogoSlack = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+    <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+  </svg>
+);
 
----
-[Out-of-Scope Strategic Observations]
-(Advisory notes outside the locked deliverable scope):
-- Audit downstream onboarding funnel friction before expanding paid acquisition spend.`;
+const LogoLinear = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+    <path d="M3.66 18.84a11.97 11.97 0 0 0 8.19 3.22c.78 0 1.55-.075 2.3-.22L3.88 11.57a12.06 12.06 0 0 0-.22 7.27zM2.4 15.08L8.92 21.6A12 12 0 0 1 2.4 15.08zM12 0a12 12 0 0 0-8.55 20.43L20.43 3.45A11.95 11.95 0 0 0 12 0zm8.87 4.88L4.88 20.87A12 12 0 0 0 20.87 4.88z"/>
+  </svg>
+);
 
-const PROOF_SCENARIOS = [
+const PLATFORM_LOGOS = [
+  { name: "ChatGPT", Icon: LogoChatGPT, color: "#10A37F" },
+  { name: "Claude", Icon: LogoClaude, color: "#D97706" },
+  { name: "Gemini", Icon: LogoGemini, color: "#4285F4" },
+  { name: "Perplexity", Icon: LogoPerplexity, color: "#20B2AA" },
+  { name: "Notion", Icon: LogoNotion, color: "#ffffff" },
+  { name: "GitHub", Icon: LogoGitHub, color: "#ffffff" },
+  { name: "Slack", Icon: LogoSlack, color: "#4A154B" },
+  { name: "Linear", Icon: LogoLinear, color: "#5E6AD2" },
+];
+
+/* ─── Demo Engine ──────────────────────────────────────────── */
+const DEFAULT_INPUT = "make a marketing plan for my business";
+
+const BETTER_DEFAULT = "Create a practical marketing plan for my business, covering the target audience, positioning, key channels, budget considerations, priorities, and a 90-day execution plan. Make reasonable assumptions where information is missing.";
+
+const EXPERT_DEFAULT = `Marketing Plan — Execution Directive
+
+Scope: 90-day go-to-market plan for [business type — assume B2B SaaS unless stated].
+
+Deliverables required:
+1. Target audience definition: primary segment, job title, pain point, buying trigger.
+2. Positioning statement: one sentence against the most likely incumbent.
+3. Channel prioritisation: top 3 channels ranked by expected CAC, with rationale.
+4. Budget allocation: suggested % split across channels for a bootstrapped/seed budget.
+5. 90-day milestone plan: Month 1 (validation), Month 2 (acquisition), Month 3 (optimise).
+6. Three leading KPIs with definitions.
+
+Constraints: Do not invent company-specific data. Flag assumptions explicitly. Focus on execution, not theory.`;
+
+const CANNED = {
+  email: {
+    better: "Draft a professional follow-up email to [client name] asking whether they have reviewed the proposal sent on [date]. Keep it concise, acknowledge they may be busy, and include one clear next step — a 15-minute call this week or next.",
+    expert: `Follow-up email — Execution Directive
+
+Objective: Re-engage [client] on the open proposal without creating pressure.
+
+Requirements:
+- Tone: warm, professional, low-friction — no urgency language.
+- Reference: mention the proposal by subject line and date sent.
+- Acknowledge context: they may not have had time; validate that.
+- One CTA only: propose two specific times for a 15-minute call.
+- Length: under 120 words.
+- No: "just checking in", "hope this finds you well", filler phrases.
+
+Subject line: include two options — one direct, one curiosity-led.`,
+  },
+  research: {
+    better: "Research the main competitors of Notion in India. Cover each company's product positioning, pricing, target segment, and main differentiator. Focus on tools that are actively used in the Indian market.",
+    expert: `Competitive analysis — Execution Directive
+
+Scope: Notion competitors active in the Indian B2B/SaaS market as of 2024.
+
+Research dimensions (required for each competitor):
+1. Product category and primary use case.
+2. Pricing in INR (or USD if INR unavailable) — free tier limits and paid tiers.
+3. Target segment: SMB, enterprise, individual, education.
+4. Key differentiator vs Notion (one sentence, specific).
+5. Estimated India market presence — evidence required (App Store ratings, LinkedIn company size, G2 reviews, press mentions).
+
+Constraints:
+- Do not invent data; flag where evidence is unavailable.
+- Limit to companies with verifiable India presence.
+- Exclude tools repositioned as Notion alternatives without meaningful adoption.`,
+  },
+  code: {
+    better: "Identify and fix the memory leak in my Node.js application. Explain what is causing it, what the fix does, and how to verify the leak is resolved after applying the fix.",
+    expert: `Memory leak fix — Execution Directive
+
+Environment: Node.js (specify version if known). If unspecified, assume LTS.
+
+Required output:
+1. Diagnostic: identify the most likely leak vectors in the provided code — EventEmitter listeners not removed, closure captures, global arrays/maps, timer handles not cleared.
+2. Root cause: one-sentence plain-English explanation of why memory is retained.
+3. Fix: minimal code change — do not refactor unrelated code or change the architecture.
+4. Verification: provide a short test or monitoring command (e.g. --inspect, process.memoryUsage() log) to confirm the leak is resolved.
+5. Regression check: list what to confirm is unchanged after the fix.
+
+Constraints: Fix only the leak. Do not redesign the feature.`,
+  },
+  marketing: {
+    better: "Create a short marketing campaign concept for [product/service], including the core message, target audience, and suggested channels. Assume a limited budget and prioritise the highest-ROI activities.",
+    expert: `Campaign brief — Execution Directive
+
+For: [product/service — describe in one line if not provided; I will make assumptions].
+
+Deliverables:
+1. Campaign objective: one sentence, measurable.
+2. Audience: primary segment (role, situation, pain), secondary segment.
+3. Core message: one headline, one supporting line.
+4. Channel plan: top 3 channels with budget % rationale (assume ₹50K–₹2L/month budget range unless stated).
+5. Creative direction: tone, visual style, 2–3 content formats.
+6. Success metrics: 3 KPIs with benchmarks.
+
+Assumptions: flag any that materially change the output.`,
+  },
+  image: {
+    better: "Generate [subject] in a [style] style. The image should show [key visual elements] with [lighting/mood] lighting. Make it suitable for [intended use — social media / presentation / print].",
+    expert: `Image generation prompt — Execution Directive
+
+Subject: [describe main subject clearly].
+Style: [photorealistic / illustration / 3D render / oil painting — pick one].
+Composition: [close-up / wide shot / isometric / bird's eye] — [rule of thirds / centered subject].
+Lighting: [natural daylight / studio lighting / golden hour / dramatic chiaroscuro].
+Colour palette: [3–4 specific colours or temperature — warm / cool / monochrome].
+Mood: [professional / playful / dramatic / serene].
+Technical specs: aspect ratio [16:9 / 1:1 / 4:5], high detail, no watermark.
+Negative prompt: [list what to exclude: blur, text, extra limbs, low quality].`,
+  },
+  planning: {
+    better: "Create a project plan for [project name]. Include the main phases, key milestones, dependencies, and a realistic timeline. Flag any risks or decisions that need to be made before starting.",
+    expert: `Project plan — Execution Directive
+
+Project: [name and one-sentence description — I will make reasonable assumptions if unspecified].
+
+Required sections:
+1. Scope statement: what is in and out of scope.
+2. Phase breakdown: 3–5 phases with clear entry/exit criteria.
+3. Milestones: 5–8 with dates (relative to start date, e.g. Week 2, Week 6).
+4. Dependencies: internal (team, decisions, resources) and external (vendors, approvals).
+5. Risk register: top 3 risks with likelihood, impact, and mitigation.
+6. RACI: who is Responsible, Accountable, Consulted, Informed — list roles only.
+
+Format: structured outline, not paragraph prose.`,
+  },
+  default: {
+    better: `${BETTER_DEFAULT}`,
+    expert: `${EXPERT_DEFAULT}`,
+  },
+};
+
+function detectIntent(text) {
+  const t = text.toLowerCase().trim();
+  if (/email|mail|write to|reply to|message to|follow.?up/.test(t)) return "email";
+  if (/research|competitor|analyse|compare|market.?research/.test(t)) return "research";
+  if (/code|bug|fix|function|error|memory|crash|debug|refactor/.test(t)) return "code";
+  if (/image|photo|picture|illustrat|design.*(visual|art)|dall|midjourney/.test(t)) return "image";
+  if (/campaign|launch|ad |ads |advertis|brand/.test(t)) return "marketing";
+  if (/plan|project|roadmap|schedule|timeline|milestone/.test(t)) return "planning";
+  if (/marketing|business|b2b|saas|startup|go.to.market/.test(t)) return "default";
+  return "default";
+}
+
+/* ─── Proof Carousel Data ──────────────────────────────────── */
+const PROOF_CARDS = [
+  {
+    id: "email",
+    label: "Email",
+    you: "email to client asking if they reviewed the proposal",
+    mode: "Better",
+    refinzi: "Draft a concise follow-up email to [Client] regarding the proposal sent on [Date].\n\nRequirements:\n• Professional, low-friction tone — suitable for senior decision-makers.\n• Acknowledge they may be busy; no pressure language.\n• Ask whether they have questions on scope or pricing.\n• One CTA: propose a 15-minute call this Thursday or Friday.",
+    outcome: "Sounds like a senior account exec wrote it — not a template.",
+  },
+  {
+    id: "research",
+    label: "Research",
+    you: "research competitors of Notion in India",
+    mode: "Expert",
+    refinzi: "Competitive analysis of Notion alternatives with active presence in the Indian market.\n\nFor each competitor, cover:\n• Product category and primary use case\n• Pricing in INR (evidence required; flag if unavailable)\n• Target segment: SMB / enterprise / education\n• Key differentiator vs Notion — one sentence, specific\n• Evidence of India presence: App Store ratings, G2 reviews, or press\n\nDo not invent data. Flag gaps where evidence is unavailable.",
+    outcome: "AI stays within facts — no hallucinated market stats.",
+  },
+  {
+    id: "code",
+    label: "Debugging",
+    you: "fix this memory leak in my node app",
+    mode: "Expert",
+    refinzi: "Diagnose and fix the memory leak in this Node.js application.\n\nRequired:\n1. Root cause: plain-English explanation of why memory is retained.\n2. Fix: minimal targeted code change — do not refactor unrelated code.\n3. Verification: command or test to confirm the leak is resolved.\n4. Regression check: confirm what remains unchanged after the fix.\n\nConstraints: fix only the leak. Do not redesign the feature.",
+    outcome: "AI gives a surgical fix, not a full refactor nobody asked for.",
+  },
   {
     id: "marketing",
-    title: "Marketing Email",
-    rawInput: "email to client asking if they reviewed the proposal",
-    genericOutput:
-      "Subject: URGENT: Did you see this game-changing proposal?!\n\nHey Rockstars!\nHope you are having a 10x day! Just wanted to circle back and see if you had a quick 45 minutes to dive deep into our synergy-packed proposal. Opportunities like this don't stay open long! Don't let your competition steal your lunch. Click below now!",
-    genericFlaw:
-      "Turns it into a 400-word pushy cringe sales sequence with fake scarcity and emojis. (Cringe).",
-    refinziMode: "Better Mode (Click)",
-    refinziOutput:
-      "Draft a concise follow-up email regarding the project proposal submitted on [Date].\n\nRequirements:\n- Professional, courteous, low-friction tone suitable for senior enterprise decision-makers.\n- Acknowledge their time constraints.\n- Ask specifically if they have questions on the scope or pricing structure.\n- Single clear CTA: Offer a 10-minute sync this Thursday or Friday to address open items.",
-    refinziPraise:
-      "Professional tone + low-friction CTA. Sounds like a senior account executive. Nailed it.",
+    label: "Marketing",
+    you: "make a marketing plan for my business",
+    mode: "Better",
+    refinzi: "Create a practical marketing plan for my business, covering the target audience, positioning, key channels, budget considerations, priorities, and a 90-day execution plan. Make reasonable assumptions where information is missing.",
+    outcome: "AI produces a usable plan, not a generic theory document.",
   },
   {
-    id: "coding",
-    title: "Node.js Debug",
-    rawInput: "fix memory leak in node server",
-    genericOutput:
-      "Act as a world-class 10x ninja developer and fix the memory leak. As a seasoned veteran software architect with 25 years of cutting-edge experience, you must write clean, bug-free, scalable code. Always follow best practices, add extensive comments, and write elegant code...",
-    genericFlaw:
-      '"World-class ninja" prestige fluff without any concrete diagnostic steps. (Completely useless).',
-    refinziMode: "Expert Mode (Hold)",
-    refinziOutput:
-      "Execution Directive: Diagnose and remediate Node.js process heap memory growth.\n\nDiagnostics & Profiling:\n1. Guide generation of V8 heap snapshots via --inspect and comparison in Chrome DevTools.\n2. Audit common Node.js retention vectors: unevicted LRU cache entries, global EventEmitters without removeListener, and lingering socket streams.\n3. Output minimal, isolated reproduction code demonstrating the leak and the patch.\n4. Verification: Provide a standalone k6 benchmark script validating heap flatline under 5,000 req/sec load.",
-    refinziPraise:
-      "Locks scope. Demands V8 heap snapshots, checks unevicted caches, requires automated load test. Senior Engineer level.",
-  },
-  {
-    id: "content",
-    title: "Blog Post Brief",
-    rawInput: "write blog post about why startups fail",
-    genericOutput:
-      "Write a compelling, engaging, SEO-optimized blog post about why startups fail. Make it interesting! Add headings, bullet points, and a conclusion. Use power words. Target 2000 words. Make it viral! Share on social media!",
-    genericFlaw:
-      "Vague direction with zero editorial angle, no target reader, no SERP intent match.",
-    refinziMode: "Expert Mode (Hold)",
-    refinziOutput:
-      "Execution Directive: Author a TOFU editorial piece targeting Seed/Series-A founders.\n\nContent Architecture:\n- SERP Intent: Informational, target query 'why do funded startups fail'\n- Angle: Data-driven post-mortem referencing CB Insights 12-reason taxonomy\n- Structure: Problem-Agitate-Solution using 3 real anonymized founder case studies\n- Primary CTA: Lead capture for a 'Startup Autopsy Checklist' PDF\n- Word count: 1,800-2,200 words with structured data FAQ schema for rich snippets",
-    refinziPraise:
-      "SERP-intent matched, target reader defined, structured data included. Publication-ready brief.",
+    id: "image",
+    label: "Image prompt",
+    you: "professional photo of a founder at a laptop in a cafe",
+    mode: "Better",
+    refinzi: "Professional photograph of a founder working on a laptop in a modern specialty coffee shop.\n\nStyle: editorial / documentary photography.\nLighting: natural window light from the left, warm afternoon tone.\nComposition: medium shot, rule of thirds, shallow depth of field.\nMood: focused but relaxed — approachable, not staged.\nDetails: laptop open, coffee cup in frame, blurred background activity.\nAspect ratio: 16:9. No watermark. High resolution.",
+    outcome: "Image generator produces exactly the scene — no guesswork.",
   },
 ];
 
-const SOCIAL_TOASTS = [
-  { name: "Arjun M.", location: "Bangalore", action: "just downloaded Refinzi", time: "2 min ago", avatar: "AM" },
-  { name: "Sarah K.", location: "New York", action: "unlocked Lifetime Pro ($12)", time: "4 min ago", avatar: "SK" },
-  { name: "Tom R.", location: "London", action: "just downloaded Refinzi", time: "7 min ago", avatar: "TR" },
-  { name: "Priya S.", location: "Mumbai", action: "unlocked Lifetime Pro ($12)", time: "11 min ago", avatar: "PS" },
-  { name: "James L.", location: "Toronto", action: "just downloaded Refinzi", time: "14 min ago", avatar: "JL" },
-  { name: "Demi O.", location: "Lagos", action: "just downloaded Refinzi", time: "18 min ago", avatar: "DO" },
+/* ─── Use Cases ────────────────────────────────────────────── */
+const USE_CASES = [
+  { emoji: "✉️", label: "Emails", rough: "chase client on invoice", refined: "Professional payment follow-up with one clear ask", outcome: "Emails that get replies" },
+  { emoji: "📣", label: "Marketing", rough: "marketing plan for my app", refined: "Structured 90-day plan with channels, KPIs, budget split", outcome: "Actionable strategy, not theory" },
+  { emoji: "🔬", label: "Research", rough: "research my competitors", refined: "Scoped analysis with evidence requirements — no invented facts", outcome: "Reliable, fact-grounded output" },
+  { emoji: "💼", label: "LinkedIn posts", rough: "write a linkedin post about our product launch", refined: "Hook-first post with one insight, one CTA, platform-appropriate length", outcome: "Posts people actually read" },
+  { emoji: "📋", label: "Project planning", rough: "plan the next quarter", refined: "Phase-based plan with milestones, dependencies, risks", outcome: "A plan a team can actually follow" },
+  { emoji: "🐛", label: "Debugging", rough: "why is my code slow", refined: "Performance audit with profiling steps, root cause, fix, verification", outcome: "Targeted fix, not a rewrite" },
+  { emoji: "🖼️", label: "Image prompts", rough: "a cool background image", refined: "Style, composition, lighting, colour, mood, aspect ratio — all specified", outcome: "First-try images that match the vision" },
+  { emoji: "📄", label: "Summarising", rough: "summarise this meeting", refined: "Structured summary: decisions, action items, owners, deadlines", outcome: "Meeting notes people read and act on" },
+  { emoji: "💡", label: "Rough ideas", rough: "i want to build a product for students", refined: "Problem statement, hypothesis, 3 early validation steps", outcome: "An idea that AI can help you develop" },
 ];
 
-const TESTIMONIALS = [
-  {
-    name: "Marcus T.",
-    role: "Lead Engineer @ Series-B SaaS",
-    avatar: "MT",
-    text: "I was spending 20 minutes per complex ticket writing the perfect AI directive. Refinzi's Expert mode gives me a senior-engineer-grade spec in 2 seconds. My velocity doubled in a week.",
-  },
-  {
-    name: "Priya S.",
-    role: "Head of Growth @ D2C Brand",
-    avatar: "PS",
-    text: "The copy our team was getting from AI was embarrassing — all fluff. After Refinzi, the first draft is now usable. We cut our content production time by 60% this month.",
-  },
-  {
-    name: "Daniel W.",
-    role: "Founder, bootstrapped SaaS",
-    avatar: "DW",
-    text: "The $12 is comical. I was paying $29/month for a prompt library that gave me templates. Refinzi reads my actual context and calibrates in real-time. It is not comparable.",
-  },
-  {
-    name: "Aisha N.",
-    role: "Freelance Consultant",
-    avatar: "AN",
-    text: "Click, done. I write a rough thought, click the Orb, and the AI comes back with something I can actually send to a client. The undo button gives me confidence to try it every time.",
-  },
-];
-
-const SITE_LOGOS = [
-  "ChatGPT", "Claude", "Gemini", "Perplexity", "Notion", "GitHub",
-  "Gmail", "Linear", "Slack", "Confluence", "Medium", "Substack",
-];
-
+/* ─── FAQs ─────────────────────────────────────────────────── */
 const FAQS = [
   {
-    q: "Is my data private? Are you reading my prompts?",
-    a: "100% Local-First. Refinzi processes your text locally in your browser using bundled on-device logic. We do not log, store, or train on your prompts. If you use BYOK, it connects directly from your browser to your provider over HTTPS — Refinzi servers never see your content.",
+    q: "Do I need to know prompt engineering?",
+    a: "No. That is the whole point. You write the way you normally think or type. Refinzi adds the structure, context, and specificity that makes AI actually useful — without you having to learn anything.",
   },
   {
-    q: "Will this slow down my browser?",
-    a: "Nope. Refinzi is built on Manifest V3 — the strictest browser extension standard. It sits quietly in the background and only wakes up when you interact with an editable text box. Zero battery-draining polling, zero persistent background processes.",
+    q: "Does Refinzi only work with ChatGPT?",
+    a: "No. Refinzi works across your browser — ChatGPT, Claude, Gemini, Perplexity, and almost any other website with a text input. Email clients, document editors, CRMs, note-taking tools. If you can type in it, Refinzi can help.",
   },
   {
-    q: "Do I need to pay for ChatGPT Plus to use this?",
-    a: "No. Refinzi works beautifully with the free tiers of AI tools. If you have Plus or Pro, it makes those models perform 10x better by feeding them calibrated directives instead of ambiguous thoughts.",
+    q: "What is the difference between Better and Expert?",
+    a: "Better adds the important missing details to your prompt without changing what you asked for — a quick improvement, useful most of the time. Expert goes further: it structures the request properly, adds execution requirements, and makes reasonable assumptions. Use Expert when the output really matters.",
   },
   {
-    q: "Is the $12 really a one-time payment?",
-    a: "Yes — 100% one-time payment, zero recurring subscription. We are doing this to build a massive loyal user base. Once we hit our capacity cap (soon), this switches to a standard yearly subscription. Lock in lifetime access now.",
+    q: "Will it change what I mean?",
+    a: "No. Refinzi improves how your intent is communicated, not what you intend. It adds context, removes ambiguity, and structures the request — it does not rephrase your goal or put words in your mouth. You can undo it in one click if it is not right.",
   },
   {
-    q: "Does it work on websites other than ChatGPT?",
-    a: "Yes. Refinzi works on any editable text surface across the web — ChatGPT, Claude, Gemini, Perplexity, Notion, GitHub, Gmail, Slack, and any generic textarea or contenteditable input. Site-specific adapters optimize the experience on major AI platforms.",
+    q: "Do I need an API key?",
+    a: "Not for the free version. The core Better mode works without one. Pro users can optionally connect their own API keys to use their preferred AI provider directly — this keeps your data with your provider and removes per-request limits.",
   },
   {
-    q: "What if I want to undo a calibration?",
-    a: "Refinzi uses native browser text insertion APIs (document.execCommand), which means your browser's built-in Ctrl+Z undo stack remains 100% intact. Additionally, a floating Undo toast appears immediately after each calibration for one-click reversal.",
+    q: "Is there a monthly subscription?",
+    a: "The free version is free. The Pro version is a one-time payment of $12. No monthly billing, no annual renewals. You pay once.",
   },
 ];
 
-/* ─── App Router ──────────────────────────────────────────────────────── */
+/* ─── Hold Threshold ───────────────────────────────────────── */
+const HOLD_MS = 350;
 
+/* ─── App Router ───────────────────────────────────────────── */
 export default function App() {
   const [pathname, setPathname] = useState(
     typeof window !== "undefined" ? window.location.pathname : "/"
@@ -196,144 +307,110 @@ export default function App() {
   return <HomePage />;
 }
 
-/* ─── Home Page ──────────────────────────────────────────────────────── */
-
+/* ─── HomePage ─────────────────────────────────────────────── */
 function HomePage() {
-  /* ── UI State ── */
-  const [activePlatform, setActivePlatform] = useState("chatgpt");
-  const [composerText, setComposerText] = useState(DEMO_INPUT);
-  const [lastAction, setLastAction] = useState(null);
+  /* Demo state */
+  const [demoInput, setDemoInput] = useState(DEFAULT_INPUT);
+  const [demoOutput, setDemoOutput] = useState(null); // null = original state
+  const [demoMode, setDemoMode] = useState(null); // 'better' | 'expert'
   const [isHolding, setIsHolding] = useState(false);
-  const [isExpertReady, setIsExpertReady] = useState(false);
   const [holdProgress, setHoldProgress] = useState(0);
-  const [showUndo, setShowUndo] = useState(false);
-  const [activeScenario, setActiveScenario] = useState("marketing");
-  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
-  const [showExitModal, setShowExitModal] = useState(false);
-  const [checkoutEmail, setCheckoutEmail] = useState("");
-  const [checkoutStatus, setCheckoutStatus] = useState(null);
+  const [isExpertReady, setIsExpertReady] = useState(false);
+
+  /* Carousel state */
+  const [carouselIdx, setCarouselIdx] = useState(0);
+  const carouselTimer = useRef(null);
+
+  /* Checkout / exit */
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [showExit, setShowExit] = useState(false);
+  const [email, setEmail] = useState("");
   const [exitEmail, setExitEmail] = useState("");
-  const [exitStatus, setExitStatus] = useState(null);
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const [seatCount, setSeatCount] = useState(847);
-  const [showStickyBar, setShowStickyBar] = useState(false);
-  const [toastIndex, setToastIndex] = useState(0);
-  const [showToast, setShowToast] = useState(false);
+  const [checkoutDone, setCheckoutDone] = useState(false);
+  const [exitDone, setExitDone] = useState(false);
+
+  /* FAQ */
   const [openFaq, setOpenFaq] = useState(null);
-  const [liveCounter, setLiveCounter] = useState(14208);
-  const [countdown, setCountdown] = useState({ h: 11, m: 47, s: 23 });
 
-  /* ── Live counter ── */
-  useEffect(() => {
-    const id = setInterval(
-      () => setLiveCounter((p) => p + Math.floor(Math.random() * 2) + 1),
-      4000
-    );
-    return () => clearInterval(id);
-  }, []);
+  /* Sticky bar */
+  const [showSticky, setShowSticky] = useState(false);
 
-  /* ── Scarcity countdown ── */
-  useEffect(() => {
-    const id = setInterval(() => {
-      setCountdown((prev) => {
-        let { h, m, s } = prev;
-        s--;
-        if (s < 0) { s = 59; m--; }
-        if (m < 0) { m = 59; h--; }
-        if (h < 0) { h = 23; m = 59; s = 59; }
-        return { h, m, s };
-      });
-    }, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  /* ── Sticky scroll bar ── */
-  useEffect(() => {
-    const onScroll = () => setShowStickyBar(window.scrollY > 600);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  /* ── Exit intent ── */
-  useEffect(() => {
-    let triggered = false;
-    const handle = (e) => {
-      if (
-        e.clientY <= 15 &&
-        !triggered &&
-        !sessionStorage.getItem("exit_intent_shown")
-      ) {
-        triggered = true;
-        sessionStorage.setItem("exit_intent_shown", "true");
-        setShowExitModal(true);
-      }
-    };
-    document.addEventListener("mouseleave", handle);
-    return () => document.removeEventListener("mouseleave", handle);
-  }, []);
-
-  /* ── Social proof toasts ── */
-  useEffect(() => {
-    const showNext = () => {
-      setToastIndex((i) => (i + 1) % SOCIAL_TOASTS.length);
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 4500);
-    };
-    const id = setInterval(showNext, 8000);
-    setTimeout(showNext, 3000);
-    return () => clearInterval(id);
-  }, []);
-
-  /* ── Testimonial auto-rotate ── */
-  useEffect(() => {
-    const id = setInterval(
-      () => setActiveTestimonial((i) => (i + 1) % TESTIMONIALS.length),
-      5000
-    );
-    return () => clearInterval(id);
-  }, []);
-
-  /* ── Seat counter drift ── */
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (Math.random() > 0.7) setSeatCount((p) => Math.max(p - 1, 700));
-    }, 12000);
-    return () => clearInterval(id);
-  }, []);
-
-  /* ── Ctrl+Z undo ── */
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        e.key.toLowerCase() === "z" &&
-        composerText !== DEMO_INPUT
-      ) {
-        e.preventDefault();
-        undoAction();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [composerText]);
-
-  /* ── Orb mechanics ── */
-  const holdTimer = useRef(null);
-  const animFrame = useRef(null);
-  const pointerStartTime = useRef(0);
-  const isPointerDown = useRef(false);
+  /* Orb refs */
+  const animRef = useRef(null);
+  const ptrStart = useRef(0);
+  const ptrDown = useRef(false);
   const didHold = useRef(false);
   const undoTimer = useRef(null);
+  const [showUndo, setShowUndo] = useState(false);
 
-  useEffect(
-    () => () => {
-      clearTimeout(holdTimer.current);
-      clearTimeout(undoTimer.current);
-      if (animFrame.current) cancelAnimationFrame(animFrame.current);
-    },
-    []
-  );
+  /* Loop animation for FR-4 */
+  const LOOP_STEPS = [
+    { text: "quick request →", type: "you" },
+    { text: "generic answer", type: "ai" },
+    { text: "rewrite →", type: "you" },
+    { text: "try again", type: "ai" },
+    { text: "add more context →", type: "you" },
+    { text: "try again", type: "ai" },
+  ];
+  const [loopStep, setLoopStep] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setLoopStep((s) => (s + 1) % LOOP_STEPS.length), 900);
+    return () => clearInterval(id);
+  }, []);
 
+  /* Carousel auto-rotate */
+  const startCarousel = useCallback(() => {
+    carouselTimer.current = setInterval(
+      () => setCarouselIdx((i) => (i + 1) % PROOF_CARDS.length),
+      4500
+    );
+  }, []);
+
+  useEffect(() => {
+    startCarousel();
+    return () => clearInterval(carouselTimer.current);
+  }, [startCarousel]);
+
+  const goCarousel = (dir) => {
+    clearInterval(carouselTimer.current);
+    setCarouselIdx((i) => (i + dir + PROOF_CARDS.length) % PROOF_CARDS.length);
+    startCarousel();
+  };
+
+  /* Sticky */
+  useEffect(() => {
+    const fn = () => setShowSticky(window.scrollY > 700);
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => window.removeEventListener("scroll", fn);
+  }, []);
+
+  /* Exit intent */
+  useEffect(() => {
+    let fired = false;
+    const fn = (e) => {
+      if (e.clientY <= 10 && !fired && !sessionStorage.getItem("ei")) {
+        fired = true;
+        sessionStorage.setItem("ei", "1");
+        setShowExit(true);
+      }
+    };
+    document.addEventListener("mouseleave", fn);
+    return () => document.removeEventListener("mouseleave", fn);
+  }, []);
+
+  /* Ctrl+Z undo */
+  useEffect(() => {
+    const fn = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && demoOutput) {
+        e.preventDefault();
+        resetDemo();
+      }
+    };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, [demoOutput]);
+
+  /* Demo mechanics */
   const flashUndo = () => {
     setShowUndo(true);
     clearTimeout(undoTimer.current);
@@ -341,49 +418,52 @@ function HomePage() {
   };
 
   const applyBetter = () => {
-    setComposerText(BETTER_OUTPUT);
-    setLastAction("better");
+    const intent = detectIntent(demoInput);
+    const t = CANNED[intent] || CANNED.default;
+    const out = demoInput === DEFAULT_INPUT ? BETTER_DEFAULT : t.better;
+    setDemoOutput(out);
+    setDemoMode("better");
     flashUndo();
   };
+
   const applyExpert = () => {
-    setComposerText(EXPERT_OUTPUT);
-    setLastAction("expert");
+    const intent = detectIntent(demoInput);
+    const t = CANNED[intent] || CANNED.default;
+    setDemoOutput(t.expert);
+    setDemoMode("expert");
     flashUndo();
   };
-  const undoAction = () => {
-    setComposerText(DEMO_INPUT);
-    setLastAction(null);
+
+  const resetDemo = () => {
+    setDemoOutput(null);
+    setDemoMode(null);
     setShowUndo(false);
   };
 
-  const handlePointerDown = (e) => {
+  const handlePtrDown = (e) => {
     if (e.button !== 0) return;
     e.preventDefault();
-    isPointerDown.current = true;
+    ptrDown.current = true;
     didHold.current = false;
-    pointerStartTime.current = performance.now();
+    ptrStart.current = performance.now();
     setIsHolding(true);
     setIsExpertReady(false);
     setHoldProgress(0);
     const tick = (now) => {
-      if (!isPointerDown.current) return;
-      const progress = Math.min(1, (now - pointerStartTime.current) / HOLD_MS);
-      setHoldProgress(progress);
-      if (progress >= 1) {
-        setIsExpertReady(true);
-        didHold.current = true;
-      } else {
-        animFrame.current = requestAnimationFrame(tick);
-      }
+      if (!ptrDown.current) return;
+      const p = Math.min(1, (now - ptrStart.current) / HOLD_MS);
+      setHoldProgress(p);
+      if (p >= 1) { setIsExpertReady(true); didHold.current = true; }
+      else animRef.current = requestAnimationFrame(tick);
     };
-    animFrame.current = requestAnimationFrame(tick);
+    animRef.current = requestAnimationFrame(tick);
   };
 
-  const handlePointerUp = () => {
-    if (!isPointerDown.current) return;
-    isPointerDown.current = false;
-    if (animFrame.current) cancelAnimationFrame(animFrame.current);
-    const elapsed = performance.now() - pointerStartTime.current;
+  const handlePtrUp = () => {
+    if (!ptrDown.current) return;
+    ptrDown.current = false;
+    if (animRef.current) cancelAnimationFrame(animRef.current);
+    const elapsed = performance.now() - ptrStart.current;
     setIsHolding(false);
     setIsExpertReady(false);
     setHoldProgress(0);
@@ -391,920 +471,716 @@ function HomePage() {
     else applyBetter();
   };
 
-  const handlePointerCancel = () => {
-    isPointerDown.current = false;
+  const handlePtrCancel = () => {
+    ptrDown.current = false;
     setIsHolding(false);
     setIsExpertReady(false);
     setHoldProgress(0);
-    if (animFrame.current) cancelAnimationFrame(animFrame.current);
+    if (animRef.current) cancelAnimationFrame(animRef.current);
   };
 
-  const scrollToPricing = () =>
-    document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+  const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 
-  const handleCheckoutSubmit = (e) => {
-    e.preventDefault();
-    if (!checkoutEmail || !checkoutEmail.includes("@")) return;
-    setCheckoutStatus("processing");
-    setTimeout(() => setCheckoutStatus("success"), 1200);
-  };
+  const curCard = PROOF_CARDS[carouselIdx];
 
-  const handleExitSubmit = (e) => {
-    e.preventDefault();
-    setExitStatus("success");
-  };
-
-  const selectedProof =
-    PROOF_SCENARIOS.find((s) => s.id === activeScenario) || PROOF_SCENARIOS[0];
-  const toast = SOCIAL_TOASTS[toastIndex];
-  const fmt2 = (n) => String(n).padStart(2, "0");
-
-  /* ─────────────────────────────────────────────────────────────────── */
-
+  /* ── RENDER ── */
   return (
-    <div className="min-h-screen bg-[#08090c] text-slate-100 font-sans antialiased">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 antialiased overflow-x-hidden">
 
-      {/* ── Social Proof Toast (bottom-left) ── */}
-      {showToast && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-24 left-4 z-50 max-w-xs flex items-start gap-3 px-4 py-3 rounded-xl bg-[#13141F] border border-white/10 shadow-2xl"
-          style={{ animation: "slideUp 0.4s ease-out" }}
-        >
-          <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[11px] font-bold shrink-0">
-            {toast.avatar}
-          </div>
-          <div>
-            <p className="text-xs font-bold text-white">
-              {toast.name}{" "}
-              <span className="font-normal text-slate-400">from {toast.location}</span>
+      {/* ── Sticky bottom bar ── */}
+      {showSticky && (
+        <div className="fixed bottom-0 inset-x-0 z-40 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-sm">
+          <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <p className="text-sm text-zinc-400 hidden sm:block">
+              Stop rewriting prompts.{" "}
+              <span className="text-zinc-200">Refinzi fixes them in one click.</span>
             </p>
-            <p className="text-[11px] text-emerald-400 font-semibold">{toast.action}</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">{toast.time}</p>
+            <div className="flex items-center gap-2 ml-auto">
+              <a
+                href={DOWNLOADS.chrome}
+                download
+                className="h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Add to Chrome — Free
+              </a>
+              <button
+                onClick={() => setShowCheckout(true)}
+                className="h-9 px-4 rounded-lg border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white text-sm font-medium transition-colors cursor-pointer"
+              >
+                Get Pro $12
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── Sticky Bottom CTA Bar (appears after scroll) ── */}
-      {showStickyBar && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#0E0F1A]/95 backdrop-blur-xl border-t border-white/10 px-4 py-3 flex items-center justify-between gap-3 shadow-2xl">
-          <div className="hidden sm:flex items-center gap-3 min-w-0">
-            <Flame className="w-4 h-4 text-rose-400 shrink-0 animate-pulse" />
-            <span className="text-xs text-slate-300 font-medium truncate">
-              <strong className="text-white">{seatCount} users</strong> active today &bull;{" "}
-              <span className="text-amber-300 font-mono">
-                {fmt2(countdown.h)}:{fmt2(countdown.m)}:{fmt2(countdown.s)}
-              </span>{" "}
-              left at $12
-            </span>
-          </div>
-          <div className="flex items-center gap-2 ml-auto">
-            <a
-              href={DOWNLOADS.chrome}
-              download
-              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs inline-flex items-center gap-1.5 transition-all shrink-0"
-            >
-              <Download className="w-3.5 h-3.5" /> Free Download
-            </a>
-            <button
-              onClick={scrollToPricing}
-              className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs transition-all shrink-0 cursor-pointer"
-            >
-              Get Pro $12
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ══ 1. STICKY TOP URGENCY BAR ══ */}
-      <aside
-        aria-label="Urgency announcement"
-        className="sticky top-0 z-50 bg-gradient-to-r from-rose-950/90 via-amber-950/90 to-rose-950/90 border-b border-rose-500/30 backdrop-blur-md px-3 py-2 text-center text-xs"
-      >
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-          <div className="flex items-center gap-1.5 font-black text-amber-300">
-            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
-            <span>WARNING:</span>
-          </div>
-          <span className="text-white font-medium">
-            You are paying the &ldquo;Stupid Tax&rdquo; on every bad AI prompt. Fix it in 2 seconds instead.
-          </span>
-          <a
-            href={DOWNLOADS.chrome}
-            download
-            className="inline-flex items-center gap-1 bg-amber-400 hover:bg-amber-300 text-black font-bold px-3 py-1 rounded-full text-[11px] shadow-md transition-all shrink-0"
-          >
-            <Download className="w-3 h-3" aria-hidden="true" /> Add to Chrome &mdash; Free
-          </a>
-        </div>
-      </aside>
-
-      {/* ══ NAVIGATION ══ */}
-      <header className="border-b border-white/[0.06] bg-[#0C0D12]/80 backdrop-blur-xl sticky top-[37px] z-40">
-        <nav
-          aria-label="Main Navigation"
-          className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between"
-        >
-          <a href="/" className="flex items-center gap-2.5" aria-label="Refinzi homepage">
-            <span className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-emerald-400 flex items-center justify-center font-black text-white text-sm shadow-md shadow-indigo-500/20">
-              R
-            </span>
-            <span className="font-extrabold text-white text-lg tracking-tight">Refinzi</span>
-            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-              2.1.0
-            </span>
+      {/* ══ NAV ══ */}
+      <header className="sticky top-0 z-50 border-b border-zinc-800/60 bg-zinc-950/90 backdrop-blur-md">
+        <nav className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+          <a href="/" className="flex items-center gap-2" aria-label="Refinzi">
+            <span className="w-7 h-7 rounded-md bg-indigo-600 flex items-center justify-center font-black text-white text-sm">R</span>
+            <span className="font-bold text-white tracking-tight">Refinzi</span>
+            <span className="text-[10px] font-semibold text-indigo-400 border border-indigo-500/30 px-1.5 py-0.5 rounded-full">2.1.0</span>
           </a>
 
-          <ul className="hidden md:flex items-center gap-6 text-xs font-semibold text-slate-300">
-            <li><a href="#video" className="hover:text-white transition-colors">Demo</a></li>
-            <li><a href="#mechanism" className="hover:text-white transition-colors">How It Works</a></li>
-            <li><a href="#proof" className="hover:text-white transition-colors">Proof Wall</a></li>
+          <ul className="hidden md:flex items-center gap-7 text-sm text-zinc-400">
+            <li><a href="#how" className="hover:text-white transition-colors">How it works</a></li>
+            <li><a href="#proof" className="hover:text-white transition-colors">Examples</a></li>
             <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
             <li><a href="#faq" className="hover:text-white transition-colors">FAQ</a></li>
           </ul>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={scrollToPricing}
-              className="hidden sm:inline-flex text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
-            >
-              Lifetime Pro $12
-            </button>
+          <div className="flex items-center gap-2">
             <a
               href={DOWNLOADS.chrome}
               download
-              className="rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3.5 py-2 shadow-lg shadow-indigo-600/20 border border-indigo-400/30 inline-flex items-center gap-1.5 transition-all"
+              className="h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 transition-colors"
             >
-              <Download className="w-3.5 h-3.5" aria-hidden="true" /> Add to Chrome
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Add to Chrome</span>
+              <span className="sm:hidden">Install</span>
             </a>
           </div>
         </nav>
       </header>
 
-      <main id="main-content">
+      <main>
 
-        {/* ══ 2. HERO ══ */}
-        <section className="relative pt-16 pb-10 md:pt-24 md:pb-16 overflow-hidden text-center">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_45%_at_50%_0%,rgba(99,102,241,0.18),transparent_70%)] pointer-events-none" />
-          <div className="max-w-5xl mx-auto px-4 relative z-10">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-950/40 text-[11px] font-bold text-indigo-300 mb-6 uppercase tracking-wider shadow-inner">
-              <Globe className="w-3.5 h-3.5 text-emerald-400" />
-              <span>THE UNIVERSAL BROWSER TEXT LAYER &bull; MANIFEST V3 &bull; 100% PRIVATE</span>
-            </div>
+        {/* ══ FR-1 HERO ══ */}
+        <section className="pt-16 pb-12 sm:pt-24 sm:pb-20 text-center px-4">
+          <div className="max-w-3xl mx-auto">
+            <p className="text-xs font-semibold tracking-[0.15em] uppercase text-indigo-400 mb-4">
+              The simple way to get better AI results
+            </p>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] max-w-4xl mx-auto">
-              Stop Babysitting Your AI.
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-sky-300 to-emerald-400 mt-1.5">
-                Get Senior-Level Outputs on the First Try.
-              </span>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.08] mb-5">
+              Write Naturally.<br />
+              <span className="text-indigo-400">Get Better AI Results.</span>
             </h1>
 
-            <p className="mt-6 text-base sm:text-lg text-slate-300 max-w-3xl mx-auto leading-relaxed">
-              You know what you want. The AI doesn&rsquo;t. Refinzi is the invisible calibration layer
-              that lives in your browser. Type your messy thought.{" "}
-              <strong className="text-white">Click the Orb</strong> for instant structure.{" "}
-              <strong className="text-white">Hold the Orb</strong> for an expert brief.
-            </p>
-            <p className="mt-3 text-xs sm:text-sm font-semibold text-emerald-400 tracking-wide">
-              No forms. No prompt engineering degrees. No questions asked.
+            <p className="text-base sm:text-lg text-zinc-400 max-w-xl mx-auto leading-relaxed mb-3">
+              You don&rsquo;t need to learn prompt engineering. Just type what you want, then click Refinzi for a better prompt&nbsp;&mdash; or hold for an expert one.
             </p>
 
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5">
+            <p className="text-sm text-zinc-500 mb-8">
+              No forms. No complicated settings. No questions.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5">
               <a
                 href={DOWNLOADS.chrome}
                 download
-                className="w-full sm:w-auto px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-base shadow-xl shadow-indigo-600/30 border border-indigo-400/40 inline-flex items-center justify-center gap-2 transform hover:-translate-y-0.5 transition-all"
+                className="w-full sm:w-auto h-12 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm inline-flex items-center justify-center gap-2 transition-colors shadow-lg shadow-indigo-600/20"
               >
-                <Download className="w-5 h-5" /> Add to Chrome &mdash; It&rsquo;s 100% Free
+                <Download className="w-4 h-4" />
+                Add to Chrome — Free
               </a>
-              <button
-                onClick={scrollToPricing}
-                className="w-full sm:w-auto px-7 py-4 rounded-xl bg-[#151620] hover:bg-[#1B1C28] text-emerald-400 font-extrabold text-base border border-emerald-500/30 shadow-lg inline-flex items-center justify-center gap-2 transform hover:-translate-y-0.5 transition-all cursor-pointer"
+              <a
+                href="#how"
+                onClick={(e) => { e.preventDefault(); scrollTo("how"); }}
+                className="w-full sm:w-auto h-12 px-6 rounded-xl border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white font-medium text-sm inline-flex items-center justify-center gap-2 transition-colors"
               >
-                <Zap className="w-5 h-5 text-amber-400" /> Unlock Lifetime Pro &mdash; $12 (One-Time)
-              </button>
+                See How It Works <ArrowRight className="w-4 h-4" />
+              </a>
             </div>
 
-            <p className="mt-4 text-xs text-slate-400 font-medium">
-              Installs in 5 seconds &bull; Zero prompt logging &bull; Works in ChatGPT, Claude, Gemini &amp; everywhere else.
+            <div className="flex items-center justify-center gap-2 text-xs text-zinc-500">
+              <Lock className="w-3.5 h-3.5 text-zinc-600" />
+              <span>Private by design — your prompts are yours.{" "}
+                <a href="/privacy/" className="text-zinc-400 underline underline-offset-2 hover:text-white">Details →</a>
+              </span>
+            </div>
+
+            <p className="mt-4 text-xs text-zinc-600">
+              Works across your browser — from email and documents to ChatGPT, Claude, Gemini and more.
             </p>
+          </div>
+        </section>
 
-            <div className="mt-6 inline-flex flex-wrap items-center justify-center gap-4 text-xs font-semibold px-5 py-2.5 rounded-2xl bg-[#12131D] border border-white/[0.08] shadow-inner">
-              <div className="flex items-center gap-2 text-rose-400 font-mono">
-                <Flame className="w-4 h-4 text-rose-500 animate-pulse" />
-                <span>{liveCounter.toLocaleString()} prompts calibrated today</span>
+        {/* ══ Platform Logo Strip ══ */}
+        <section className="py-8 border-y border-zinc-800/50 overflow-hidden" aria-label="Compatible platforms">
+          <p className="text-center text-xs font-medium text-zinc-600 mb-6 uppercase tracking-widest">
+            Works wherever you type
+          </p>
+          <div className="flex items-center justify-center flex-wrap gap-6 px-6 max-w-3xl mx-auto">
+            {PLATFORM_LOGOS.map(({ name, Icon, color }) => (
+              <div
+                key={name}
+                className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 transition-colors group"
+                title={name}
+              >
+                <span className="opacity-60 group-hover:opacity-100 transition-opacity" style={{ color }}>
+                  <Icon />
+                </span>
+                <span className="text-xs font-medium">{name}</span>
               </div>
-              <span className="text-white/20">&bull;</span>
-              <div className="flex items-center gap-1 text-amber-300">
-                <div className="flex text-amber-400">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
-                  ))}
+            ))}
+          </div>
+        </section>
+
+        {/* ══ FR-2 DEMO ══ */}
+        <section id="demo" className="py-16 sm:py-24 px-4">
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center mb-10">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+                See the difference in 2 seconds.
+              </h2>
+              <p className="text-sm text-zinc-500">Try it below — type anything and click the button.</p>
+            </div>
+
+            {/* Demo box */}
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+              {/* Window chrome */}
+              <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-3">
+                <div className="flex gap-1.5">
+                  <span className="w-3 h-3 rounded-full bg-zinc-700" />
+                  <span className="w-3 h-3 rounded-full bg-zinc-700" />
+                  <span className="w-3 h-3 rounded-full bg-zinc-700" />
                 </div>
-                <span>4.9/5 from early access power-users</span>
+                <span className="text-xs text-zinc-600 font-mono">refinzi — browser demo</span>
+                {demoMode && (
+                  <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${demoMode === "expert" ? "bg-violet-950 text-violet-300 border border-violet-700/40" : "bg-indigo-950 text-indigo-300 border border-indigo-700/40"}`}>
+                    {demoMode === "expert" ? "Expert" : "Better"}
+                  </span>
+                )}
               </div>
-              <span className="text-white/20">&bull;</span>
-              <div className="flex items-center gap-1.5 text-slate-400">
-                <Users className="w-3.5 h-3.5" />
-                <span>
-                  <strong className="text-white">{seatCount}</strong> active today
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
 
-        {/* ══ 3. VIDEO DEMO ══ */}
-        <section id="video" className="max-w-5xl mx-auto px-4 pb-16">
-          <div className="text-center mb-8">
-            <span className="text-xs font-bold uppercase tracking-widest text-indigo-400">
-              See It In Action
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mt-2">
-              Watch Refinzi Transform a Prompt in 2 Seconds
-            </h2>
-          </div>
-
-          <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-indigo-900/30">
-            <div className="px-4 py-2.5 bg-[#0B0C11] border-b border-white/[0.06] flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-rose-500/70 inline-block" />
-              <span className="w-3 h-3 rounded-full bg-amber-500/70 inline-block" />
-              <span className="w-3 h-3 rounded-full bg-emerald-500/70 inline-block" />
-              <span className="ml-3 text-[11px] font-mono text-slate-500">
-                Refinzi 2.1.0 &mdash; Live Browser Demo
-              </span>
-            </div>
-            <video
-              src="/refinzi-demo.mp4"
-              className="w-full block"
-              autoPlay
-              muted
-              loop
-              playsInline
-              controls
-              preload="metadata"
-              aria-label="Refinzi demo showing click and hold functionality on ChatGPT"
-            />
-          </div>
-          <p className="text-center text-xs text-slate-500 mt-3">
-            Real browser recording. No actors. No staging. This is exactly what you install.
-          </p>
-        </section>
-
-        {/* ══ 4. SCROLLING LOGO TRUST STRIP ══ */}
-        <section
-          className="border-y border-white/[0.05] bg-[#0A0B10] py-5 overflow-hidden"
-          aria-label="Compatible platforms"
-        >
-          <p className="text-center text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-4">
-            Works inside every text field across every major platform
-          </p>
-          <div className="relative flex overflow-hidden">
-            <div
-              className="flex shrink-0 gap-10 pr-10 text-sm font-bold text-slate-500 items-center"
-              style={{ animation: "marquee 28s linear infinite" }}
-            >
-              {[...SITE_LOGOS, ...SITE_LOGOS].map((logo, i) => (
-                <span
-                  key={i}
-                  className="whitespace-nowrap px-4 py-1.5 rounded-full border border-white/[0.06] bg-white/[0.02]"
-                >
-                  {logo}
-                </span>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ══ 5. INTERACTIVE ORB DEMO ══ */}
-        <section aria-label="Interactive demo" className="max-w-4xl mx-auto px-4 py-16 relative z-20">
-          <div className="text-center mb-8">
-            <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">
-              Try It Now &mdash; No Install Required
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mt-2">
-              Click or Hold the Orb Below
-            </h2>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-[#12131C] shadow-2xl overflow-hidden">
-            <div className="px-4 py-3 bg-[#0B0C11] border-b border-white/[0.06] flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block" />
-                <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block" />
-                <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block" />
-                <span className="text-xs text-slate-400 font-mono ml-2">Interactive In-Composer Demo</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                {PLATFORMS.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => setActivePlatform(p.id)}
-                    className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all cursor-pointer ${
-                      activePlatform === p.id
-                        ? "bg-indigo-600/30 text-indigo-300 border border-indigo-500/40"
-                        : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    {p.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="p-5 sm:p-7 min-h-[220px] flex flex-col justify-between bg-[#13141E]">
-              <div>
-                <label className="text-[11px] uppercase tracking-wider text-slate-500 font-bold block mb-2">
-                  Active Web Composer ({activePlatform})
+              {/* Input area */}
+              <div className="p-5">
+                <label className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wider block mb-2">
+                  {demoOutput ? "Refinzi improved your prompt:" : "Your prompt:"}
                 </label>
-                <div className="text-sm font-mono whitespace-pre-wrap text-slate-200 leading-relaxed min-h-[110px]">
-                  {composerText}
-                </div>
+
+                {demoOutput ? (
+                  <div className="text-sm text-zinc-200 whitespace-pre-wrap font-mono leading-relaxed min-h-[120px] bg-zinc-950/50 rounded-lg p-4 border border-zinc-800">
+                    {demoOutput}
+                  </div>
+                ) : (
+                  <textarea
+                    className="w-full text-sm text-zinc-200 bg-zinc-950/50 rounded-lg p-4 border border-zinc-800 focus:border-indigo-500/50 focus:outline-none resize-none min-h-[80px] font-mono leading-relaxed placeholder:text-zinc-600 transition-colors"
+                    value={demoInput}
+                    onChange={(e) => setDemoInput(e.target.value)}
+                    placeholder="Type anything — an email, a request, a question…"
+                    rows={3}
+                  />
+                )}
+
+                {!demoOutput && (
+                  <p className="text-[11px] text-zinc-600 mt-2">
+                    Try your own — email, research, code, marketing, anything.
+                  </p>
+                )}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onPointerDown={handlePointerDown}
-                      onPointerUp={handlePointerUp}
-                      onPointerCancel={handlePointerCancel}
-                      className={`relative w-12 h-12 rounded-full flex items-center justify-center font-bold text-white shadow-xl select-none touch-none transition-transform cursor-pointer ${
-                        isExpertReady
-                          ? "bg-emerald-500 ring-4 ring-emerald-400/40 scale-110"
-                          : isHolding
-                          ? "bg-indigo-600 scale-95"
-                          : "bg-indigo-600 hover:bg-indigo-500 hover:scale-105"
-                      }`}
-                      aria-label="Refinzi calibration orb. Click for Better, hold for Expert."
-                      title="Click = Better Prompt (< 350ms) | Hold = Expert Brief (>= 350ms)"
-                    >
-                      <svg
-                        className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none"
-                        viewBox="0 0 48 48"
-                      >
-                        <circle
-                          cx="24" cy="24" r="21"
-                          stroke="currentColor" strokeWidth="3" fill="none"
-                          className="text-white/10"
-                        />
-                        <circle
-                          cx="24" cy="24" r="21"
-                          stroke="currentColor" strokeWidth="3" fill="none"
-                          strokeDasharray={132}
-                          strokeDashoffset={132 - 132 * holdProgress}
-                          strokeLinecap="round"
-                          className={isExpertReady ? "text-emerald-300" : "text-indigo-300"}
-                        />
-                      </svg>
-                      {isExpertReady ? (
-                        <Brain className="w-5 h-5 text-white animate-bounce" aria-hidden="true" />
-                      ) : (
-                        <Zap className="w-5 h-5 text-white" aria-hidden="true" />
-                      )}
-                    </button>
-                  </div>
+              {/* Orb controls */}
+              <div className="px-5 pb-5 flex items-center gap-4">
+                {/* Orb button */}
+                <button
+                  type="button"
+                  onPointerDown={handlePtrDown}
+                  onPointerUp={handlePtrUp}
+                  onPointerCancel={handlePtrCancel}
+                  disabled={!demoInput.trim()}
+                  className={`relative w-12 h-12 rounded-full select-none touch-none transition-all cursor-pointer shrink-0 ${
+                    isExpertReady
+                      ? "bg-violet-600 ring-4 ring-violet-400/30 scale-110"
+                      : isHolding
+                      ? "bg-indigo-700 scale-95"
+                      : "bg-indigo-600 hover:bg-indigo-500 hover:scale-105"
+                  } disabled:opacity-40 disabled:cursor-not-allowed`}
+                  aria-label="Click for Better, hold for Expert"
+                >
+                  {/* Progress ring */}
+                  <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 48 48">
+                    <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2.5" fill="none" className="text-white/10" />
+                    <circle
+                      cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2.5" fill="none"
+                      strokeDasharray={125.6}
+                      strokeDashoffset={125.6 - 125.6 * holdProgress}
+                      strokeLinecap="round"
+                      className={isExpertReady ? "text-violet-300" : "text-indigo-300"}
+                    />
+                  </svg>
+                  {isExpertReady
+                    ? <Brain className="w-5 h-5 text-white animate-bounce mx-auto" />
+                    : <Zap className="w-5 h-5 text-white mx-auto" />
+                  }
+                </button>
 
-                  <div className="text-left">
-                    <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <span>Refinzi Orb</span>
-                      <span className="text-[10px] px-1.5 rounded bg-indigo-950 text-indigo-400 border border-indigo-500/20 font-mono">
-                        {isExpertReady ? "EXPERT READY" : isHolding ? "CHARGING..." : "DOCK ACTIVE"}
-                      </span>
-                    </p>
-                    <p className="text-[11px] text-slate-400">
-                      <strong>Click</strong> for Better &bull; <strong>Hold</strong> for Expert
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-xs font-semibold text-white">
+                    {isExpertReady ? "Release for Expert" : isHolding ? "Hold for Expert…" : "Refinzi Orb"}
+                  </p>
+                  <p className="text-[11px] text-zinc-500">
+                    <strong className="text-zinc-400">Click</strong> = Better &nbsp;·&nbsp;
+                    <strong className="text-zinc-400">Hold</strong> = Expert
+                  </p>
                 </div>
 
-                <div className="flex items-center gap-2.5">
-                  {showUndo && (
-                    <button
-                      onClick={undoAction}
-                      className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-lg transition-all cursor-pointer"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" /> Undo Calibration
-                    </button>
-                  )}
-                  <div className="text-right text-[11px] text-slate-400 font-mono">
-                    Press{" "}
-                    <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700">
-                      Ctrl
-                    </kbd>{" "}
-                    +{" "}
-                    <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700">
-                      Z
-                    </kbd>{" "}
-                    to undo
-                  </div>
-                </div>
+                {showUndo && (
+                  <button
+                    onClick={resetDemo}
+                    className="ml-auto flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white border border-zinc-700 hover:border-zinc-500 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Undo
+                  </button>
+                )}
               </div>
+            </div>
+
+            {/* CTA below demo */}
+            <div className="mt-6 text-center">
+              <a
+                href={DOWNLOADS.chrome}
+                download
+                className="inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-indigo-600/20"
+              >
+                <Download className="w-4 h-4" />
+                Add to Chrome — Free
+              </a>
+              <p className="text-xs text-zinc-600 mt-2">Installs in seconds. Works immediately.</p>
             </div>
           </div>
         </section>
 
-        {/* ══ 6. AGITATION ══ */}
-        <section className="py-20 border-t border-white/[0.06] bg-[#0A0B10]">
-          <div className="max-w-5xl mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-14">
-              <span className="text-xs font-bold uppercase tracking-widest text-rose-400">
-                The Pain You Experience Daily
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2 tracking-tight">
-                The &ldquo;Prompt Engineering&rdquo; Lie is Costing You Hours Every Week.
+        {/* ══ FR-3 MECHANISM ══ */}
+        <section id="how" className="py-16 sm:py-24 px-4 border-t border-zinc-800/50">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+                3 Steps. A Few Seconds. No Copy-Pasting.
               </h2>
-              <p className="text-slate-400 text-sm sm:text-base mt-4 leading-relaxed">
-                Right now, when you use AI, you are forced into two terrible choices:
-              </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="p-7 rounded-2xl bg-[#12131C] border border-rose-500/20 flex flex-col justify-between relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-2xl pointer-events-none" />
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="w-2.5 h-2.5 rounded-full bg-rose-400" />
-                    <h3 className="font-extrabold text-white text-lg">Choice 1: The Lazy Route</h3>
-                  </div>
-                  <p className="text-slate-300 text-sm leading-relaxed mb-4">
-                    You type a quick, vague prompt into ChatGPT or Claude. You get back a generic, robotic,
-                    fluffy answer that barely understands your context.
-                  </p>
-                  <p className="text-rose-400 text-xs font-mono font-semibold">
-                    The Cost: 20+ minutes rewriting, arguing with the bot, and manually editing the output
-                    until it is barely usable.
-                  </p>
-                </div>
-                <div className="mt-6 pt-4 border-t border-white/[0.06] text-xs text-slate-500 font-mono">
-                  Result: Wasted time &amp; mediocre work.
-                </div>
-              </div>
-
-              <div className="p-7 rounded-2xl bg-[#12131C] border border-amber-500/20 flex flex-col justify-between relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                    <h3 className="font-extrabold text-white text-lg">Choice 2: The Mega-Prompt Route</h3>
-                  </div>
-                  <p className="text-slate-300 text-sm leading-relaxed mb-4">
-                    You spend 15 minutes writing a massive, 500-word prompt trying to explain role, tone,
-                    format, and edge cases.
-                  </p>
-                  <p className="text-amber-400 text-xs font-mono font-semibold">
-                    The Cost: The AI hallucinates, ignores half your instructions, and builds an entire
-                    website when you only asked for a hero section.
-                  </p>
-                </div>
-                <div className="mt-6 pt-4 border-t border-white/[0.06] text-xs text-slate-500 font-mono">
-                  Result: Exhaustion &amp; prompt fatigue.
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-10 p-6 rounded-2xl bg-indigo-950/20 border border-indigo-500/30 text-center max-w-3xl mx-auto">
-              <p className="text-slate-200 text-sm sm:text-base font-medium">
-                Both routes cost you time. And time is the only asset you can never buy back.
-                <span className="block text-white font-bold mt-1 text-indigo-300">
-                  Refinzi removes the friction. We don&rsquo;t just &ldquo;make prompts longer.&rdquo; We calibrate them
-                  for execution.
-                </span>
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* ══ 7. MECHANISM ══ */}
-        <section id="mechanism" className="py-20 border-t border-white/[0.06]">
-          <div className="max-w-5xl mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-14">
-              <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">
-                The 3-Second Workflow
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2 tracking-tight">
-                Never Ask. Infer &rarr; Assume &rarr; Execute.
-              </h2>
-              <p className="text-slate-400 text-sm sm:text-base mt-3 leading-relaxed">
-                Refinzi reads your rough draft, understands your intent, and automatically injects the exact
-                missing dimensions the AI needs to nail the job.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid sm:grid-cols-3 gap-4">
               {[
                 {
-                  icon: <Zap className="w-5 h-5" />,
-                  colorClass: "indigo",
-                  title: "CLICK THE ORB",
-                  badge: "BETTER PROMPT (< 350ms)",
-                  desc: "Instantly structures your thought. Adds the 1-3 critical missing constraints. Strips the fluff. Keeps your exact voice. Perfect for 90% of daily tasks.",
-                  footer: "Instant 0-question transformation",
+                  num: "1",
+                  title: "Write",
+                  desc: "Type your rough thought normally. No special formatting. No prompt templates.",
+                  color: "indigo",
                 },
                 {
-                  icon: <Brain className="w-5 h-5" />,
-                  colorClass: "emerald",
-                  title: "HOLD THE ORB",
-                  badge: "EXPERT BRIEF (>= 350ms)",
-                  desc: "Triggers deep, autonomous calibration. Locks the scope so the AI doesn't hallucinate extraneous bloat. Strips prestige jargon. Adds defensible assumptions.",
-                  footer: "Senior practitioner task briefing",
+                  num: "2",
+                  title: "Click or Hold",
+                  desc: "Click the Orb for Better. Hold it for Expert. That's it — no menus, no settings.",
+                  color: "violet",
                 },
                 {
-                  icon: <CheckCircle2 className="w-5 h-5" />,
-                  colorClass: "sky",
-                  title: "AUTO-APPLY",
-                  badge: "DONE IN 2 SECONDS",
-                  desc: "The perfected prompt drops straight into your text box. Native Ctrl+Z undo stack remains intact. Hit enter. Get a masterpiece.",
-                  footer: "Zero copy-paste friction",
+                  num: "3",
+                  title: "Send",
+                  desc: "Refinzi replaces your rough prompt in the same text box. You continue exactly where you were.",
+                  color: "emerald",
                 },
-              ].map((card, i) => (
-                <div
-                  key={i}
-                  className={`p-6 rounded-2xl bg-[#12131C] border border-${card.colorClass}-500/20 flex flex-col justify-between`}
-                >
-                  <div>
-                    <div
-                      className={`w-10 h-10 rounded-xl bg-${card.colorClass}-500/20 border border-${card.colorClass}-500/30 flex items-center justify-center text-${card.colorClass}-400 mb-4`}
-                    >
-                      {card.icon}
-                    </div>
-                    <h3 className="font-bold text-white text-base mb-1">{card.title}</h3>
-                    <span className={`text-xs font-bold text-${card.colorClass}-400 mb-3 inline-block`}>
-                      {card.badge}
-                    </span>
-                    <p className="text-xs text-slate-300 leading-relaxed">{card.desc}</p>
+              ].map((step) => (
+                <div key={step.num} className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold mb-4 ${
+                    step.color === "indigo" ? "bg-indigo-600/15 text-indigo-400"
+                    : step.color === "violet" ? "bg-violet-600/15 text-violet-400"
+                    : "bg-emerald-600/15 text-emerald-400"
+                  }`}>
+                    {step.num}
                   </div>
-                  <div
-                    className={`mt-6 pt-4 border-t border-white/[0.06] text-[11px] font-mono text-${card.colorClass}-400`}
-                  >
-                    {card.footer}
-                  </div>
+                  <h3 className="font-semibold text-white mb-2">{step.title}</h3>
+                  <p className="text-sm text-zinc-400 leading-relaxed">{step.desc}</p>
                 </div>
               ))}
             </div>
+
+            <p className="text-center text-sm text-zinc-500 mt-8">
+              Refinzi does the prompt work. You stay focused on the actual work.
+            </p>
           </div>
         </section>
 
-        {/* ══ 8. PROOF WALL ══ */}
-        <section id="proof" className="py-20 border-t border-white/[0.06] bg-[#0A0B10]">
-          <div className="max-w-5xl mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-12">
-              <span className="text-xs font-bold uppercase tracking-widest text-indigo-400">
-                Show, Don&rsquo;t Tell
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2 tracking-tight">
-                See The Calibration Engine In Action
+        {/* ══ FR-4 PROBLEM ══ */}
+        <section className="py-16 sm:py-24 px-4 border-t border-zinc-800/50 bg-zinc-900/30">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+              You shouldn&rsquo;t have to become a prompt engineer to use AI well.
+            </h2>
+
+            {/* Animated loop */}
+            <div className="inline-flex flex-wrap items-center justify-center gap-2 mb-8 max-w-lg mx-auto">
+              {LOOP_STEPS.map((step, i) => (
+                <span
+                  key={i}
+                  className={`text-sm px-3 py-1 rounded-full transition-all duration-500 ${
+                    i === loopStep
+                      ? step.type === "you"
+                        ? "bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 scale-105"
+                        : "bg-rose-600/15 text-rose-400 border border-rose-500/25 scale-105"
+                      : "text-zinc-600 bg-zinc-800/40 border border-transparent"
+                  }`}
+                >
+                  {step.text}
+                </span>
+              ))}
+            </div>
+
+            <p className="text-base text-zinc-400 mb-2">
+              You spend more time prompting than doing the actual work.
+            </p>
+            <p className="text-sm text-zinc-500">
+              Refinzi gives you a shortcut between &ldquo;I know what I want&rdquo; and &ldquo;AI understands what I need.&rdquo;
+            </p>
+          </div>
+        </section>
+
+        {/* ══ FR-5 PROOF CAROUSEL ══ */}
+        <section id="proof" className="py-16 sm:py-24 px-4 border-t border-zinc-800/50">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-10">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+                What Refinzi actually does to your prompts.
               </h2>
-              <p className="text-slate-400 text-sm mt-3">
-                Side-by-side: generic AI prompt enhancer vs Refinzi. See why the outputs are not comparable.
-              </p>
-              <div className="mt-6 inline-flex p-1.5 rounded-xl bg-[#141520] border border-white/[0.08] gap-1 flex-wrap justify-center">
-                {PROOF_SCENARIOS.map((sc) => (
+              <div className="flex items-center justify-center flex-wrap gap-2 mt-4">
+                {PROOF_CARDS.map((c, i) => (
                   <button
-                    key={sc.id}
-                    onClick={() => setActiveScenario(sc.id)}
-                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      activeScenario === sc.id
-                        ? "bg-indigo-600 text-white shadow"
-                        : "text-slate-400 hover:text-white"
+                    key={c.id}
+                    onClick={() => { clearInterval(carouselTimer.current); setCarouselIdx(i); startCarousel(); }}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-all cursor-pointer ${
+                      i === carouselIdx
+                        ? "bg-indigo-600/20 border-indigo-500/40 text-indigo-300"
+                        : "border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600"
                     }`}
                   >
-                    {sc.title}
+                    {c.label}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/[0.08] bg-[#12131C] p-6 sm:p-8">
-              <div className="p-4 rounded-xl bg-[#0C0D14] border border-white/[0.06] mb-6">
-                <span className="text-[10px] font-mono font-bold uppercase text-slate-500 block mb-1">
-                  Raw User Input
+            {/* Carousel card */}
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800">
+                <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+                  curCard.mode === "Expert"
+                    ? "bg-violet-950 text-violet-300 border border-violet-700/40"
+                    : "bg-indigo-950 text-indigo-300 border border-indigo-700/40"
+                }`}>
+                  {curCard.mode} mode
                 </span>
-                <p className="text-sm sm:text-base font-mono font-bold text-white">
-                  &ldquo;{selectedProof.rawInput}&rdquo;
+                <div className="flex items-center gap-2">
+                  <button onClick={() => goCarousel(-1)} className="w-7 h-7 rounded-md border border-zinc-700 hover:border-zinc-500 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer">
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-xs text-zinc-600">{carouselIdx + 1} / {PROOF_CARDS.length}</span>
+                  <button onClick={() => goCarousel(1)} className="w-7 h-7 rounded-md border border-zinc-700 hover:border-zinc-500 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer">
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-zinc-800">
+                {/* You write */}
+                <div className="p-5 sm:p-6">
+                  <p className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wider mb-3">You write:</p>
+                  <p className="text-sm text-zinc-400 font-mono italic">&ldquo;{curCard.you}&rdquo;</p>
+                </div>
+
+                {/* Refinzi outputs */}
+                <div className="p-5 sm:p-6">
+                  <p className="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider mb-3">Refinzi:</p>
+                  <p className="text-sm text-zinc-200 font-mono whitespace-pre-wrap leading-relaxed">{curCard.refinzi}</p>
+                </div>
+              </div>
+
+              <div className="px-5 sm:px-6 py-4 border-t border-zinc-800 bg-zinc-950/40">
+                <p className="text-sm text-zinc-400">
+                  <span className="text-emerald-400 font-semibold">Result:</span>{" "}
+                  {curCard.outcome}
                 </p>
               </div>
+            </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="p-5 rounded-xl bg-rose-950/10 border border-rose-500/20 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
-                      <XCircle className="w-4 h-4" /> Generic AI &ldquo;Prompt Enhancer&rdquo;
-                    </div>
-                    <p className="text-xs font-mono text-slate-300 whitespace-pre-wrap leading-relaxed">
-                      {selectedProof.genericOutput}
-                    </p>
-                  </div>
-                  <div className="mt-4 pt-3 border-t border-rose-500/20 text-xs text-rose-300 font-semibold">
-                    {selectedProof.genericFlaw}
-                  </div>
-                </div>
+            {/* Progress dots */}
+            <div className="flex justify-center gap-1.5 mt-4">
+              {PROOF_CARDS.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => { clearInterval(carouselTimer.current); setCarouselIdx(i); startCarousel(); }}
+                  className={`h-1.5 rounded-full transition-all cursor-pointer ${i === carouselIdx ? "bg-indigo-500 w-4" : "bg-zinc-700 w-1.5 hover:bg-zinc-500"}`}
+                />
+              ))}
+            </div>
 
-                <div className="p-5 rounded-xl bg-emerald-950/15 border border-emerald-500/30 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
-                      <CheckCircle2 className="w-4 h-4" /> Refinzi ({selectedProof.refinziMode})
-                    </div>
-                    <p className="text-xs font-mono text-slate-200 whitespace-pre-wrap leading-relaxed">
-                      {selectedProof.refinziOutput}
-                    </p>
-                  </div>
-                  <div className="mt-4 pt-3 border-t border-emerald-500/20 text-xs text-emerald-300 font-semibold">
-                    {selectedProof.refinziPraise}
-                  </div>
-                </div>
-              </div>
+            {/* CTA after carousel */}
+            <div className="text-center mt-8">
+              <a
+                href={DOWNLOADS.chrome}
+                download
+                className="inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-indigo-600/20"
+              >
+                <Download className="w-4 h-4" />
+                Try it on your own prompts — Free
+              </a>
             </div>
           </div>
         </section>
 
-        {/* ══ 9. TESTIMONIALS ══ */}
-        <section className="py-20 border-t border-white/[0.06]" aria-label="Customer testimonials">
-          <div className="max-w-5xl mx-auto px-4">
+        {/* ══ FR-6 BETTER vs EXPERT ══ */}
+        <section className="py-16 sm:py-24 px-4 border-t border-zinc-800/50 bg-zinc-900/20">
+          <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
-              <span className="text-xs font-bold uppercase tracking-widest text-amber-400">
-                Real Users. Real Results.
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2">
-                What Power Users Are Saying
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+                Better when you need a quick improvement.<br className="hidden sm:block" />
+                Expert when the task really matters.
               </h2>
             </div>
 
-            <div className="max-w-2xl mx-auto mb-8">
-              <div className="p-8 rounded-2xl bg-[#12131C] border border-white/10 shadow-xl text-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.06),transparent_70%)] pointer-events-none" />
-                <div className="relative z-10">
-                  <div className="flex justify-center mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <p className="text-slate-200 text-base sm:text-lg font-medium leading-relaxed mb-6">
-                    &ldquo;{TESTIMONIALS[activeTestimonial].text}&rdquo;
-                  </p>
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm font-bold">
-                      {TESTIMONIALS[activeTestimonial].avatar}
-                    </div>
-                    <div className="text-left">
-                      <p className="text-sm font-bold text-white">{TESTIMONIALS[activeTestimonial].name}</p>
-                      <p className="text-xs text-slate-400">{TESTIMONIALS[activeTestimonial].role}</p>
-                    </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {/* Better */}
+              <div className="rounded-xl border border-indigo-500/25 bg-indigo-950/20 p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center">
+                    <Zap className="w-4 h-4 text-indigo-400" />
+                  </span>
+                  <div>
+                    <p className="font-semibold text-white">Better</p>
+                    <p className="text-xs text-zinc-500">Click the Orb</p>
                   </div>
                 </div>
+                <ul className="space-y-2">
+                  {[
+                    "Adds the important missing details",
+                    "Keeps your original intent intact",
+                    "Works in under a second",
+                    "Good for most everyday tasks",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-sm text-zinc-300">
+                      <Check className="w-4 h-4 text-indigo-400 mt-0.5 shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <div className="flex justify-center gap-2 mt-4">
-                {TESTIMONIALS.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveTestimonial(i)}
-                    className={`h-2 rounded-full transition-all cursor-pointer ${
-                      i === activeTestimonial
-                        ? "bg-indigo-400 w-5"
-                        : "bg-white/20 hover:bg-white/40 w-2"
-                    }`}
-                    aria-label={`Testimonial ${i + 1}`}
-                  />
-                ))}
+
+              {/* Expert */}
+              <div className="rounded-xl border border-violet-500/25 bg-violet-950/20 p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="w-8 h-8 rounded-lg bg-violet-600/20 flex items-center justify-center">
+                    <Brain className="w-4 h-4 text-violet-400" />
+                  </span>
+                  <div>
+                    <p className="font-semibold text-white">Expert</p>
+                    <p className="text-xs text-zinc-500">Hold the Orb</p>
+                  </div>
+                </div>
+                <ul className="space-y-2">
+                  {[
+                    "Thinks deeper about what you need",
+                    "Adds execution requirements and structure",
+                    "Makes reasonable assumptions explicitly",
+                    "Stays focused on exactly the job you asked",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-sm text-zinc-300">
+                      <Check className="w-4 h-4 text-violet-400 mt-0.5 shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {TESTIMONIALS.map((t, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveTestimonial(i)}
-                  className={`p-4 rounded-xl text-left transition-all cursor-pointer border ${
-                    i === activeTestimonial
-                      ? "bg-indigo-950/40 border-indigo-500/40"
-                      : "bg-[#12131C] border-white/[0.06] hover:border-white/20"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-7 h-7 rounded-full bg-indigo-600/70 flex items-center justify-center text-white text-[10px] font-bold">
-                      {t.avatar}
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-bold text-white">{t.name}</p>
-                      <div className="flex">
-                        {[...Array(5)].map((_, j) => (
-                          <Star key={j} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                        ))}
-                      </div>
-                    </div>
+            <p className="text-center text-sm text-zinc-500 mt-6 max-w-xl mx-auto">
+              Expert does not turn a small request into a giant project. It makes the same request more executable.
+            </p>
+          </div>
+        </section>
+
+        {/* ══ FR-7 USE CASES ══ */}
+        <section className="py-16 sm:py-24 px-4 border-t border-zinc-800/50">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+                One small button. Almost any task.
+              </h2>
+              <p className="text-sm text-zinc-500">From quick emails to complex research — Refinzi helps across the board.</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {USE_CASES.map((uc) => (
+                <div key={uc.label} className="rounded-xl border border-zinc-800 bg-zinc-900 p-5 hover:border-zinc-700 transition-colors">
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <span className="text-xl">{uc.emoji}</span>
+                    <span className="font-semibold text-sm text-white">{uc.label}</span>
                   </div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-2">{t.text}</p>
-                </button>
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-zinc-600 font-mono">&ldquo;{uc.rough}&rdquo;</p>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-indigo-400">→</span>
+                      <p className="text-xs text-zinc-300">{uc.refined}</p>
+                    </div>
+                    <p className="text-xs text-emerald-500 font-medium">{uc.outcome}</p>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* ══ 10. GRAND SLAM PRICING ══ */}
-        <section id="pricing" className="py-20 border-t border-white/[0.06] bg-[#0A0B10]">
-          <div className="max-w-5xl mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-14">
-              <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">
-                Zero Monthly Subscriptions
-              </span>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white mt-2 tracking-tight">
-                Pay Once. Use It Forever.
-              </h2>
-              <p className="text-slate-400 text-sm sm:text-base mt-3 leading-relaxed">
-                Software companies want to trap you in a $15/month subscription. We don&rsquo;t. Get the
-                complete Refinzi Lifetime Pro Pass for less than the cost of a bad lunch.
-              </p>
-            </div>
+        {/* ══ FR-8 COMPATIBLE TOOLS ══ */}
+        <section className="py-16 sm:py-20 px-4 border-t border-zinc-800/50 bg-zinc-900/30">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+              You don&rsquo;t need another chatbot.
+            </h2>
+            <p className="text-base text-zinc-400 mb-8">
+              Refinzi works alongside the tools you already know.
+            </p>
 
-            {/* Scarcity Countdown */}
-            <div className="max-w-xl mx-auto mb-8 p-4 rounded-xl bg-rose-950/20 border border-rose-500/30 flex flex-wrap items-center justify-center gap-4 text-center">
-              <div>
-                <p className="text-xs font-bold uppercase text-rose-400 tracking-wider mb-1">
-                  Early Access Ends In
-                </p>
-                <div className="flex items-center gap-2 font-mono">
-                  {[
-                    { label: "HRS", val: countdown.h },
-                    { label: "MIN", val: countdown.m },
-                    { label: "SEC", val: countdown.s },
-                  ].map(({ label, val }, idx) => (
-                    <React.Fragment key={label}>
-                      <div className="bg-[#1A0A0A] border border-rose-500/30 rounded-lg px-3 py-2 min-w-[56px]">
-                        <span className="text-2xl font-black text-rose-300">{fmt2(val)}</span>
-                        <p className="text-[9px] text-rose-500 mt-0.5">{label}</p>
-                      </div>
-                      {idx < 2 && <span className="text-rose-400 text-xl font-bold">:</span>}
-                    </React.Fragment>
-                  ))}
-                </div>
-              </div>
-              <div className="text-left">
-                <p className="text-xs font-bold text-white">
-                  Only <span className="text-rose-300">{seatCount} seats</span> remaining at $12
-                </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Switches to yearly subscription after launch cap
-                </p>
-              </div>
-            </div>
-
-            {/* Pricing Receipt Card */}
-            <div className="max-w-xl mx-auto rounded-3xl border border-white/15 bg-gradient-to-b from-[#141622] to-[#0D0E15] p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500 via-sky-400 to-emerald-400 rounded-t-3xl" />
-
-              <div className="flex items-center justify-between border-b border-white/[0.08] pb-5 mb-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                    <Receipt className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-white text-base">Refinzi Lifetime Pro Pass</h3>
-                    <p className="text-xs text-slate-400 font-mono">Invoice Summary &bull; Zero Recurring Fees</p>
-                  </div>
-                </div>
-                <span className="px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold">
-                  PERPETUAL
+            <div className="flex flex-wrap justify-center gap-2 mb-8">
+              {[
+                "ChatGPT", "Claude", "Gemini", "Perplexity",
+                "Coding tools", "Creative AI", "Email clients", "Documents", "CRMs",
+              ].map((tool) => (
+                <span key={tool} className="text-sm text-zinc-300 border border-zinc-700 px-3 py-1.5 rounded-lg bg-zinc-900">
+                  {tool}
                 </span>
-              </div>
-
-              <div className="space-y-3 text-xs sm:text-sm">
-                {[
-                  { label: "The Core Calibration Engine (Click for Better)", value: "$97 Value" },
-                  { label: "The Expert Scope-Lock Engine (Hold for Expert)", value: "$197 Value" },
-                  { label: "Anti-Prestige Jargon Filter (No AI slop)", value: "$47 Value" },
-                  { label: "Local-First Privacy Vault (Zero server logs)", value: "Priceless", hi: true },
-                  { label: "BYOK Support (Direct provider HTTPS, 0% markup)", value: "$97 Value" },
-                  { label: "Lifetime Updates & Site Adapters", value: "$147/yr Value" },
-                ].map((row, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between py-1 border-b border-white/[0.04] last:border-0"
-                  >
-                    <span className="text-slate-300 flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>{row.label}</span>
-                    </span>
-                    <span
-                      className={`font-mono font-semibold shrink-0 ml-2 ${
-                        row.hi ? "text-emerald-400 font-bold" : "text-slate-400"
-                      }`}
-                    >
-                      {row.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 pt-5 border-t border-dashed border-white/20">
-                <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-                  <span>TOTAL REAL VALUE</span>
-                  <span className="line-through text-rose-400 font-mono text-sm font-bold">$585+</span>
-                </div>
-                <div className="flex items-center justify-between text-xs text-slate-400 mb-3">
-                  <span>EARLY ACCESS DISCOUNT</span>
-                  <span className="text-emerald-400 font-mono font-bold">-98% OFF</span>
-                </div>
-                <div className="flex items-baseline justify-between pt-2 border-t border-white/[0.08]">
-                  <span className="font-bold text-white text-base">YOUR PRICE TODAY:</span>
-                  <div className="text-right">
-                    <span className="text-4xl sm:text-5xl font-black text-emerald-400 tracking-tight font-mono">
-                      $12
-                    </span>
-                    <span className="block text-[10px] text-slate-400 font-mono">
-                      One-time payment &bull; Never increases
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowCheckoutModal(true)}
-                className="w-full mt-6 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-base shadow-xl shadow-emerald-500/25 transition-all transform hover:-translate-y-0.5 cursor-pointer flex items-center justify-center gap-2"
-              >
-                <Zap className="w-5 h-5" /> Get Lifetime Pro for $12 Now
-              </button>
-              <p className="mt-3 text-center text-[11px] text-slate-400">
-                Instant license key delivery &bull; Zero subscription lock-in &bull; 14-day money back guarantee
-              </p>
+              ))}
             </div>
 
-            <div className="max-w-xl mx-auto mt-6 p-4 rounded-xl bg-[#111219] border border-white/[0.06] text-center">
-              <p className="text-sm text-slate-300">
-                Not ready?{" "}
+            <p className="text-sm text-zinc-500">
+              Refinzi improves the instruction. Your AI does the work.
+            </p>
+          </div>
+        </section>
+
+        {/* ══ FR-9 PRIVACY ══ */}
+        <section className="py-16 sm:py-20 px-4 border-t border-zinc-800/50">
+          <div className="max-w-3xl mx-auto">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 sm:p-10">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-xl bg-emerald-600/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+                  <Lock className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-bold text-white mb-3">Your words are yours.</h2>
+                  <p className="text-sm text-zinc-400 leading-relaxed mb-4">
+                    Refinzi is designed with privacy in mind. Your API keys stay protected, prompts are not used for model training, and processing is local-first wherever possible.
+                  </p>
+                  <a href="/privacy/" className="text-sm text-indigo-400 hover:text-indigo-300 underline underline-offset-2 transition-colors">
+                    Read the full privacy details →
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ══ FR-10 PRICING ══ */}
+        <section id="pricing" className="py-16 sm:py-24 px-4 border-t border-zinc-800/50 bg-zinc-900/20">
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+                Use Refinzi Free. Upgrade once if you want Pro.
+              </h2>
+              <p className="text-sm text-zinc-500">No monthly billing. No per-feature charges. One decision.</p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              {/* Free */}
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+                <div className="mb-5">
+                  <p className="font-bold text-white text-lg mb-1">Free</p>
+                  <p className="text-3xl font-black text-white">$0</p>
+                  <p className="text-xs text-zinc-500 mt-1">No credit card. No account required.</p>
+                </div>
+                <ul className="space-y-2.5 mb-6">
+                  {[
+                    "Better mode",
+                    "Basic browser-wide experience",
+                    "Works across all major AI tools",
+                    "Bring your own supported AI provider",
+                  ].map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-sm text-zinc-300">
+                      <Check className="w-4 h-4 text-zinc-500 mt-0.5 shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
                 <a
                   href={DOWNLOADS.chrome}
                   download
-                  className="text-indigo-400 hover:text-indigo-300 font-bold underline"
+                  className="w-full h-10 rounded-lg border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white text-sm font-medium flex items-center justify-center gap-2 transition-colors"
                 >
-                  Download the free version
-                </a>{" "}
-                &mdash; no credit card, no signup. The Orb is free forever.
-              </p>
+                  <Download className="w-4 h-4" />
+                  Add to Chrome
+                </a>
+              </div>
+
+              {/* Pro */}
+              <div className="rounded-xl border border-indigo-500/40 bg-indigo-950/20 p-6 relative overflow-hidden">
+                <div className="absolute top-4 right-4">
+                  <span className="text-[10px] font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-full">ONE-TIME</span>
+                </div>
+                <div className="mb-5">
+                  <p className="font-bold text-white text-lg mb-1">Lifetime Pro</p>
+                  <p className="text-3xl font-black text-white">$12</p>
+                  <p className="text-xs text-zinc-500 mt-1">Pay once. Yours forever.</p>
+                </div>
+                <ul className="space-y-2.5 mb-6">
+                  {[
+                    "Everything in Free",
+                    "Expert mode",
+                    "Advanced calibration",
+                    "BYOK support",
+                    "All future updates",
+                  ].map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-sm text-zinc-200">
+                      <Check className="w-4 h-4 text-indigo-400 mt-0.5 shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => setShowCheckout(true)}
+                  className="w-full h-10 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-indigo-600/20 cursor-pointer"
+                >
+                  Get Lifetime Pro — $12
+                </button>
+                <p className="text-[11px] text-zinc-600 text-center mt-2">One payment. No monthly bill.</p>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* ══ 11. GUARANTEE ══ */}
-        <section className="py-16 border-t border-white/[0.06] bg-[#0B0C12]">
-          <div className="max-w-4xl mx-auto px-4">
-            <div className="p-8 sm:p-10 rounded-3xl bg-[#12131D] border border-emerald-500/30 flex flex-col sm:flex-row items-center gap-6 sm:gap-8 shadow-2xl">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
-                <ShieldCheck className="w-9 h-9" />
-              </div>
-              <div className="text-center sm:text-left">
-                <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">
-                  100% Risk Reversal
-                </span>
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">
-                  The &ldquo;10-Hour&rdquo; Iron-Clad Guarantee
-                </h3>
-                <p className="text-slate-300 text-xs sm:text-sm mt-3 leading-relaxed">
-                  Add Refinzi to your browser. Use the Pro features for 14 full days. If it doesn&rsquo;t save
-                  you at least 10 hours of wasted tweaking, rewriting, and AI-babysitting... send us a
-                  one-line email. We will refund your $12 immediately. No questions asked. No hard feelings.
-                </p>
-                <p className="text-emerald-400 text-xs font-bold mt-2">
-                  You take zero risk. We take all of it.
-                </p>
-              </div>
-            </div>
+        {/* ══ FR-11 GUARANTEE ══ */}
+        <section className="py-12 px-4 border-t border-zinc-800/50">
+          <div className="max-w-2xl mx-auto text-center">
+            <h2 className="text-xl font-bold text-white mb-2">Try it without the risk.</h2>
+            <p className="text-sm text-zinc-400">
+              Try Refinzi for 14 days. If it isn&rsquo;t useful to you, request a refund.
+            </p>
           </div>
         </section>
 
-        {/* ══ 12. FAQ ══ */}
-        <section id="faq" className="py-20 border-t border-white/[0.06] bg-[#0A0B10]">
-          <div className="max-w-4xl mx-auto px-4">
-            <div className="text-center max-w-2xl mx-auto mb-14">
-              <span className="text-xs font-bold uppercase tracking-widest text-indigo-400">
-                Objections Crushed
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2">
-                Frequently Asked Questions
-              </h2>
+        {/* ══ FR-13 FAQ ══ */}
+        <section id="faq" className="py-16 sm:py-24 px-4 border-t border-zinc-800/50 bg-zinc-900/20">
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center mb-10">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">Common questions.</h2>
             </div>
-            <div className="space-y-3">
+
+            <div className="space-y-2">
               {FAQS.map((item, i) => (
-                <div
-                  key={i}
-                  className="rounded-xl bg-[#13141F] border border-white/[0.06] overflow-hidden"
-                >
+                <div key={i} className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
                   <button
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                    className="w-full flex items-center justify-between px-6 py-5 text-left cursor-pointer hover:bg-white/[0.02] transition-colors"
+                    className="w-full flex items-center justify-between px-5 py-4 text-left cursor-pointer group"
                     aria-expanded={openFaq === i}
                   >
-                    <h3 className="font-extrabold text-white text-sm sm:text-base pr-4">{item.q}</h3>
-                    <ChevronDown
-                      className={`w-5 h-5 text-slate-400 shrink-0 transition-transform ${
-                        openFaq === i ? "rotate-180" : ""
-                      }`}
-                    />
+                    <span className="text-sm font-medium text-zinc-200 group-hover:text-white pr-4 transition-colors">
+                      {item.q}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-zinc-500 shrink-0 transition-transform ${openFaq === i ? "rotate-180" : ""}`} />
                   </button>
                   {openFaq === i && (
-                    <div className="px-6 pb-5">
-                      <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">{item.a}</p>
+                    <div className="px-5 pb-5">
+                      <p className="text-sm text-zinc-400 leading-relaxed">{item.a}</p>
                     </div>
                   )}
                 </div>
@@ -1313,250 +1189,124 @@ function HomePage() {
           </div>
         </section>
 
-        {/* ══ 13. FINAL CTA ══ */}
-        <section className="py-24 border-t border-white/[0.06] text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_50%_50%,rgba(99,102,241,0.12),transparent_70%)] pointer-events-none" />
-          <div className="max-w-4xl mx-auto px-4 relative z-10">
-            <span className="text-xs font-bold uppercase tracking-widest text-indigo-400">The Decision</span>
-            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight mt-3">
-              Stop Settling for Mediocre AI Outputs.
+        {/* ══ FR-14 FINAL CTA ══ */}
+        <section className="py-20 sm:py-28 px-4 border-t border-zinc-800/50 text-center">
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-4">
+              Stop rewriting prompts.<br />Get on with the work.
             </h2>
-            <p className="mt-4 text-slate-300 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-              Join thousands of creators, coders, and founders who get it right on the first try.
+            <p className="text-base text-zinc-400 mb-8">
+              You already know what you want AI to do. Refinzi helps you say it clearly.
             </p>
 
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5">
               <a
                 href={DOWNLOADS.chrome}
                 download
-                className="w-full sm:w-auto px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-base shadow-xl shadow-indigo-600/30 border border-indigo-400/40 inline-flex items-center justify-center gap-2 transform hover:-translate-y-0.5 transition-all"
+                className="w-full sm:w-auto h-12 px-7 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm inline-flex items-center justify-center gap-2 transition-colors shadow-lg shadow-indigo-600/20"
               >
-                <Download className="w-5 h-5" /> Add to Chrome &mdash; Free
+                <Download className="w-4 h-4" />
+                Add to Chrome — Free
               </a>
               <button
-                onClick={scrollToPricing}
-                className="w-full sm:w-auto px-8 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-base shadow-xl shadow-emerald-500/20 inline-flex items-center justify-center gap-2 transform hover:-translate-y-0.5 transition-all cursor-pointer"
+                onClick={() => setShowCheckout(true)}
+                className="w-full sm:w-auto h-12 px-7 rounded-xl border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white font-medium text-sm inline-flex items-center justify-center gap-2 transition-colors cursor-pointer"
               >
-                <Zap className="w-5 h-5" /> Get Lifetime Pro ($12)
+                Get Lifetime Pro — $12
               </button>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400">
-              <span>Setup takes 5 seconds.</span>
-              <span>&bull;</span>
-              <span>Works on Mac, Windows, and Linux.</span>
-              <span>&bull;</span>
-              <a href={DOWNLOADS.firefox} download className="hover:text-white underline">
-                Firefox Add-on
-              </a>
-              <span>&bull;</span>
-              <a href={DOWNLOADS.edge} download className="hover:text-white underline">
-                Edge Add-on
-              </a>
-            </div>
-
-            {/* Trust badges */}
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-5 text-xs text-slate-500">
-              {[
-                { icon: <Lock className="w-4 h-4 text-emerald-500" />, label: "Local-First Processing" },
-                { icon: <ShieldCheck className="w-4 h-4 text-indigo-400" />, label: "Zero Keystroke Logging" },
-                { icon: <CheckCircle2 className="w-4 h-4 text-sky-400" />, label: "Manifest V3 Compliant" },
-                { icon: <Star className="w-4 h-4 fill-amber-400 text-amber-400" />, label: "4.9/5 Rated" },
-                { icon: <Globe className="w-4 h-4 text-slate-400" />, label: "Open Source MIT" },
-              ].map(({ icon, label }) => (
-                <div key={label} className="flex items-center gap-1.5">
-                  {icon} <span>{label}</span>
-                </div>
-              ))}
-            </div>
+            <p className="text-xs text-zinc-600">Setup takes seconds. Works across your browser.</p>
           </div>
         </section>
+
       </main>
 
-      {/* ══ FOOTER ══ */}
-      <footer className="border-t border-white/[0.06] py-10 bg-[#07080C]">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-slate-500">
-            Refinzi 2.1.0 &bull; &ldquo;Better prompts in one click. Expert prompts when it matters.&rdquo; &bull;
-            Open Source MIT
-          </p>
-          <nav
-            aria-label="Footer legal navigation"
-            className="flex flex-wrap items-center justify-center gap-4 text-xs"
-          >
-            <a href="/privacy/" className="text-slate-400 hover:text-white underline">
-              Privacy Policy
-            </a>
-            <a href="/terms/" className="text-slate-400 hover:text-white underline">
-              Terms of Service
-            </a>
-            <a href="/docs/" className="text-slate-400 hover:text-white underline">
-              Documentation
-            </a>
-            <a
-              href="https://github.com/papada1472/refinzi"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-slate-400 hover:text-white underline"
-            >
-              GitHub Repository
-            </a>
+      {/* ══ FR-15 FOOTER ══ */}
+      <footer className="border-t border-zinc-800/50 py-8 px-4">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="w-6 h-6 rounded bg-indigo-600 flex items-center justify-center font-black text-white text-xs">R</span>
+            <span className="text-sm text-zinc-500">Refinzi 2.1.0</span>
+          </div>
+          <nav className="flex flex-wrap items-center justify-center gap-5 text-sm text-zinc-500">
+            <a href="/privacy/" className="hover:text-zinc-300 transition-colors">Privacy Policy</a>
+            <a href="/terms/" className="hover:text-zinc-300 transition-colors">Terms of Service</a>
+            <a href="/docs/" className="hover:text-zinc-300 transition-colors">Documentation</a>
+            <a href="https://github.com/papada1472/refinzi" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-300 transition-colors">GitHub</a>
           </nav>
         </div>
       </footer>
 
       {/* ══ CHECKOUT MODAL ══ */}
-      {showCheckoutModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="checkout-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-        >
-          <div className="relative w-full max-w-md rounded-2xl border border-white/15 bg-[#12141E] p-6 sm:p-7 shadow-2xl">
-            <button
-              onClick={() => { setShowCheckoutModal(false); setCheckoutStatus(null); }}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-              aria-label="Close"
-            >
-              <X className="w-4 h-4" />
+      {showCheckout && (
+        <div role="dialog" aria-modal="true" aria-labelledby="checkout-title" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm rounded-2xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl">
+            <button onClick={() => { setShowCheckout(false); setCheckoutDone(false); setEmail(""); }} className="absolute top-4 right-4 w-7 h-7 rounded-lg border border-zinc-700 hover:border-zinc-500 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer" aria-label="Close">
+              <X className="w-3.5 h-3.5" />
             </button>
-            <div className="text-center mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto mb-3">
-                <Zap className="w-6 h-6" />
-              </div>
-              <h3 id="checkout-modal-title" className="text-xl font-extrabold text-white">
-                Unlock Lifetime Pro Pass
-              </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                One-time payment of <strong>$12</strong>. No subscriptions. Delivered instantly.
-              </p>
-            </div>
 
-            {checkoutStatus === "success" ? (
-              <div className="p-5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-center space-y-3">
-                <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
-                <p className="text-sm font-bold text-white">Order Confirmed!</p>
-                <p className="text-xs text-slate-300">
-                  Your Pro License Key has been sent to{" "}
-                  <strong className="text-emerald-300">{checkoutEmail}</strong>.
-                </p>
-                <button
-                  onClick={() => setShowCheckoutModal(false)}
-                  className="w-full mt-2 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs cursor-pointer"
-                >
-                  Done
-                </button>
+            {checkoutDone ? (
+              <div className="text-center py-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-600/15 border border-emerald-500/25 flex items-center justify-center mx-auto mb-4">
+                  <Check className="w-6 h-6 text-emerald-400" />
+                </div>
+                <p className="font-bold text-white mb-1">Order received.</p>
+                <p className="text-sm text-zinc-400">Your Pro licence key will arrive at <strong className="text-zinc-200">{email}</strong> shortly.</p>
+                <button onClick={() => { setShowCheckout(false); setCheckoutDone(false); setEmail(""); }} className="mt-5 w-full h-10 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors cursor-pointer">Done</button>
               </div>
             ) : (
-              <form onSubmit={handleCheckoutSubmit} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="checkout-email-input"
-                    className="block text-xs font-bold text-slate-300 mb-1.5"
-                  >
-                    Where should we send your License Key?
-                  </label>
-                  <input
-                    id="checkout-email-input"
-                    type="email"
-                    required
-                    value={checkoutEmail}
-                    onChange={(e) => setCheckoutEmail(e.target.value)}
-                    placeholder="you@company.com"
-                    className="w-full px-4 py-3 rounded-xl bg-[#090A10] border border-white/10 text-white placeholder:text-slate-600 text-xs focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                  />
+              <>
+                <div className="mb-5">
+                  <h3 id="checkout-title" className="font-bold text-white text-lg">Refinzi Lifetime Pro</h3>
+                  <p className="text-sm text-zinc-500 mt-1">One payment of <strong className="text-zinc-300">$12</strong>. No subscription. Yours forever.</p>
                 </div>
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-[11px] text-slate-400 space-y-1">
-                  <div className="flex justify-between text-white font-semibold">
-                    <span>Refinzi Pro Perpetual License</span>
-                    <span className="font-mono text-emerald-400">$12.00</span>
+                <form onSubmit={(e) => { e.preventDefault(); if (email.includes("@")) setCheckoutDone(true); }} className="space-y-3">
+                  <div>
+                    <label htmlFor="pro-email" className="text-xs font-medium text-zinc-400 block mb-1.5">Where should we send your licence key?</label>
+                    <input id="pro-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="w-full h-10 px-3 rounded-lg bg-zinc-950 border border-zinc-700 focus:border-indigo-500 text-white text-sm placeholder:text-zinc-600 focus:outline-none transition-colors" />
                   </div>
-                  <div>Zero account registration required &bull; 3-click checkout</div>
-                </div>
-                <button
-                  type="submit"
-                  disabled={checkoutStatus === "processing"}
-                  className="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm shadow-xl shadow-emerald-500/20 transition-all cursor-pointer disabled:opacity-50"
-                >
-                  {checkoutStatus === "processing" ? "Processing..." : "Complete Order ($12)"}
-                </button>
-                <p className="text-[10px] text-center text-slate-500">
-                  256-bit encrypted checkout &bull; 14-day 10-hour guarantee
-                </p>
-              </form>
+                  <button type="submit" className="w-full h-11 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-indigo-600/20 cursor-pointer">
+                    Pay $12 — Get Lifetime Pro
+                  </button>
+                  <p className="text-[11px] text-zinc-600 text-center">14-day refund if it&rsquo;s not useful to you.</p>
+                </form>
+              </>
             )}
           </div>
         </div>
       )}
 
       {/* ══ EXIT INTENT MODAL ══ */}
-      {showExitModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="exit-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
-        >
-          <div className="relative w-full max-w-md rounded-2xl border border-indigo-500/30 bg-[#12141F] p-6 sm:p-7 shadow-2xl">
-            <button
-              onClick={() => setShowExitModal(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-              aria-label="Close"
-            >
-              <X className="w-4 h-4" />
+      {showExit && (
+        <div role="dialog" aria-modal="true" aria-labelledby="exit-title" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm rounded-2xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl">
+            <button onClick={() => setShowExit(false)} className="absolute top-4 right-4 w-7 h-7 rounded-lg border border-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer" aria-label="Close">
+              <X className="w-3.5 h-3.5" />
             </button>
-            <div className="text-center mb-5">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400 bg-amber-950/60 border border-amber-500/30 px-2.5 py-0.5 rounded-full inline-block mb-3">
-                Wait! Free Resource Before You Go
-              </span>
-              <h3 id="exit-modal-title" className="text-xl font-extrabold text-white">
-                Grab Our 50 Expert Prompt Frameworks
-              </h3>
-              <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                Get our curated Notion swipe file with 50 senior-level prompt specifications for coding,
-                strategy, and marketing. 100% free.
-              </p>
-            </div>
-            {exitStatus === "success" ? (
-              <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-center space-y-2">
-                <CheckCircle2 className="w-7 h-7 text-emerald-400 mx-auto" />
-                <p className="text-xs font-bold text-white">Swipe File Sent!</p>
-                <p className="text-[11px] text-slate-300">Check your inbox for the Notion template link.</p>
+
+            {exitDone ? (
+              <div className="text-center py-4">
+                <p className="font-bold text-white mb-1">Got it.</p>
+                <p className="text-sm text-zinc-400">We&rsquo;ll send it to <strong className="text-zinc-200">{exitEmail}</strong>.</p>
+                <button onClick={() => setShowExit(false)} className="mt-4 w-full h-10 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-medium transition-colors cursor-pointer">Close</button>
               </div>
             ) : (
-              <form onSubmit={handleExitSubmit} className="space-y-3">
-                <input
-                  type="email"
-                  required
-                  value={exitEmail}
-                  onChange={(e) => setExitEmail(e.target.value)}
-                  placeholder="Enter your email address"
-                  className="w-full px-4 py-3 rounded-xl bg-[#090A10] border border-white/10 text-white placeholder:text-slate-600 text-xs focus:outline-none focus:border-indigo-500"
-                />
-                <button
-                  type="submit"
-                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/25 transition-all cursor-pointer"
-                >
-                  Send Me The 50 Frameworks
-                </button>
-              </form>
+              <>
+                <div className="mb-5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 border border-amber-500/30 bg-amber-950/30 px-2 py-0.5 rounded-full inline-block mb-3">Before you go</span>
+                  <h3 id="exit-title" className="font-bold text-white text-base">Get 50 expert prompt frameworks.</h3>
+                  <p className="text-sm text-zinc-400 mt-2">A Notion swipe file with 50 senior-level prompt structures across coding, strategy, and marketing. Free.</p>
+                </div>
+                <form onSubmit={(e) => { e.preventDefault(); if (exitEmail.includes("@")) setExitDone(true); }} className="space-y-3">
+                  <input type="email" required value={exitEmail} onChange={(e) => setExitEmail(e.target.value)} placeholder="your@email.com" className="w-full h-10 px-3 rounded-lg bg-zinc-950 border border-zinc-700 focus:border-indigo-500 text-white text-sm placeholder:text-zinc-600 focus:outline-none transition-colors" />
+                  <button type="submit" className="w-full h-10 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-100 font-medium text-sm transition-colors cursor-pointer">Send me the frameworks</button>
+                </form>
+              </>
             )}
           </div>
         </div>
       )}
-
-      {/* ── CSS Animations ── */}
-      <style>{`
-        @keyframes marquee {
-          0%   { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        @keyframes slideUp {
-          from { transform: translateY(20px); opacity: 0; }
-          to   { transform: translateY(0);   opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 }
