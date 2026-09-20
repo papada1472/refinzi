@@ -16,12 +16,13 @@
   --bg-card-hover: #1c1c20;
   --bg-input: #121215;
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(255, 215, 0, 0.4);
+  --border-active: rgba(255, 215, 0, 0.6);
   --text-primary: #f4f4f5;
   --text-secondary: #a1a1aa;
   --text-muted: #71717a;
-  --gold-accent: #ffd700;
-  --gold-dim: rgba(255, 215, 0, 0.15);
+  --gold-accent: #FFD700;
+  --gold-bright: #FFE135;
+  --gold-dim: rgba(255, 215, 0, 0.25);
   --emerald-accent: #10b981;
   --indigo-accent: #6366f1;
   --danger-accent: #f43f5e;
@@ -284,6 +285,12 @@ body {
   margin-bottom: 4px;
 }
 
+.card-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.95;
+}
+
 .dash-card-label {
   font-size: 10px;
   font-weight: 700;
@@ -349,15 +356,15 @@ body {
 
 .sparkline-line {
   fill: none;
-  stroke: var(--gold-accent);
-  stroke-width: 1.5;
+  stroke: var(--gold-bright);
+  stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
-  opacity: 0.9;
+  opacity: 1;
 }
 
 .sparkline-fill {
-  fill: rgba(255, 215, 0, 0.08);
+  fill: rgba(255, 215, 0, 0.15);
   stroke: none;
 }
 
@@ -374,14 +381,14 @@ body {
 
 .split-bar-better {
   height: 100%;
-  background: var(--gold-accent);
+  background: var(--gold-bright);
   border-radius: 3px 0 0 3px;
   transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .split-bar-expert {
   height: 100%;
-  background: #a78bfa;
+  background: #c4b5fd;
   border-radius: 0 3px 3px 0;
   transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -412,13 +419,13 @@ body {
 }
 
 .activity-dot.better {
-  background: var(--gold-accent);
-  box-shadow: 0 0 6px rgba(255, 215, 0, 0.4);
+  background: var(--gold-bright);
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
 }
 
 .activity-dot.expert {
-  background: #a78bfa;
-  box-shadow: 0 0 6px rgba(167, 139, 250, 0.4);
+  background: #c4b5fd;
+  box-shadow: 0 0 8px rgba(196, 181, 253, 0.6);
 }
 
 .activity-name {
