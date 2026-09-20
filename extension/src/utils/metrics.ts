@@ -11,9 +11,10 @@
  */
 
 import { BrowserAPI } from '../browser/api';
-import { PromptMode, AIProviderId, PeriodType, RefinziUsageEvent, RefinziMetricsSummary, RefinziHistoryItem } from '../types';
+import { stageWrite } from './storage-batch';
+import type { PromptMode, AIProviderId, PeriodType, RefinziUsageEvent, RefinziMetricsSummary, RefinziHistoryItem } from '../types';
 
-export { PeriodType, RefinziUsageEvent, RefinziMetricsSummary };
+export type { PeriodType, RefinziUsageEvent, RefinziMetricsSummary };
 
 export interface ModelPricing {
   inputPer1k: number;
@@ -35,38 +36,80 @@ export const DEFAULT_METRICS_CONFIG: MetricsConfig = {
 };
 
 /**
- * Verified Model Pricing (Per 1k tokens) and estimated turn costs
+ * Verified Model Pricing (Per 1k tokens) and estimated turn costs.
+ *
+ * `averageTurnCost` is the blended cost of one refinement turn assuming
+ * ~500 input tokens and ~800 output tokens:
+ *     averageTurnCost = 0.5 * inputPer1k + 0.8 * outputPer1k
+ *
+ * Superseded (retired) model IDs are deliberately retained so that historical
+ * usage events recorded before a migration still price correctly.
  */
 export const MODEL_PRICING: Record<string, ModelPricing> = {
-  // OpenAI
+  // OpenAI — current generation
+  'gpt-6-astra': { inputPer1k: 0.01, outputPer1k: 0.05, averageTurnCost: 0.045 },
+  'gpt-5.6-sol': { inputPer1k: 0.004, outputPer1k: 0.02, averageTurnCost: 0.018 },
+  'gpt-5.6-terra': { inputPer1k: 0.002, outputPer1k: 0.012, averageTurnCost: 0.0106 },
+  'gpt-5.6-luna': { inputPer1k: 0.0002, outputPer1k: 0.0012, averageTurnCost: 0.00106 },
+  'gpt-5.4-mini': { inputPer1k: 0.00075, outputPer1k: 0.0045, averageTurnCost: 0.00398 },
+  'gpt-5.4-nano': { inputPer1k: 0.0002, outputPer1k: 0.00125, averageTurnCost: 0.0011 },
+  'gpt-5-mini': { inputPer1k: 0.00025, outputPer1k: 0.002, averageTurnCost: 0.00173 },
+  'gpt-5-nano': { inputPer1k: 0.00005, outputPer1k: 0.0004, averageTurnCost: 0.00035 },
+  // OpenAI — legacy (still billed, retained for historical events)
   'gpt-4o-mini': { inputPer1k: 0.00015, outputPer1k: 0.0006, averageTurnCost: 0.00055 },
   'gpt-4o': { inputPer1k: 0.0025, outputPer1k: 0.010, averageTurnCost: 0.00925 },
   'gpt-4-turbo': { inputPer1k: 0.01, outputPer1k: 0.03, averageTurnCost: 0.029 },
   'o1-mini': { inputPer1k: 0.003, outputPer1k: 0.012, averageTurnCost: 0.011 },
   'o3-mini': { inputPer1k: 0.0011, outputPer1k: 0.0044, averageTurnCost: 0.004 },
   // Anthropic / Claude
+  'claude-sonnet-5': { inputPer1k: 0.002, outputPer1k: 0.010, averageTurnCost: 0.009 },
+  'claude-opus-5': { inputPer1k: 0.005, outputPer1k: 0.025, averageTurnCost: 0.0225 },
+  'claude-haiku-4-5': { inputPer1k: 0.001, outputPer1k: 0.005, averageTurnCost: 0.0045 },
   'claude-3-5-sonnet': { inputPer1k: 0.003, outputPer1k: 0.015, averageTurnCost: 0.0135 },
   'claude-3-7-sonnet': { inputPer1k: 0.003, outputPer1k: 0.015, averageTurnCost: 0.0135 },
   'claude-3-haiku': { inputPer1k: 0.00025, outputPer1k: 0.00125, averageTurnCost: 0.00112 },
   'claude-3-5-haiku': { inputPer1k: 0.0008, outputPer1k: 0.004, averageTurnCost: 0.0036 },
-  // Google Gemini
+  // Google Gemini — Gemini 3.8 Flash introductory rate ($0.75 / $3.75 per 1M)
+  'gemini-flash-latest': { inputPer1k: 0.00075, outputPer1k: 0.00375, averageTurnCost: 0.00338 },
+  'gemini-3.8-flash': { inputPer1k: 0.00075, outputPer1k: 0.00375, averageTurnCost: 0.00338 },
+  'gemini-pro-latest': { inputPer1k: 0.00125, outputPer1k: 0.01, averageTurnCost: 0.00863 },
+  // Google Gemini — legacy (retired upstream; retained for historical events)
   'gemini-2.5-flash': { inputPer1k: 0.000075, outputPer1k: 0.0003, averageTurnCost: 0.00028 },
   'gemini-2.0-flash': { inputPer1k: 0.0001, outputPer1k: 0.0004, averageTurnCost: 0.00035 },
   'gemini-1.5-flash': { inputPer1k: 0.000075, outputPer1k: 0.0003, averageTurnCost: 0.00028 },
   'gemini-1.5-pro': { inputPer1k: 0.00125, outputPer1k: 0.005, averageTurnCost: 0.0046 },
-  // DeepSeek
+  // DeepSeek — off-peak rates (peak hours are 2x)
+  'deepseek-flash': { inputPer1k: 0.00015, outputPer1k: 0.0006, averageTurnCost: 0.00056 },
+  'deepseek-v4-pro': { inputPer1k: 0.00066, outputPer1k: 0.00198, averageTurnCost: 0.00191 },
+  // DeepSeek — legacy (retained for historical events)
   'deepseek-chat': { inputPer1k: 0.00014, outputPer1k: 0.00028, averageTurnCost: 0.00029 },
   'deepseek-reasoner': { inputPer1k: 0.00055, outputPer1k: 0.00219, averageTurnCost: 0.00203 },
 };
 
 /**
+ * Calculates direct API cost in USD based on model pricing and token counts.
+ */
+export function calculateCostUsd(
+  provider: string,
+  model: string,
+  tokenUsage: { promptTokens: number; completionTokens: number; totalTokens?: number }
+): number {
+  const pricing = MODEL_PRICING[model];
+  if (!pricing) return 0;
+  return (
+    (tokenUsage.promptTokens / 1000) * pricing.inputPer1k +
+    (tokenUsage.completionTokens / 1000) * pricing.outputPer1k
+  );
+}
+
+/**
  * Default model mapping when destination AI website is known
  */
 export const TARGET_AI_DEFAULT_MODELS: Record<string, string> = {
-  'chatgpt': 'gpt-4o',
-  'claude': 'claude-3-5-sonnet',
-  'gemini': 'gemini-1.5-pro',
-  'perplexity': 'claude-3-5-sonnet',
+  'chatgpt': 'gpt-5.6-sol',
+  'claude': 'claude-sonnet-5',
+  'gemini': 'gemini-3.8-flash',
+  'perplexity': 'claude-sonnet-5',
 };
 
 // In-memory set of recorded event IDs to prevent race-condition duplicates across rapid calls
@@ -163,18 +206,15 @@ export async function recordUsageEvent(
   event: Omit<RefinziUsageEvent, 'timestamp'> & { timestamp?: number }
 ): Promise<boolean> {
   try {
-    // 1. Immediate in-memory idempotency check (stops concurrent async races)
+    // 1. Immediate in-memory idempotency check (stops concurrent async races).
+    // getUsageEvents() hydrates this set from every stored id, so an O(1)
+    // lookup here fully subsumes the old O(n) scan over the persisted array —
+    // which used to re-read and linearly search up to 500 events per write.
     if (event.id && inMemoryRecordedIds.has(event.id)) {
       return false;
     }
 
     const events = await getUsageEvents();
-
-    // 2. Storage idempotency check: duplicate event IDs are counted strictly once
-    if (event.id && events.some((e) => e.id === event.id)) {
-      if (event.id) inMemoryRecordedIds.add(event.id);
-      return false;
-    }
 
     const eventId = event.id || `evt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     inMemoryRecordedIds.add(eventId);
@@ -193,7 +233,7 @@ export async function recordUsageEvent(
 
     // Keep up to 500 recent events for rolling calculations
     const updated = [newEvent, ...events].slice(0, 500);
-    await BrowserAPI.storage.local.set({ refinzi_events: updated });
+    await stageWrite({ refinzi_events: updated });
     return true;
   } catch (err) {
     console.error('[Refinzi] Failed to record usage event:', err);
@@ -206,7 +246,7 @@ export async function deleteUsageEvent(id: string): Promise<void> {
     inMemoryRecordedIds.delete(id);
     const events = await getUsageEvents();
     const updated = events.filter((e) => e.id !== id);
-    await BrowserAPI.storage.local.set({ refinzi_events: updated });
+    await stageWrite({ refinzi_events: updated });
   } catch (err) {
     console.error('[Refinzi] Failed to delete usage event:', err);
   }
@@ -215,7 +255,7 @@ export async function deleteUsageEvent(id: string): Promise<void> {
 export async function clearUsageEvents(): Promise<void> {
   try {
     inMemoryRecordedIds.clear();
-    await BrowserAPI.storage.local.set({ refinzi_events: [] });
+    await stageWrite({ refinzi_events: [] });
   } catch (err) {
     console.error('[Refinzi] Failed to clear usage events:', err);
   }

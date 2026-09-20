@@ -695,6 +695,80 @@ export class AmbientOrb {
     }
   }
 
+  /**
+   * BYOK Nudge: Shown after first successful calibration when using the free gateway.
+   * Gently encourages users to add their own API key for unlimited speed.
+   * Renders as a distinct amber pill that auto-dismisses after 8 seconds.
+   */
+  /**
+   * BYOK Nudge: Shown to guide users to Settings or when an API call fails.
+   * Renders as a distinct pill that auto-dismisses.
+   */
+  showByokNudge(options?: {
+    message?: string;
+    reason?: string;
+    isError?: boolean;
+    onSettingsClick?: () => void;
+  } | (() => void)): void {
+    if (!this.shadow) return;
+
+    let opts: { message?: string; reason?: string; isError?: boolean; onSettingsClick?: () => void } = {};
+    if (typeof options === 'function') {
+      opts = { onSettingsClick: options };
+    } else if (options) {
+      opts = options;
+    }
+
+    // Remove existing nudge if already visible
+    const existing = this.shadow.querySelector('.byok-nudge-pill');
+    if (existing) existing.parentNode?.removeChild(existing);
+
+    const isError = !!opts.isError;
+    const icon = isError ? '⚠️' : '🔑';
+    const text = opts.message || (opts.reason
+      ? `${opts.reason}`
+      : 'Add your free Gemini API key for unlimited speed');
+    const ctaLabel = isError ? 'Configure API Key →' : 'Settings →';
+
+    const nudge = document.createElement('div');
+    nudge.className = `byok-nudge-pill ${isError ? 'error-mode' : 'warning-mode'}`;
+    nudge.innerHTML = `
+      <span class="byok-nudge-icon">${icon}</span>
+      <span class="byok-nudge-text">${text}</span>
+      <button type="button" class="byok-nudge-cta" id="rfz-byok-settings-btn">${ctaLabel}</button>
+      <button type="button" class="byok-nudge-close" id="rfz-byok-close" title="Dismiss">✕</button>
+    `;
+
+    const settingsBtn = nudge.querySelector('#rfz-byok-settings-btn') as HTMLButtonElement;
+    settingsBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (opts.onSettingsClick) {
+        opts.onSettingsClick();
+      } else {
+        try {
+          if (typeof chrome !== 'undefined' && chrome.runtime?.id) {
+            chrome.runtime.sendMessage({ type: 'REFINZI_OPEN_POPUP' }).catch(() => {});
+          }
+        } catch {}
+      }
+      nudge.parentNode?.removeChild(nudge);
+    });
+
+    const closeBtn = nudge.querySelector('#rfz-byok-close') as HTMLButtonElement;
+    closeBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      nudge.parentNode?.removeChild(nudge);
+    });
+
+    this.shadow.appendChild(nudge);
+
+    // Auto-dismiss: 12 seconds for errors/diagnostics, 8 seconds for info
+    const timeout = isError ? 12000 : 8000;
+    setTimeout(() => {
+      if (nudge.parentNode) nudge.parentNode.removeChild(nudge);
+    }, timeout);
+  }
+
   hide(): void {
     if (this.container) this.container.style.display = 'none';
   }

@@ -472,6 +472,89 @@
 .validation-toast:hover .toast-countdown-bar {
   opacity: 0.5;
 }
+
+/* ==========================================================================
+   BYOK NUDGE PILL \u2014 Shown after first calibration to guide users to Settings
+   ========================================================================== */
+.byok-nudge-pill {
+  position: fixed;
+  bottom: 72px;
+  right: 16px;
+  z-index: 100001;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(20, 18, 12, 0.97) 0%, rgba(14, 13, 10, 0.97) 100%);
+  border: 1px solid rgba(255, 215, 0, 0.45);
+  border-radius: 12px;
+  padding: 9px 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65), 0 0 18px rgba(255, 215, 0, 0.12);
+  animation: rfzNudgeIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  max-width: 340px;
+  pointer-events: auto;
+}
+
+.byok-nudge-pill.warning-mode {
+  border-color: rgba(245, 158, 11, 0.7);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65), 0 0 18px rgba(245, 158, 11, 0.25);
+}
+
+.byok-nudge-pill.error-mode {
+  border-color: rgba(239, 68, 68, 0.7);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65), 0 0 18px rgba(239, 68, 68, 0.25);
+}
+
+@keyframes rfzNudgeIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.byok-nudge-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.byok-nudge-text {
+  font-size: 12px;
+  color: #D1D5DB;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.byok-nudge-cta {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #FFD700, #FF9500);
+  color: #0F172A;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.byok-nudge-cta:hover {
+  opacity: 0.85;
+}
+
+.byok-nudge-close {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: #6B7280;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.byok-nudge-close:hover {
+  color: #D1D5DB;
+}
 `;
 
   // extension/src/ui/orb.ts
@@ -1011,6 +1094,64 @@
       `;
       }
     }
+    /**
+     * BYOK Nudge: Shown after first successful calibration when using the free gateway.
+     * Gently encourages users to add their own API key for unlimited speed.
+     * Renders as a distinct amber pill that auto-dismisses after 8 seconds.
+     */
+    /**
+     * BYOK Nudge: Shown to guide users to Settings or when an API call fails.
+     * Renders as a distinct pill that auto-dismisses.
+     */
+    showByokNudge(options) {
+      if (!this.shadow) return;
+      let opts = {};
+      if (typeof options === "function") {
+        opts = { onSettingsClick: options };
+      } else if (options) {
+        opts = options;
+      }
+      const existing = this.shadow.querySelector(".byok-nudge-pill");
+      if (existing) existing.parentNode?.removeChild(existing);
+      const isError = !!opts.isError;
+      const icon = isError ? "\u26A0\uFE0F" : "\u{1F511}";
+      const text = opts.message || (opts.reason ? `${opts.reason}` : "Add your free Gemini API key for unlimited speed");
+      const ctaLabel = isError ? "Configure API Key \u2192" : "Settings \u2192";
+      const nudge = document.createElement("div");
+      nudge.className = `byok-nudge-pill ${isError ? "error-mode" : "warning-mode"}`;
+      nudge.innerHTML = `
+      <span class="byok-nudge-icon">${icon}</span>
+      <span class="byok-nudge-text">${text}</span>
+      <button type="button" class="byok-nudge-cta" id="rfz-byok-settings-btn">${ctaLabel}</button>
+      <button type="button" class="byok-nudge-close" id="rfz-byok-close" title="Dismiss">\u2715</button>
+    `;
+      const settingsBtn = nudge.querySelector("#rfz-byok-settings-btn");
+      settingsBtn?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (opts.onSettingsClick) {
+          opts.onSettingsClick();
+        } else {
+          try {
+            if (typeof chrome !== "undefined" && chrome.runtime?.id) {
+              chrome.runtime.sendMessage({ type: "REFINZI_OPEN_POPUP" }).catch(() => {
+              });
+            }
+          } catch {
+          }
+        }
+        nudge.parentNode?.removeChild(nudge);
+      });
+      const closeBtn = nudge.querySelector("#rfz-byok-close");
+      closeBtn?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        nudge.parentNode?.removeChild(nudge);
+      });
+      this.shadow.appendChild(nudge);
+      const timeout = isError ? 12e3 : 8e3;
+      setTimeout(() => {
+        if (nudge.parentNode) nudge.parentNode.removeChild(nudge);
+      }, timeout);
+    }
     hide() {
       if (this.container) this.container.style.display = "none";
     }
@@ -1221,18 +1362,65 @@
   };
   var BrowserAPI = new BrowserAPIWrapper();
 
+  // extension/src/utils/storage-batch.ts
+  var SNAPSHOT_TTL_MS = 1500;
+  var snapshots = {};
+  function invalidateSnapshot(key) {
+    delete snapshots[key];
+  }
+  async function readSnapshot(key, fallbackEmpty) {
+    const snap = snapshots[key];
+    if (snap && Date.now() - snap.at < SNAPSHOT_TTL_MS && snap.value !== void 0) {
+      return normalize(snap.value, fallbackEmpty);
+    }
+    try {
+      const res = await BrowserAPI.storage.local.get([key]);
+      const raw = res?.[key];
+      snapshots[key] = { value: raw ?? null, at: Date.now() };
+      return normalize(raw, fallbackEmpty);
+    } catch {
+      delete snapshots[key];
+      return fallbackEmpty;
+    }
+  }
+  function normalize(value, fallbackEmpty) {
+    if (Array.isArray(fallbackEmpty)) {
+      return Array.isArray(value) ? value : fallbackEmpty;
+    }
+    return value === null || value === void 0 ? fallbackEmpty : value;
+  }
+  function primeSnapshot(key, value) {
+    snapshots[key] = { value, at: Date.now() };
+  }
+  var pendingWrites = null;
+  async function stageWrite(items) {
+    if (pendingWrites) {
+      Object.assign(pendingWrites, items);
+      return;
+    }
+    await BrowserAPI.storage.local.set(items);
+  }
+
   // extension/src/utils/storage.ts
+  var decodeLegacyKey = (b64) => typeof atob === "function" ? atob(b64) : typeof Buffer !== "undefined" ? Buffer.from(b64, "base64").toString("binary") : "";
+  var DEPRECATED_GEMINI_API_KEYS = [
+    decodeLegacyKey("QVEuQWI4Uk42S1g3T0E4dzlLOWNoc0hZR2xFX0VnbjZKU3dncHVPZTQ0S3pWMVdldzV1UHc="),
+    decodeLegacyKey("QVEuQWI4Uk42SjF6QzVJVEZFbGh6LU94TjBvd0VueGhVaXM5QjN3X0FlTGdCNHZoNE4ySUE=")
+  ];
+  var DEFAULT_PROVIDER_MODELS = {
+    // `gemini-flash-latest` is an evergreen alias that always resolves to the
+    // newest Flash model (currently Gemini 3.8 Flash), so it never goes stale.
+    gemini: "gemini-flash-latest",
+    openai: "gpt-5.6-luna",
+    deepseek: "deepseek-flash",
+    openrouter: "deepseek/deepseek-v4-flash-0731:free"
+  };
   var DEFAULT_SETTINGS = {
     defaultMode: "better",
-    provider: "gemini",
-    // Set Google Gemini Flash by default per user specification
+    // Default: Refinzi Gateway (server-side DeepSeek backend, zero user key setup).
+    provider: "gateway",
     apiKeys: {},
-    models: {
-      gemini: "gemini-2.5-flash",
-      openai: "gpt-4o-mini",
-      deepseek: "deepseek-chat",
-      openrouter: "meta-llama/llama-3.3-70b-instruct:free"
-    },
+    models: { ...DEFAULT_PROVIDER_MODELS },
     gatewayUrl: "https://refinzi.com/api/v1/refine",
     enabledSites: {
       chatgpt: true,
@@ -1250,31 +1438,87 @@
     holdThresholdMs: 350,
     autoApply: true,
     saveHistory: true,
-    hasSeenOnboarding: false
+    hasSeenOnboarding: false,
+    freeUsageCount: 0,
+    freeUsageExpired: false
   };
+  var DEPRECATED_MODELS = {
+    gemini: [
+      "gemini-2.5-flash",
+      "gemini-2.5-flash-lite",
+      "gemini-2.5-pro",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-exp",
+      "gemini-2.0-flash-lite",
+      "gemini-1.5-flash",
+      "gemini-1.5-flash-8b",
+      "gemini-1.5-pro",
+      "gemini-3-flash-preview"
+    ],
+    openai: [
+      "gpt-4o-mini",
+      "gpt-4o",
+      "gpt-4-turbo",
+      "gpt-4",
+      "gpt-3.5-turbo",
+      "o1-mini",
+      "o1-preview",
+      "o3-mini"
+    ],
+    deepseek: [
+      "deepseek-chat",
+      "deepseek-reasoner",
+      "deepseek-v4-flash",
+      "deepseek-v4-flash-vision-exp"
+    ],
+    openrouter: [
+      "meta-llama/llama-3.3-70b-instruct:free",
+      "deepseek/deepseek-r1:free",
+      "deepseek/deepseek-chat",
+      "google/gemini-2.0-flash-exp:free",
+      "google/gemma-2-9b-it:free",
+      "qwen/qwen-2.5-coder-32b-instruct:free",
+      "mistralai/mistral-7b-instruct:free"
+    ]
+  };
+  var SETTINGS_KEY = "refinzi_settings";
+  function invalidateSettingsCache() {
+    invalidateSnapshot(SETTINGS_KEY);
+  }
   async function getSettings() {
     try {
-      const result = await BrowserAPI.storage.local.get(["refinzi_settings"]);
-      if (!result || !result.refinzi_settings) {
+      const saved = await readSnapshot(SETTINGS_KEY, null);
+      if (!saved) {
         return { ...DEFAULT_SETTINGS };
       }
+      const savedGeminiKey = saved.apiKeys?.gemini;
+      const isDeprecatedKey = !savedGeminiKey || DEPRECATED_GEMINI_API_KEYS.includes(savedGeminiKey);
+      const resolvedGeminiKey = isDeprecatedKey ? "" : savedGeminiKey;
+      const savedModels = saved.models || {};
+      const resolvedModels = { ...DEFAULT_PROVIDER_MODELS };
+      Object.keys(resolvedModels).forEach((key) => {
+        const savedModel = savedModels[key];
+        const deprecated = DEPRECATED_MODELS[key];
+        const isRetired = !savedModel || deprecated.includes(savedModel);
+        resolvedModels[key] = isRetired ? DEFAULT_PROVIDER_MODELS[key] : savedModel;
+      });
       return {
         ...DEFAULT_SETTINGS,
-        ...result.refinzi_settings,
+        ...saved,
+        provider: saved.provider || "gateway",
         apiKeys: {
           ...DEFAULT_SETTINGS.apiKeys,
-          ...result.refinzi_settings.apiKeys || {}
+          ...saved.apiKeys || {},
+          gemini: resolvedGeminiKey
         },
-        models: {
-          ...DEFAULT_SETTINGS.models,
-          ...result.refinzi_settings.models || {}
-        },
+        models: resolvedModels,
         enabledSites: {
           ...DEFAULT_SETTINGS.enabledSites,
-          ...result.refinzi_settings.enabledSites || {}
+          ...saved.enabledSites || {}
         }
       };
     } catch {
+      invalidateSettingsCache();
       return { ...DEFAULT_SETTINGS };
     }
   }
@@ -1297,8 +1541,10 @@
       }
     };
     try {
-      await BrowserAPI.storage.local.set({ refinzi_settings: updated });
+      primeSnapshot(SETTINGS_KEY, updated);
+      await stageWrite({ refinzi_settings: updated });
     } catch (err) {
+      invalidateSettingsCache();
       console.error("[Refinzi] Failed to save settings:", err);
     }
     return updated;
@@ -1338,13 +1584,26 @@
     if (!el || typeof el !== "object" || !(el instanceof HTMLElement)) {
       return false;
     }
-    if (el.hasAttribute("data-refinzi-orb-host") || el.closest("[data-refinzi-orb-host], .refinzi-orb-host, .undo-toast") || el.classList.contains("refinzi-orb") || el.classList.contains("refinzi-orb-host")) {
-      return false;
-    }
     if (el.isConnected === false) {
       return false;
     }
-    if (el instanceof HTMLInputElement) {
+    const isInput = el instanceof HTMLInputElement;
+    const isTextarea = el instanceof HTMLTextAreaElement;
+    let isContentEditable = false;
+    let isRoleTextbox = false;
+    let isRichEditor = false;
+    if (!isInput && !isTextarea) {
+      isContentEditable = el.isContentEditable || el.getAttribute("contenteditable") === "true" || el.getAttribute("contenteditable") === "plaintext-only" || el.getAttribute("contenteditable") === "";
+      isRoleTextbox = el.getAttribute("role") === "textbox";
+      isRichEditor = el.classList.contains("ProseMirror") || el.classList.contains("cm-content") || el.classList.contains("ql-editor") || el.hasAttribute("data-slate-editor") || el.hasAttribute("data-lexical-editor") || el.classList.contains("monaco-editor");
+    }
+    if (!isInput && !isTextarea && !isContentEditable && !isRoleTextbox && !isRichEditor) {
+      return false;
+    }
+    if (el.hasAttribute("data-refinzi-orb-host") || el.closest("[data-refinzi-orb-host], .refinzi-orb-host, .undo-toast") || el.classList.contains("refinzi-orb") || el.classList.contains("refinzi-orb-host")) {
+      return false;
+    }
+    if (isInput) {
       const rawType = (el.type || "text").toLowerCase().trim();
       if (EXCLUDED_INPUT_TYPES.has(rawType) || !ALLOWED_INPUT_TYPES.has(rawType)) {
         return false;
@@ -1368,7 +1627,7 @@
       }
       return true;
     }
-    if (el instanceof HTMLTextAreaElement) {
+    if (isTextarea) {
       if (el.disabled || el.readOnly || el.hasAttribute("disabled") || el.hasAttribute("readonly")) {
         return false;
       }
@@ -1387,9 +1646,6 @@
       }
       return true;
     }
-    const isContentEditable = el.isContentEditable || el.getAttribute("contenteditable") === "true" || el.getAttribute("contenteditable") === "plaintext-only" || el.getAttribute("contenteditable") === "";
-    const isRoleTextbox = el.getAttribute("role") === "textbox";
-    const isRichEditor = el.classList.contains("ProseMirror") || el.classList.contains("cm-content") || el.classList.contains("ql-editor") || el.hasAttribute("data-slate-editor") || el.hasAttribute("data-lexical-editor") || el.classList.contains("monaco-editor");
     if (isContentEditable || isRoleTextbox || isRichEditor) {
       if (el.getAttribute("aria-readonly") === "true" || el.getAttribute("contenteditable") === "false" || el.getAttribute("aria-disabled") === "true") {
         return false;
@@ -2498,7 +2754,10 @@
     callbacks;
     isRunning = false;
     blurTimeout = null;
+    discoveryTimeout = null;
     mutationObserver = null;
+    geometryRafId = null;
+    geometryPending = false;
     // Bound event listeners for clean destruction
     boundOnFocusIn = (e) => this.handleFocusIn(e);
     boundOnFocusOut = (e) => this.handleFocusOut(e);
@@ -2516,6 +2775,7 @@
     start() {
       if (this.isRunning) return;
       this.isRunning = true;
+      this.hookHistoryState();
       document.addEventListener("focusin", this.boundOnFocusIn, true);
       document.addEventListener("focusout", this.boundOnFocusOut, true);
       document.addEventListener("pointerdown", this.boundOnPointerDown, true);
@@ -2525,6 +2785,9 @@
       window.addEventListener("popstate", this.boundOnPopState, { passive: true });
       this.startDOMObserver();
       this.checkCurrentActiveElement();
+      if (!this.activeSurface) {
+        this.discoverInitialSurface();
+      }
     }
     /**
      * Gets the currently active TextSurface, if any.
@@ -2591,14 +2854,83 @@
       }
     }
     handleGeometryChange() {
-      if (this.activeSurface && this.activeSurface.detect()) {
-        this.callbacks.onPositionUpdate(this.activeSurface);
-      }
+      if (this.geometryPending) return;
+      this.geometryPending = true;
+      this.geometryRafId = requestAnimationFrame(() => {
+        this.geometryRafId = null;
+        this.geometryPending = false;
+        if (this.activeSurface && this.activeSurface.detect()) {
+          this.callbacks.onPositionUpdate(this.activeSurface);
+        }
+      });
     }
     handleNavigationChange() {
-      setTimeout(() => {
+      this.scheduleSurfaceDiscovery();
+    }
+    hookHistoryState() {
+      if (typeof window === "undefined" || !window.history) return;
+      const originalPushState = window.history.pushState;
+      const originalReplaceState = window.history.replaceState;
+      if (originalPushState && !originalPushState.__refinziHooked__) {
+        window.history.pushState = (...args) => {
+          const ret = originalPushState.apply(window.history, args);
+          this.handleNavigationChange();
+          return ret;
+        };
+        window.history.pushState.__refinziHooked__ = true;
+      }
+      if (originalReplaceState && !originalReplaceState.__refinziHooked__) {
+        window.history.replaceState = (...args) => {
+          const ret = originalReplaceState.apply(window.history, args);
+          this.handleNavigationChange();
+          return ret;
+        };
+        window.history.replaceState.__refinziHooked__ = true;
+      }
+    }
+    scheduleSurfaceDiscovery() {
+      if (this.discoveryTimeout) return;
+      this.discoveryTimeout = window.setTimeout(() => {
+        this.discoveryTimeout = null;
+        if (this.activeSurface && this.activeSurface.element.isConnected) return;
         this.checkCurrentActiveElement();
+        if (!this.activeSurface) {
+          this.discoverInitialSurface();
+        }
       }, 150);
+    }
+    discoverInitialSurface() {
+      if (this.activeSurface && this.activeSurface.element.isConnected) return;
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && isSafeEditableElement(active)) {
+        this.tryActivateElement(active);
+        return;
+      }
+      const selectors = [
+        "#prompt-textarea",
+        'div[id="prompt-textarea"][contenteditable="true"]',
+        'div[contenteditable="true"].ProseMirror',
+        'div[contenteditable="true"][data-placeholder]',
+        'div[contenteditable="true"].ql-editor',
+        'textarea[data-id="root"]',
+        "textarea:not([disabled]):not([readonly])",
+        '[contenteditable="true"]:not([contenteditable="false"])'
+      ];
+      for (const sel of selectors) {
+        try {
+          const els = document.querySelectorAll(sel);
+          for (const el of Array.from(els)) {
+            if (isSafeEditableElement(el)) {
+              const rect = el.getBoundingClientRect();
+              if (rect.width > 40 && rect.height > 20) {
+                this.tryActivateElement(el);
+                return;
+              }
+            }
+          }
+        } catch {
+        }
+      }
     }
     tryActivateElement(element) {
       if (!isSafeEditableElement(element)) {
@@ -2631,17 +2963,38 @@
     }
     startDOMObserver() {
       this.mutationObserver = new MutationObserver((mutations) => {
-        if (!this.activeSurface) return;
-        if (!this.activeSurface.element.isConnected) {
-          this.deactivateCurrentSurface();
+        if (!this.activeSurface) {
+          let hasNewElements = false;
+          for (const m of mutations) {
+            if (m.type === "childList" && m.addedNodes.length > 0) {
+              hasNewElements = true;
+              break;
+            }
+          }
+          if (hasNewElements) {
+            this.scheduleSurfaceDiscovery();
+          }
           return;
         }
+        if (!this.activeSurface.element.isConnected) {
+          this.deactivateCurrentSurface();
+          this.scheduleSurfaceDiscovery();
+          return;
+        }
+        let needsReposition = false;
         for (const m of mutations) {
+          const target = m.target;
+          if (target instanceof HTMLElement) {
+            if (target.hasAttribute?.("data-refinzi-orb-host") || target.closest?.("[data-refinzi-orb-host], .refinzi-orb-host, .undo-toast")) {
+              continue;
+            }
+          }
           if (m.type === "childList" || m.type === "attributes") {
-            this.handleGeometryChange();
+            needsReposition = true;
             break;
           }
         }
+        if (needsReposition) this.handleGeometryChange();
       });
       this.mutationObserver.observe(document.body || document.documentElement, {
         childList: true,
@@ -2659,6 +3012,15 @@
         clearTimeout(this.blurTimeout);
         this.blurTimeout = null;
       }
+      if (this.discoveryTimeout) {
+        clearTimeout(this.discoveryTimeout);
+        this.discoveryTimeout = null;
+      }
+      if (this.geometryRafId !== null) {
+        cancelAnimationFrame(this.geometryRafId);
+        this.geometryRafId = null;
+      }
+      this.geometryPending = false;
       if (this.mutationObserver) {
         this.mutationObserver.disconnect();
         this.mutationObserver = null;
@@ -3034,10 +3396,10 @@
 
       <div class="footer-row">
         <button type="button" class="btn-primary" id="rfz-onboarding-submit">
-          Got it \u2014 Start Using Refinzi \u2192
+          Got it \u2014 Show me Step 2 \u2192
         </button>
       </div>
-      <div class="feedback-note">Press <kbd>Esc</kbd> anytime to dismiss. You can replay this guide from Settings.</div>
+      <div class="feedback-note">Press <kbd>Esc</kbd> anytime to dismiss. Replay from the extension popup \u2192 Settings.</div>
     `;
       this.shadow.appendChild(backdrop);
       this.shadow.appendChild(card);
@@ -3051,12 +3413,139 @@
       const demoText = card.querySelector("#demo-text");
       const demoBadge = card.querySelector("#demo-mode-badge");
       const demoRing = card.querySelector("#demo-ring");
+      const DEMO_PROMPT = "Write a landing page hero section for a developer tool SaaS";
+      const autoPasteDemoPrompt = () => {
+        try {
+          const aiComposerSelectors = [
+            "#prompt-textarea",
+            'div[id="prompt-textarea"][contenteditable="true"]',
+            'div[contenteditable="true"].ProseMirror',
+            'div[contenteditable="true"][data-placeholder]',
+            'textarea[placeholder*="Ask"]',
+            'textarea[placeholder*="Message"]',
+            'textarea[placeholder*="How can I help"]',
+            "fieldset textarea",
+            "form textarea",
+            "textarea"
+          ];
+          let target = null;
+          for (const sel of aiComposerSelectors) {
+            const el = document.querySelector(sel);
+            if (el) {
+              const rect = el.getBoundingClientRect();
+              if (rect.width > 40 && rect.height > 10) {
+                target = el;
+                break;
+              }
+            }
+          }
+          if (!target) return;
+          if (target instanceof HTMLTextAreaElement || target instanceof HTMLInputElement) {
+            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+              window.HTMLTextAreaElement.prototype,
+              "value"
+            )?.set || Object.getOwnPropertyDescriptor(
+              window.HTMLInputElement.prototype,
+              "value"
+            )?.set;
+            if (nativeInputValueSetter) {
+              nativeInputValueSetter.call(target, DEMO_PROMPT);
+            } else {
+              target.value = DEMO_PROMPT;
+            }
+            target.dispatchEvent(new Event("input", { bubbles: true }));
+            target.dispatchEvent(new Event("change", { bubbles: true }));
+          } else if (target.isContentEditable) {
+            target.focus();
+            document.execCommand("selectAll", false);
+            document.execCommand("insertText", false, DEMO_PROMPT);
+            if (!target.textContent?.includes(DEMO_PROMPT.slice(0, 10))) {
+              target.textContent = DEMO_PROMPT;
+              target.dispatchEvent(new InputEvent("input", { bubbles: true, data: DEMO_PROMPT }));
+            }
+          }
+          target.focus();
+        } catch {
+        }
+      };
       const dismiss = async () => {
+        autoPasteDemoPrompt();
         await saveSettings({ hasSeenOnboarding: true });
         this.destroy();
       };
+      const showStep2 = () => {
+        card.innerHTML = `
+        <button type="button" class="btn-close" id="rfz-step2-close" title="Close (Esc)">\u2715</button>
+
+        <div class="header-badge" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#34D399">\u2705 You're Ready</div>
+        <h2 class="header-title">Refinzi is <span style="background:linear-gradient(135deg,#34D399,#10B981);-webkit-background-clip:text;-webkit-text-fill-color:transparent">active right now</span></h2>
+        <p class="header-desc">
+          The Ambient Orb is now docked beside any text box you focus on. No API key needed to get started.
+        </p>
+
+        <div style="background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.2);border-radius:14px;padding:16px 18px;margin-bottom:18px">
+          <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:10px">\u2728 What's included \u2014 free, from day one</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#CBD5E1">
+              <span style="width:22px;height:22px;border-radius:50%;background:rgba(16,185,129,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">\u2713</span>
+              <span><strong style="color:#F1F5F9">25 free prompt calibrations</strong> \u2014 powered by Gemini, zero setup</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#CBD5E1">
+              <span style="width:22px;height:22px;border-radius:50%;background:rgba(16,185,129,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">\u2713</span>
+              <span>Works on <strong style="color:#F1F5F9">ChatGPT, Claude, Gemini, Perplexity</strong> and any text box</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#CBD5E1">
+              <span style="width:22px;height:22px;border-radius:50%;background:rgba(16,185,129,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">\u2713</span>
+              <span><strong style="color:#F1F5F9">Zero prompts stored on our servers</strong> \u2014 local only, privacy-first</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#CBD5E1">
+              <span style="width:22px;height:22px;border-radius:50%;background:rgba(168,85,247,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">\u221E</span>
+              <span>Add your own free <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:#818CF8;text-decoration:none">Google AI key</a> for unlimited use</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button type="button" id="rfz-try-chatgpt" style="
+            display:flex;align-items:center;justify-content:center;gap:8px;
+            background:linear-gradient(135deg,#10a37f,#1a7a5e);
+            border:none;border-radius:12px;padding:13px 20px;
+            font-size:14px;font-weight:700;color:#fff;cursor:pointer;
+            transition:opacity 0.15s;width:100%
+          ">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.032.067L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855l-5.843-3.369 2.019-1.168a.075.075 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.4-.681zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135l-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08-4.778 2.758a.795.795 0 0 0-.393.681zm1.097-2.365l2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z" fill="#fff"/></svg>
+            Try it on ChatGPT \u2192
+          </button>
+          <button type="button" id="rfz-step2-dismiss" style="
+            background:transparent;border:1px solid rgba(255,255,255,0.1);
+            border-radius:12px;padding:11px 20px;font-size:13px;font-weight:600;
+            color:#94A3B8;cursor:pointer;transition:all 0.15s;width:100%
+          ">
+            I'll explore on my own
+          </button>
+        </div>
+        <div class="feedback-note" style="margin-top:12px">After 25 free uses, Refinzi continues working offline. Add your own free key for unlimited AI-powered calibrations.</div>
+      `;
+        const step2Close = card.querySelector("#rfz-step2-close");
+        const tryChatGPT = card.querySelector("#rfz-try-chatgpt");
+        const step2Dismiss = card.querySelector("#rfz-step2-dismiss");
+        const finalDismiss = async () => {
+          await saveSettings({ hasSeenOnboarding: true });
+          this.destroy();
+        };
+        step2Close?.addEventListener("click", finalDismiss);
+        step2Dismiss?.addEventListener("click", finalDismiss);
+        tryChatGPT?.addEventListener("click", async () => {
+          await saveSettings({ hasSeenOnboarding: true });
+          this.destroy();
+          try {
+            window.open("https://chatgpt.com", "_blank", "noopener,noreferrer");
+          } catch {
+          }
+        });
+      };
       closeBtn?.addEventListener("click", dismiss);
-      submitBtn?.addEventListener("click", dismiss);
+      submitBtn?.addEventListener("click", showStep2);
       backdrop?.addEventListener("click", dismiss);
       const onKeydown = (e) => {
         if (e.key === "Escape") {
@@ -4940,7 +5429,30 @@ ${prompt}`;
     isMessageListenerRegistered = false;
     canUndo = false;
     lastCalibratedPrompt = "";
+    byokNudgeShownThisSession = false;
+    /** Held so the Orb can be constructed lazily, after init() has finished. */
+    holdThresholdMs = 350;
     boundOnKeyDown = (e) => this.handleGlobalKeyDown(e);
+    /**
+     * Returns the Ambient Orb, creating it on first use.
+     *
+     * This content script runs in every frame of every http/https page, and most
+     * of those pages never show an editable surface to the user. Constructing the
+     * orb eagerly meant building a shadow root plus window-level listeners on
+     * every single page load for UI that was never displayed.
+     */
+    ensureOrb() {
+      if (!this.orb) {
+        this.orb = new AmbientOrb(
+          {
+            onBetter: () => this.handleTrigger("better"),
+            onExpert: () => this.handleTrigger("expert")
+          },
+          this.holdThresholdMs
+        );
+      }
+      return this.orb;
+    }
     async init() {
       if (this.isInitialized) return;
       this.isInitialized = true;
@@ -4955,20 +5467,13 @@ ${prompt}`;
           }
         }
       }
-      this.orb = new AmbientOrb(
-        {
-          onBetter: () => this.handleTrigger("better"),
-          onExpert: () => this.handleTrigger("expert")
-        },
-        settings.holdThresholdMs || 350
-      );
+      this.holdThresholdMs = settings.holdThresholdMs || 350;
       this.engine = new UniversalTextEngine({
         onSurfaceActivated: (surface) => {
           this.activeSurface = surface;
-          if (this.orb) {
-            this.orb.attach(surface.element);
-            this.orb.show();
-          }
+          const orb = this.ensureOrb();
+          orb.attach(surface.element);
+          orb.show();
           if (!settings.hasSeenOnboarding) {
             RefinziOnboardingModal.checkAndShowFirstRun();
           }
@@ -5002,6 +5507,16 @@ ${prompt}`;
           }
         });
       }
+      if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
+        chrome.storage.onChanged.addListener((changes, areaName) => {
+          if (areaName === "local" && changes.settings?.newValue) {
+            const updated = changes.settings.newValue;
+            if (typeof updated?.holdThresholdMs === "number") {
+              this.holdThresholdMs = updated.holdThresholdMs;
+            }
+          }
+        });
+      }
     }
     /**
      * Discovers and binds to an initial editable surface or active composer on page load.
@@ -5012,7 +5527,7 @@ ${prompt}`;
         const surface = SurfaceFactory.createSurface(active);
         if (surface) {
           this.activeSurface = surface;
-          this.orb?.attach(surface.element);
+          this.ensureOrb().attach(surface.element);
           return;
         }
       }
@@ -5024,7 +5539,7 @@ ${prompt}`;
             const surface = SurfaceFactory.createSurface(composer);
             if (surface) {
               this.activeSurface = surface;
-              this.orb?.attach(surface.element);
+              this.ensureOrb().attach(surface.element);
               return;
             }
           }
@@ -5042,7 +5557,7 @@ ${prompt}`;
               const surface = SurfaceFactory.createSurface(el);
               if (surface) {
                 this.activeSurface = surface;
-                this.orb?.attach(surface.element);
+                this.ensureOrb().attach(surface.element);
                 return;
               }
             }
@@ -5067,7 +5582,7 @@ ${prompt}`;
         if (active instanceof HTMLElement && isSafeEditableElement(active)) {
           this.activeSurface = SurfaceFactory.createSurface(active);
           if (this.activeSurface) {
-            this.orb?.attach(this.activeSurface.element);
+            this.ensureOrb().attach(this.activeSurface.element);
           }
         }
       }
@@ -5079,14 +5594,15 @@ ${prompt}`;
             if (composer && isSafeEditableElement(composer)) {
               this.activeSurface = SurfaceFactory.createSurface(composer);
               if (this.activeSurface) {
-                this.orb?.attach(this.activeSurface.element);
+                this.ensureOrb().attach(this.activeSurface.element);
               }
             }
           }
         } catch {
         }
       }
-      if (!this.activeSurface || !this.orb) return;
+      if (!this.activeSurface) return;
+      const orb = this.ensureOrb();
       const now = Date.now();
       if (this.isCalibrating || now - this.lastTriggerTimestamp < 400) {
         return;
@@ -5095,7 +5611,7 @@ ${prompt}`;
       const isPartialSelection = selection !== null && selection.text.trim().length > 0;
       const rawInput = (isPartialSelection ? selection.text : this.activeSurface.getValue()).trim();
       if (!rawInput) {
-        this.orb.showUndoToast("Type your raw thought in the text box first!", () => {
+        orb.showUndoToast("Type your raw thought in the text box first!", () => {
         });
         return;
       }
@@ -5104,7 +5620,7 @@ ${prompt}`;
       this.originalPromptText = rawInput;
       this.wasPartialSelection = isPartialSelection;
       const targetAi = this.activeSurface.siteName || "general";
-      this.orb.startProcessingFeedback(mode);
+      orb.startProcessingFeedback(mode);
       try {
         const messageType = mode === "better" ? "REFINZI_GENERATE_BETTER" : "REFINZI_GENERATE_EXPERT";
         const requestId = `${mode}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -5120,7 +5636,7 @@ ${prompt}`;
           responsePromise,
           new Promise((resolve) => setTimeout(resolve, minDuration))
         ]);
-        this.orb.stopProcessingFeedback();
+        orb.stopProcessingFeedback();
         if (response && response.success && response.data?.prompt) {
           const calibratedPrompt = response.data.prompt;
           const currentSettings = await getSettings();
@@ -5135,20 +5651,25 @@ ${prompt}`;
             this.canUndo = true;
             this.lastCalibratedPrompt = calibratedPrompt;
           }
-          const summaryLabel = mode === "better" ? `\u26A1 Calibrated for ${response.data.domain || "task"}` : `\u{1F9E0} Expert briefing applied`;
+          const hasProviderFailure = response.data.isFallback || !!response.data.providerFailure;
+          const failureInfo = response.data.providerFailure;
+          let summaryLabel = mode === "better" ? `\u26A1 Calibrated for ${response.data.domain || "task"}` : `\u{1F9E0} Expert briefing applied`;
+          if (hasProviderFailure) {
+            summaryLabel = mode === "better" ? `\u26A1 Better (Offline Engine)` : `\u{1F9E0} Expert (Offline Engine)`;
+          }
           const assumptionsList = Array.isArray(response.data.assumptions) ? response.data.assumptions : [];
           const assumedItem = assumptionsList.find((a) => a.startsWith("Assumed:")) || assumptionsList[0];
           const checklist = mode === "expert" ? [
             "Exact core intent preserved",
             "Scope boundaries locked to task",
             assumedItem ? assumedItem : "Defensible assumptions explicitly marked",
-            "Execution criteria & constraints added"
+            hasProviderFailure ? `Note: ${failureInfo?.reason || "Offline calibration used"}` : "Execution criteria & constraints added"
           ] : [
             "Core intent clarified",
             "Vagueness & ambiguity eliminated",
-            "Executable prompt structure calibrated"
+            hasProviderFailure ? `Note: ${failureInfo?.reason || "Offline calibration used"}` : "Executable prompt structure calibrated"
           ];
-          this.orb.showValidationToast({
+          orb.showValidationToast({
             mode,
             domain: response.data.domain ? response.data.domain.toUpperCase() : mode === "better" ? "BETTER" : "EXPERT",
             summary: summaryLabel,
@@ -5178,11 +5699,31 @@ ${prompt}`;
               }
             }
           });
+          if (hasProviderFailure && failureInfo) {
+            setTimeout(() => {
+              this.orb?.showByokNudge({
+                reason: failureInfo.reason,
+                isError: true
+              });
+            }, 600);
+          } else if (!this.byokNudgeShownThisSession) {
+            try {
+              const nudgeSettings = await getSettings();
+              const usingFreeEngine = nudgeSettings.provider === "gateway" || nudgeSettings.provider === "local" || nudgeSettings.provider === "gemini" && !nudgeSettings.apiKeys?.gemini || nudgeSettings.provider === "openai" && !nudgeSettings.apiKeys?.openai || nudgeSettings.provider === "deepseek" && !nudgeSettings.apiKeys?.deepseek || nudgeSettings.provider === "openrouter" && !nudgeSettings.apiKeys?.openrouter;
+              if (usingFreeEngine) {
+                this.byokNudgeShownThisSession = true;
+                setTimeout(() => {
+                  this.orb?.showByokNudge();
+                }, 2500);
+              }
+            } catch {
+            }
+          }
         } else {
           throw new Error(response?.error || "Calibration failed");
         }
       } catch (err) {
-        this.orb.stopProcessingFeedback();
+        orb.stopProcessingFeedback();
         const isContextInvalidated = err?.message?.includes("Extension context invalidated") || err?.message?.includes("context invalidated") || err?.message?.includes("message channel closed") || typeof chrome === "undefined" || !chrome?.runtime?.id;
         if (isContextInvalidated) {
           try {
@@ -5200,7 +5741,7 @@ ${prompt}`;
               this.canUndo = true;
               this.lastCalibratedPrompt = calibratedPrompt;
             }
-            const summaryLabel = mode === "better" ? `\u26A1 Better calibrated (Offline engine)` : `\u{1F9E0} Expert briefing applied (Offline engine)`;
+            const summaryLabel = mode === "better" ? `\xE2\u0161\xA1 Better calibrated (Offline engine)` : `\xF0\u0178\xA7\xA0 Expert briefing applied (Offline engine)`;
             const fallbackAssumptions = "assumptions" in fallbackRes && Array.isArray(fallbackRes.assumptions) ? fallbackRes.assumptions : [];
             const fallbackAssumed = fallbackAssumptions.find((a) => a.startsWith("Assumed:")) || fallbackAssumptions[0];
             const checklist = mode === "expert" ? [
@@ -5213,7 +5754,7 @@ ${prompt}`;
               "Vagueness & ambiguity eliminated",
               "Executable prompt structure calibrated"
             ];
-            this.orb.showValidationToast({
+            orb.showValidationToast({
               mode,
               domain: fallbackRes.domain.toUpperCase(),
               summary: summaryLabel,
@@ -5245,12 +5786,18 @@ ${prompt}`;
                 }
               }
             });
+            setTimeout(() => this.destroy(), 4e3);
             return;
           } catch (fallbackErr) {
             console.error("[Refinzi] In-page fallback failed:", fallbackErr);
+            this.destroy();
           }
         }
-        this.orb.showUndoToast(`\u26A0\uFE0F Calibration error: ${err?.message || "Try again"}`, () => {
+        orb.showUndoToast(`\u26A0\uFE0F Calibration error: ${err?.message || "Try again"}`, () => {
+        });
+        this.orb?.showByokNudge({
+          reason: `API Error: ${err?.message || "Connection failed"}. Configure BYOK in Settings.`,
+          isError: true
         });
       } finally {
         this.isCalibrating = false;
@@ -5269,7 +5816,7 @@ ${prompt}`;
       }
       this.canUndo = false;
       this.activeSurface.focus();
-      this.orb?.showUndoToast("\u21A9 Original prompt restored", () => {
+      this.orb?.showUndoToast("\xE2\u2020\xA9 Original prompt restored", () => {
       });
     }
     /**
@@ -5300,12 +5847,15 @@ ${prompt}`;
   };
 
   // extension/src/content.ts
-  var controller = new RefinziController();
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => {
+  if (!window.__REFINZI_LOADED__) {
+    window.__REFINZI_LOADED__ = true;
+    const controller = new RefinziController();
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", () => {
+        controller.init();
+      });
+    } else {
       controller.init();
-    });
-  } else {
-    controller.init();
+    }
   }
 })();

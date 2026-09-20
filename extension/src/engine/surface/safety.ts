@@ -46,13 +46,57 @@ const SENSITIVE_KEYWORD_PATTERN =
 /**
  * Validates whether an element is a safe, eligible editable text surface.
  * Returns true ONLY if the element is safe and editable.
+ *
+ * ORDERING MATTERS: this runs on every `pointerover` across every page and
+ * frame, so the cheap "is this even an editable candidate?" classification is
+ * done *before* the ancestor `closest()` exclusion walk below. Profiling showed
+ * that walk accounts for ~99% of the cost for non-editable targets, and the
+ * overwhelming majority of hovered elements (div, span, img, …) are neither
+ * inputs nor contenteditable. Rejecting them first turns the common case into a
+ * few property reads instead of a full ancestor traversal.
  */
 export function isSafeEditableElement(el: unknown): el is HTMLElement {
   if (!el || typeof el !== 'object' || !(el instanceof HTMLElement)) {
     return false;
   }
 
-  // 1. Never activate inside Refinzi's own UI containers or shadow roots
+  // Element must be connected to the DOM
+  if (el.isConnected === false) {
+    return false;
+  }
+
+  // --- Cheap candidate classification --------------------------------------
+  const isInput = el instanceof HTMLInputElement;
+  const isTextarea = el instanceof HTMLTextAreaElement;
+
+  let isContentEditable = false;
+  let isRoleTextbox = false;
+  let isRichEditor = false;
+
+  if (!isInput && !isTextarea) {
+    isContentEditable =
+      el.isContentEditable ||
+      el.getAttribute('contenteditable') === 'true' ||
+      el.getAttribute('contenteditable') === 'plaintext-only' ||
+      el.getAttribute('contenteditable') === '';
+
+    isRoleTextbox = el.getAttribute('role') === 'textbox';
+
+    isRichEditor =
+      el.classList.contains('ProseMirror') ||
+      el.classList.contains('cm-content') ||
+      el.classList.contains('ql-editor') ||
+      el.hasAttribute('data-slate-editor') ||
+      el.hasAttribute('data-lexical-editor') ||
+      el.classList.contains('monaco-editor');
+  }
+
+  // Fast reject — no ancestor walk, no regex work on the common case.
+  if (!isInput && !isTextarea && !isContentEditable && !isRoleTextbox && !isRichEditor) {
+    return false;
+  }
+
+  // --- Never activate inside Refinzi's own UI containers or shadow roots ----
   if (
     el.hasAttribute('data-refinzi-orb-host') ||
     el.closest('[data-refinzi-orb-host], .refinzi-orb-host, .undo-toast') ||
@@ -62,13 +106,8 @@ export function isSafeEditableElement(el: unknown): el is HTMLElement {
     return false;
   }
 
-  // 2. Element must be connected to the DOM
-  if (el.isConnected === false) {
-    return false;
-  }
-
-  // 3. Inspect HTMLInputElement
-  if (el instanceof HTMLInputElement) {
+  // --- Inspect HTMLInputElement --------------------------------------------
+  if (isInput) {
     const rawType = (el.type || 'text').toLowerCase().trim();
 
     // Check excluded types (password, hidden, file, etc.)
@@ -103,8 +142,8 @@ export function isSafeEditableElement(el: unknown): el is HTMLElement {
     return true;
   }
 
-  // 4. Inspect HTMLTextAreaElement
-  if (el instanceof HTMLTextAreaElement) {
+  // --- Inspect HTMLTextAreaElement -----------------------------------------
+  if (isTextarea) {
     // Exclude disabled or readonly
     if (el.disabled || el.readOnly || el.hasAttribute('disabled') || el.hasAttribute('readonly')) {
       return false;
@@ -129,23 +168,9 @@ export function isSafeEditableElement(el: unknown): el is HTMLElement {
     return true;
   }
 
-  // 5. Inspect ContentEditable elements & Rich Text Editors
-  const isContentEditable =
-    el.isContentEditable ||
-    el.getAttribute('contenteditable') === 'true' ||
-    el.getAttribute('contenteditable') === 'plaintext-only' ||
-    el.getAttribute('contenteditable') === '';
-
-  const isRoleTextbox = el.getAttribute('role') === 'textbox';
-
-  const isRichEditor =
-    el.classList.contains('ProseMirror') ||
-    el.classList.contains('cm-content') ||
-    el.classList.contains('ql-editor') ||
-    el.hasAttribute('data-slate-editor') ||
-    el.hasAttribute('data-lexical-editor') ||
-    el.classList.contains('monaco-editor');
-
+  // --- Inspect ContentEditable elements & Rich Text Editors ----------------
+  // (candidate classification already happened above; reaching here means the
+  // element is one of these three kinds, so no re-testing is needed.)
   if (isContentEditable || isRoleTextbox || isRichEditor) {
     // Exclude disabled or aria-readonly
     if (

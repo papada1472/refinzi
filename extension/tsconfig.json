@@ -2,13 +2,15 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "typeRoots": ["../node_modules/@types"],
+    "types": ["chrome", "node"],
     "noEmit": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "popup/**/*"]
 }

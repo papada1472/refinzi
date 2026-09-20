@@ -2140,14 +2140,11 @@ function isValidDomain(val) {
 
 // extension/src/providers/openai.ts
 var OpenAIProvider = class {
-  constructor(apiKey, model = "gpt-4o-mini", baseURL = "https://api.openai.com/v1") {
+  constructor(apiKey, model = "gpt-5.6-luna", baseURL = "https://api.openai.com/v1") {
     this.apiKey = apiKey;
     this.model = model;
     this.baseURL = baseURL;
   }
-  apiKey;
-  model;
-  baseURL;
   id = "openai";
   name = "OpenAI";
   async callChat(systemPrompt, userMessage, options) {
@@ -2184,9 +2181,35 @@ var OpenAIProvider = class {
       throw err;
     }
   }
+  classifyOpenAIError(err) {
+    const msg = err?.message || String(err);
+    if (msg.includes("401") || msg.includes("Incorrect API key") || msg.includes("Unauthorized")) {
+      return { reason: "OpenAI API key is invalid (HTTP 401)", status: 401, code: "INVALID_KEY" };
+    }
+    if (msg.includes("429") || msg.includes("quota") || msg.includes("Rate limit")) {
+      return { reason: "OpenAI quota or rate limit exceeded (HTTP 429)", status: 429, code: "QUOTA_EXCEEDED" };
+    }
+    if (msg.includes("timeout") || msg.includes("AbortError")) {
+      return { reason: "OpenAI request timed out", status: 408, code: "TIME_BUDGET_EXHAUSTED" };
+    }
+    if (msg.includes("500") || msg.includes("502") || msg.includes("503")) {
+      return { reason: "OpenAI servers temporarily unavailable", status: 503, code: "SERVER_ERROR" };
+    }
+    return { reason: msg.slice(0, 120), status: 0, code: "NETWORK_ERROR" };
+  }
   async generateBetter(rawInput, intent, options) {
     if (!this.apiKey) {
-      return synthesizeBetterPrompt(rawInput, intent.targetAi);
+      const fallback2 = synthesizeBetterPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: {
+          provider: "openai",
+          reason: "OpenAI API key is not configured. Add your key in Settings.",
+          status: 0,
+          code: "NO_KEY"
+        }
+      };
     }
     try {
       const content = await this.callChat(
@@ -2201,12 +2224,44 @@ Target AI: ${intent.targetAi}`,
       if (validated) return validated;
     } catch (err) {
       console.warn("[Refinzi] OpenAI Better call failed, using local calibration:", err);
+      const failure = this.classifyOpenAIError(err);
+      const fallback2 = synthesizeBetterPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: {
+          provider: "openai",
+          reason: failure.reason,
+          status: failure.status,
+          code: failure.code
+        }
+      };
     }
-    return synthesizeBetterPrompt(rawInput, intent.targetAi);
+    const fallback = synthesizeBetterPrompt(rawInput, intent.targetAi);
+    return {
+      ...fallback,
+      isFallback: true,
+      providerFailure: {
+        provider: "openai",
+        reason: "OpenAI returned an invalid response",
+        status: 0,
+        code: "SERVER_ERROR"
+      }
+    };
   }
   async generateExpert(rawInput, intent, options) {
     if (!this.apiKey) {
-      return synthesizeExpertPrompt(rawInput, intent.targetAi);
+      const fallback2 = synthesizeExpertPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: {
+          provider: "openai",
+          reason: "OpenAI API key is not configured. Add your key in Settings.",
+          status: 0,
+          code: "NO_KEY"
+        }
+      };
     }
     try {
       const content = await this.callChat(
@@ -2221,8 +2276,30 @@ Target AI: ${intent.targetAi}`,
       if (validated) return validated;
     } catch (err) {
       console.warn("[Refinzi] OpenAI Expert call failed, using local briefing:", err);
+      const failure = this.classifyOpenAIError(err);
+      const fallback2 = synthesizeExpertPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: {
+          provider: "openai",
+          reason: failure.reason,
+          status: failure.status,
+          code: failure.code
+        }
+      };
     }
-    return synthesizeExpertPrompt(rawInput, intent.targetAi);
+    const fallback = synthesizeExpertPrompt(rawInput, intent.targetAi);
+    return {
+      ...fallback,
+      isFallback: true,
+      providerFailure: {
+        provider: "openai",
+        reason: "OpenAI returned an invalid response",
+        status: 0,
+        code: "SERVER_ERROR"
+      }
+    };
   }
   async testConnection(options) {
     try {
@@ -2241,26 +2318,378 @@ Target AI: ${intent.targetAi}`,
   }
 };
 
-// extension/src/providers/gemini.ts
-var GeminiProvider = class {
-  constructor(apiKey, model = "gemini-2.5-flash") {
-    this.apiKey = apiKey;
-    this.model = model;
+// extension/src/utils/storage-batch.ts
+var SNAPSHOT_TTL_MS = 1500;
+var snapshots = {};
+function invalidateSnapshot(key) {
+  delete snapshots[key];
+}
+function invalidateAllSnapshots() {
+  for (const k of Object.keys(snapshots)) delete snapshots[k];
+}
+async function readSnapshot(key, fallbackEmpty) {
+  const snap = snapshots[key];
+  if (snap && Date.now() - snap.at < SNAPSHOT_TTL_MS && snap.value !== void 0) {
+    return normalize(snap.value, fallbackEmpty);
   }
-  apiKey;
-  model;
+  try {
+    const res = await BrowserAPI.storage.local.get([key]);
+    const raw = res?.[key];
+    snapshots[key] = { value: raw ?? null, at: Date.now() };
+    return normalize(raw, fallbackEmpty);
+  } catch {
+    delete snapshots[key];
+    return fallbackEmpty;
+  }
+}
+function normalize(value, fallbackEmpty) {
+  if (Array.isArray(fallbackEmpty)) {
+    return Array.isArray(value) ? value : fallbackEmpty;
+  }
+  return value === null || value === void 0 ? fallbackEmpty : value;
+}
+function primeSnapshot(key, value) {
+  snapshots[key] = { value, at: Date.now() };
+}
+var batchDepth = 0;
+var pendingWrites = null;
+async function stageWrite(items) {
+  if (pendingWrites) {
+    Object.assign(pendingWrites, items);
+    return;
+  }
+  await BrowserAPI.storage.local.set(items);
+}
+async function runInBatch(fn) {
+  batchDepth++;
+  if (!pendingWrites) pendingWrites = {};
+  try {
+    const result = await fn();
+    return result;
+  } finally {
+    batchDepth--;
+    if (batchDepth === 0 && pendingWrites) {
+      const writes = pendingWrites;
+      pendingWrites = null;
+      try {
+        await BrowserAPI.storage.local.set(writes);
+      } catch (err) {
+        invalidateAllSnapshots();
+        throw err;
+      }
+    } else if (batchDepth === 0) {
+      pendingWrites = null;
+    }
+  }
+}
+
+// extension/src/utils/storage.ts
+var DEFAULT_GEMINI_API_KEY = "";
+var decodeLegacyKey = (b64) => typeof atob === "function" ? atob(b64) : typeof Buffer !== "undefined" ? Buffer.from(b64, "base64").toString("binary") : "";
+var DEPRECATED_GEMINI_API_KEYS = [
+  decodeLegacyKey("QVEuQWI4Uk42S1g3T0E4dzlLOWNoc0hZR2xFX0VnbjZKU3dncHVPZTQ0S3pWMVdldzV1UHc="),
+  decodeLegacyKey("QVEuQWI4Uk42SjF6QzVJVEZFbGh6LU94TjBvd0VueGhVaXM5QjN3X0FlTGdCNHZoNE4ySUE=")
+];
+var FREE_TIER_PROMPT_CAP = 25;
+var DEFAULT_PROVIDER_MODELS = {
+  // `gemini-flash-latest` is an evergreen alias that always resolves to the
+  // newest Flash model (currently Gemini 3.8 Flash), so it never goes stale.
+  gemini: "gemini-flash-latest",
+  openai: "gpt-5.6-luna",
+  deepseek: "deepseek-flash",
+  openrouter: "deepseek/deepseek-v4-flash-0731:free"
+};
+var DEFAULT_SETTINGS = {
+  defaultMode: "better",
+  // Default: Refinzi Gateway (server-side DeepSeek backend, zero user key setup).
+  provider: "gateway",
+  apiKeys: {},
+  models: { ...DEFAULT_PROVIDER_MODELS },
+  gatewayUrl: "https://refinzi.com/api/v1/refine",
+  enabledSites: {
+    chatgpt: true,
+    claude: true,
+    gemini: true,
+    perplexity: true
+  },
+  shortcuts: {
+    better: "Ctrl+Shift+B",
+    expert: "Ctrl+Shift+E"
+  },
+  theme: "dark",
+  autoFocus: true,
+  showInlineTrigger: true,
+  holdThresholdMs: 350,
+  autoApply: true,
+  saveHistory: true,
+  hasSeenOnboarding: false,
+  freeUsageCount: 0,
+  freeUsageExpired: false
+};
+var DEPRECATED_MODELS = {
+  gemini: [
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.5-pro",
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-exp",
+    "gemini-2.0-flash-lite",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
+    "gemini-1.5-pro",
+    "gemini-3-flash-preview"
+  ],
+  openai: [
+    "gpt-4o-mini",
+    "gpt-4o",
+    "gpt-4-turbo",
+    "gpt-4",
+    "gpt-3.5-turbo",
+    "o1-mini",
+    "o1-preview",
+    "o3-mini"
+  ],
+  deepseek: [
+    "deepseek-chat",
+    "deepseek-reasoner",
+    "deepseek-v4-flash",
+    "deepseek-v4-flash-vision-exp"
+  ],
+  openrouter: [
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "deepseek/deepseek-r1:free",
+    "deepseek/deepseek-chat",
+    "google/gemini-2.0-flash-exp:free",
+    "google/gemma-2-9b-it:free",
+    "qwen/qwen-2.5-coder-32b-instruct:free",
+    "mistralai/mistral-7b-instruct:free"
+  ]
+};
+var SETTINGS_KEY = "refinzi_settings";
+function invalidateSettingsCache() {
+  invalidateSnapshot(SETTINGS_KEY);
+}
+async function getSettings() {
+  try {
+    const saved = await readSnapshot(SETTINGS_KEY, null);
+    if (!saved) {
+      return { ...DEFAULT_SETTINGS };
+    }
+    const savedGeminiKey = saved.apiKeys?.gemini;
+    const isDeprecatedKey = !savedGeminiKey || DEPRECATED_GEMINI_API_KEYS.includes(savedGeminiKey);
+    const resolvedGeminiKey = isDeprecatedKey ? "" : savedGeminiKey;
+    const savedModels = saved.models || {};
+    const resolvedModels = { ...DEFAULT_PROVIDER_MODELS };
+    Object.keys(resolvedModels).forEach((key) => {
+      const savedModel = savedModels[key];
+      const deprecated = DEPRECATED_MODELS[key];
+      const isRetired = !savedModel || deprecated.includes(savedModel);
+      resolvedModels[key] = isRetired ? DEFAULT_PROVIDER_MODELS[key] : savedModel;
+    });
+    return {
+      ...DEFAULT_SETTINGS,
+      ...saved,
+      provider: saved.provider || "gateway",
+      apiKeys: {
+        ...DEFAULT_SETTINGS.apiKeys,
+        ...saved.apiKeys || {},
+        gemini: resolvedGeminiKey
+      },
+      models: resolvedModels,
+      enabledSites: {
+        ...DEFAULT_SETTINGS.enabledSites,
+        ...saved.enabledSites || {}
+      }
+    };
+  } catch {
+    invalidateSettingsCache();
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+async function saveSettings(patch) {
+  const current = await getSettings();
+  const updated = {
+    ...current,
+    ...patch,
+    apiKeys: {
+      ...current.apiKeys,
+      ...patch.apiKeys || {}
+    },
+    models: {
+      ...current.models,
+      ...patch.models || {}
+    },
+    enabledSites: {
+      ...current.enabledSites,
+      ...patch.enabledSites || {}
+    }
+  };
+  try {
+    primeSnapshot(SETTINGS_KEY, updated);
+    await stageWrite({ refinzi_settings: updated });
+  } catch (err) {
+    invalidateSettingsCache();
+    console.error("[Refinzi] Failed to save settings:", err);
+  }
+  return updated;
+}
+async function isFreeKeyActive() {
+  const settings = await getSettings();
+  const usingDefaultKey = settings.provider === "gemini" && (!settings.apiKeys?.gemini || settings.apiKeys.gemini === DEFAULT_GEMINI_API_KEY);
+  return usingDefaultKey && !settings.freeUsageExpired;
+}
+async function incrementFreeUsage() {
+  try {
+    const settings = await getSettings();
+    if (settings.freeUsageExpired) return;
+    const currentCount = settings.freeUsageCount ?? 0;
+    const newCount = currentCount + 1;
+    const expired = newCount >= FREE_TIER_PROMPT_CAP;
+    await saveSettings({
+      freeUsageCount: newCount,
+      freeUsageExpired: expired
+    });
+  } catch (err) {
+    console.error("[Refinzi] Failed to increment free usage count:", err);
+  }
+}
+var HISTORY_KEY = "refinzi_history";
+var STATS_KEY = "refinzi_stats";
+async function getHistory() {
+  return readSnapshot(HISTORY_KEY, []);
+}
+async function addHistoryItem(item) {
+  try {
+    await incrementStats(item.mode);
+    const settings = await getSettings();
+    if (settings.saveHistory === false) return;
+    const now = /* @__PURE__ */ new Date();
+    const dateStr = now.toISOString().split("T")[0];
+    const newItem = {
+      ...item,
+      id: "rfz_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now().toString(36),
+      timestamp: Date.now(),
+      dateStr
+    };
+    const history = await getHistory();
+    const updated = [newItem, ...history].slice(0, 50);
+    primeSnapshot(HISTORY_KEY, updated);
+    await stageWrite({ refinzi_history: updated });
+  } catch (err) {
+    console.error("[Refinzi] Failed to record history:", err);
+  }
+}
+async function clearHistory() {
+  try {
+    primeSnapshot(HISTORY_KEY, []);
+    await stageWrite({ refinzi_history: [] });
+  } catch (err) {
+    console.error("[Refinzi] Failed to clear history:", err);
+  }
+}
+async function deleteHistoryItem(id) {
+  try {
+    const history = await getHistory();
+    const updated = history.filter((item) => item.id !== id);
+    primeSnapshot(HISTORY_KEY, updated);
+    await stageWrite({ refinzi_history: updated });
+  } catch (err) {
+    console.error("[Refinzi] Failed to delete history item:", err);
+  }
+}
+async function getStats() {
+  const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+  const stored = await readSnapshot(STATS_KEY, null);
+  const stats = stored || {
+    todayBetterCount: 0,
+    todayExpertCount: 0,
+    lastDate: today
+  };
+  if (stats.lastDate !== today) {
+    return {
+      todayBetterCount: 0,
+      todayExpertCount: 0,
+      lastDate: today
+    };
+  }
+  return stats;
+}
+async function incrementStats(mode) {
+  try {
+    const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+    const stats = await getStats();
+    if (mode === "better") {
+      stats.todayBetterCount = (stats.todayBetterCount || 0) + 1;
+    } else {
+      stats.todayExpertCount = (stats.todayExpertCount || 0) + 1;
+    }
+    stats.lastDate = today;
+    primeSnapshot(STATS_KEY, stats);
+    await stageWrite({ refinzi_stats: stats });
+  } catch (err) {
+    console.error("[Refinzi] Failed to update stats:", err);
+  }
+}
+
+// extension/src/providers/gemini.ts
+var GEMINI_FALLBACK_MODELS = [
+  "gemini-flash-latest",
+  "gemini-3.8-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.1-flash-lite"
+];
+var ATTEMPT_TIMEOUT_MS = 9e3;
+var TOTAL_BUDGET_MS = 18e3;
+var ATTEMPTS_PER_MODEL = 1;
+var LAST_GOOD_TTL_MS = 5 * 60 * 1e3;
+var lastGoodModel = null;
+var lastGoodAt = 0;
+function isRetryableStatus(status) {
+  return status === 408 || status === 429 || status === 500 || status === 502 || status === 503 || status === 504;
+}
+function isFatalStatus(status) {
+  return status === 400 || status === 401 || status === 403;
+}
+var GeminiHttpError = class extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+    this.name = "GeminiHttpError";
+  }
+};
+var GeminiProvider = class {
   id = "gemini";
   name = "Google Gemini";
-  async callGemini(systemPrompt, userMessage, options) {
-    const timeoutMs = options?.timeoutMs || 15e3;
+  apiKey;
+  model;
+  constructor(apiKey, model = "gemini-flash-latest") {
+    this.apiKey = apiKey && apiKey.trim() || DEFAULT_GEMINI_API_KEY;
+    this.model = model && model.trim() || "gemini-flash-latest";
+  }
+  /**
+   * Configured model first, then the known-good model (if one is remembered and
+   * still fresh), then the static fallbacks — de-duplicated.
+   */
+  buildModelChain() {
+    const base = [this.model, ...GEMINI_FALLBACK_MODELS].filter(Boolean);
+    const remembered = lastGoodModel;
+    const memoryIsFresh = !!remembered && remembered !== this.model && Date.now() - lastGoodAt < LAST_GOOD_TTL_MS;
+    return Array.from(new Set(memoryIsFresh ? [remembered, ...base] : base));
+  }
+  /** Single request against one model. */
+  async callModel(model, systemPrompt, userMessage, timeoutMs, externalSignal) {
+    const activeKey = this.apiKey || DEFAULT_GEMINI_API_KEY;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
+    const signal = externalSignal ? typeof AbortSignal.any === "function" ? AbortSignal.any([controller.signal, externalSignal]) : controller.signal : controller.signal;
     try {
       const response = await fetch(url, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "X-goog-api-key": activeKey
         },
         body: JSON.stringify({
           system_instruction: { parts: [{ text: systemPrompt }] },
@@ -2270,22 +2699,108 @@ var GeminiProvider = class {
             temperature: 0.6
           }
         }),
-        signal: options?.signal || controller.signal
+        signal
       });
-      clearTimeout(timer);
       if (!response.ok) {
         const errText = await response.text().catch(() => "");
-        throw new Error(`Gemini HTTP ${response.status}: ${errText.slice(0, 150)}`);
+        throw new GeminiHttpError(response.status, `Gemini HTTP ${response.status}: ${errText.slice(0, 150)}`);
       }
       const data = await response.json();
       return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    } catch (err) {
+    } finally {
       clearTimeout(timer);
-      throw err;
     }
   }
+  /**
+   * Calls Gemini with model fallback.
+   *
+   * Order of defence:
+   *   1. try the configured model
+   *   2. walk the fallback chain, so one busy or throttled model cannot disable
+   *      the feature (each model has its own capacity pool and quota bucket)
+   *   3. only then propagate, letting the caller fall back to local synthesis
+   *
+   * Bounded by a wall-clock budget so a degraded provider cannot hang the UI.
+   */
+  async callGemini(systemPrompt, userMessage, options) {
+    const chain = this.buildModelChain();
+    const budgetMs = options?.timeoutMs ?? TOTAL_BUDGET_MS;
+    const deadline = Date.now() + budgetMs;
+    const failures = [];
+    for (const model of chain) {
+      for (let attempt = 0; attempt < ATTEMPTS_PER_MODEL; attempt++) {
+        const remaining = deadline - Date.now();
+        if (remaining < 1200) {
+          throw new Error(
+            `Gemini time budget (${budgetMs}ms) exhausted. Tried: ${failures.join(" | ")}`
+          );
+        }
+        try {
+          const text = await this.callModel(
+            model,
+            systemPrompt,
+            userMessage,
+            Math.min(ATTEMPT_TIMEOUT_MS, remaining),
+            options?.signal
+          );
+          if (text && text.trim()) {
+            lastGoodModel = model;
+            lastGoodAt = Date.now();
+            if (model !== this.model) {
+              console.warn(
+                `[Refinzi] Gemini served by fallback model "${model}" (primary "${this.model}" unavailable).`
+              );
+            }
+            return text;
+          }
+          failures.push(`${model}: empty response`);
+        } catch (err) {
+          const status = err instanceof GeminiHttpError ? err.status : 0;
+          const label = status ? `HTTP ${status}` : err?.name || "error";
+          failures.push(`${model}: ${label}`);
+          if (isFatalStatus(status)) {
+            throw new Error(`Gemini request rejected (${label}). ${err?.message ?? ""}`.trim());
+          }
+          if (status === 404) break;
+          if (!isRetryableStatus(status) && status !== 0) break;
+        }
+      }
+    }
+    throw new Error(`All Gemini models failed. Tried: ${failures.join(" | ")}`);
+  }
+  classifyGeminiError(err) {
+    const msg = err?.message || String(err);
+    if (msg.includes("401") || msg.includes("API_KEY_INVALID") || msg.includes("Unauthorized")) {
+      return { reason: "Gemini API key is invalid (HTTP 401)", status: 401, code: "INVALID_KEY" };
+    }
+    if (msg.includes("403") || msg.includes("PERMISSION_DENIED")) {
+      return { reason: "Gemini API permission denied (HTTP 403)", status: 403, code: "INVALID_KEY" };
+    }
+    if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota") || msg.includes("throttled")) {
+      return { reason: "Gemini quota or rate limit exceeded (HTTP 429)", status: 429, code: "QUOTA_EXCEEDED" };
+    }
+    if (msg.includes("time budget") || msg.includes("timeout") || msg.includes("AbortError")) {
+      return { reason: "Gemini request timed out", status: 408, code: "TIME_BUDGET_EXHAUSTED" };
+    }
+    if (msg.includes("500") || msg.includes("502") || msg.includes("503") || msg.includes("504")) {
+      return { reason: "Google Gemini servers temporarily unavailable", status: 503, code: "SERVER_ERROR" };
+    }
+    return { reason: msg.slice(0, 120), status: 0, code: "NETWORK_ERROR" };
+  }
   async generateBetter(rawInput, intent, options) {
-    if (!this.apiKey) return synthesizeBetterPrompt(rawInput, intent.targetAi);
+    if (!this.apiKey) {
+      const fallback2 = synthesizeBetterPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: {
+          provider: "gemini",
+          reason: "Gemini API key is not configured. Add your free key in Settings.",
+          status: 0,
+          code: "NO_KEY"
+        }
+      };
+    }
     try {
       const text = await this.callGemini(
         BETTER_SYSTEM_PROMPT,
@@ -2299,11 +2814,45 @@ Target AI: ${intent.targetAi}`,
       if (validated) return validated;
     } catch (err) {
       console.warn("[Refinzi] Gemini Better call failed, using local calibration:", err);
+      const failure = this.classifyGeminiError(err);
+      const fallback2 = synthesizeBetterPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: {
+          provider: "gemini",
+          reason: failure.reason,
+          status: failure.status,
+          code: failure.code
+        }
+      };
     }
-    return synthesizeBetterPrompt(rawInput, intent.targetAi);
+    const fallback = synthesizeBetterPrompt(rawInput, intent.targetAi);
+    return {
+      ...fallback,
+      isFallback: true,
+      providerFailure: {
+        provider: "gemini",
+        reason: "Gemini returned an invalid response",
+        status: 0,
+        code: "SERVER_ERROR"
+      }
+    };
   }
   async generateExpert(rawInput, intent, options) {
-    if (!this.apiKey) return synthesizeExpertPrompt(rawInput, intent.targetAi);
+    if (!this.apiKey) {
+      const fallback2 = synthesizeExpertPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: {
+          provider: "gemini",
+          reason: "Gemini API key is not configured. Add your free key in Settings.",
+          status: 0,
+          code: "NO_KEY"
+        }
+      };
+    }
     try {
       const text = await this.callGemini(
         EXPERT_SYSTEM_PROMPT,
@@ -2317,13 +2866,39 @@ Target AI: ${intent.targetAi}`,
       if (validated) return validated;
     } catch (err) {
       console.warn("[Refinzi] Gemini Expert call failed, using local briefing:", err);
+      const failure = this.classifyGeminiError(err);
+      const fallback2 = synthesizeExpertPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: {
+          provider: "gemini",
+          reason: failure.reason,
+          status: failure.status,
+          code: failure.code
+        }
+      };
     }
-    return synthesizeExpertPrompt(rawInput, intent.targetAi);
+    const fallback = synthesizeExpertPrompt(rawInput, intent.targetAi);
+    return {
+      ...fallback,
+      isFallback: true,
+      providerFailure: {
+        provider: "gemini",
+        reason: "Gemini returned an invalid response",
+        status: 0,
+        code: "SERVER_ERROR"
+      }
+    };
   }
   async testConnection(options) {
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`, {
+      const activeKey = this.apiKey || DEFAULT_GEMINI_API_KEY;
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${activeKey}`, {
         method: "GET",
+        headers: {
+          "X-goog-api-key": activeKey
+        },
         signal: options?.signal || AbortSignal.timeout(6e3)
       });
       if (res.ok) {
@@ -2338,14 +2913,14 @@ Target AI: ${intent.targetAi}`,
 
 // extension/src/providers/deepseek.ts
 var DeepSeekProvider = class {
-  constructor(apiKey, model = "deepseek-chat") {
+  id = "deepseek";
+  name = "DeepSeek";
+  apiKey;
+  model;
+  constructor(apiKey, model = "deepseek-flash") {
     this.apiKey = apiKey;
     this.model = model;
   }
-  apiKey;
-  model;
-  id = "deepseek";
-  name = "DeepSeek";
   async callDeepSeek(systemPrompt, userMessage, options) {
     const timeoutMs = options?.timeoutMs || 15e3;
     const controller = new AbortController();
@@ -2435,12 +3010,10 @@ Target AI: ${intent.targetAi}`,
 
 // extension/src/providers/openrouter.ts
 var OpenRouterProvider = class {
-  constructor(apiKey, model = "meta-llama/llama-3.3-70b-instruct:free") {
+  constructor(apiKey, model = "deepseek/deepseek-v4-flash-0731:free") {
     this.apiKey = apiKey;
     this.model = model;
   }
-  apiKey;
-  model;
   id = "openrouter";
   name = "OpenRouter";
   async callOpenRouter(systemPrompt, userMessage, options) {
@@ -2539,9 +3112,6 @@ var GatewayProvider = class {
     this.apiKey = apiKey;
     this.model = model;
   }
-  gatewayUrl;
-  apiKey;
-  model;
   id = "gateway";
   name = "Refinzi Gateway";
   async callGateway(systemPrompt, text, options) {
@@ -2575,6 +3145,22 @@ var GatewayProvider = class {
       throw err;
     }
   }
+  classifyGatewayError(err) {
+    const msg = err?.message || String(err);
+    if (msg.includes("401") || msg.includes("Unauthorized")) {
+      return { reason: "Gateway access unauthorized. Add a BYOK API key in Settings.", status: 401, code: "INVALID_KEY" };
+    }
+    if (msg.includes("429")) {
+      return { reason: "Gateway rate limited. Add your free Gemini API key for unlimited speed.", status: 429, code: "QUOTA_EXCEEDED" };
+    }
+    if (msg.includes("timeout") || msg.includes("AbortError")) {
+      return { reason: "Gateway request timed out", status: 408, code: "TIME_BUDGET_EXHAUSTED" };
+    }
+    if (msg.includes("500") || msg.includes("502") || msg.includes("503")) {
+      return { reason: "Gateway server temporarily unavailable", status: 503, code: "SERVER_ERROR" };
+    }
+    return { reason: "Gateway connection error. Configure a BYOK key in Settings.", status: 0, code: "NETWORK_ERROR" };
+  }
   async generateBetter(rawInput, intent, options) {
     try {
       const text = await this.callGateway(
@@ -2589,8 +3175,30 @@ Target AI: ${intent.targetAi}`,
       if (validated) return validated;
     } catch (err) {
       console.warn("[Refinzi] Gateway Better call failed, using local calibration:", err);
+      const failure = this.classifyGatewayError(err);
+      const fallback2 = synthesizeBetterPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: {
+          provider: "gateway",
+          reason: failure.reason,
+          status: failure.status,
+          code: failure.code
+        }
+      };
     }
-    return synthesizeBetterPrompt(rawInput, intent.targetAi);
+    const fallback = synthesizeBetterPrompt(rawInput, intent.targetAi);
+    return {
+      ...fallback,
+      isFallback: true,
+      providerFailure: {
+        provider: "gateway",
+        reason: "Gateway returned an invalid response",
+        status: 0,
+        code: "SERVER_ERROR"
+      }
+    };
   }
   async generateExpert(rawInput, intent, options) {
     try {
@@ -2606,8 +3214,30 @@ Target AI: ${intent.targetAi}`,
       if (validated) return validated;
     } catch (err) {
       console.warn("[Refinzi] Gateway Expert call failed, using local briefing:", err);
+      const failure = this.classifyGatewayError(err);
+      const fallback2 = synthesizeExpertPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: {
+          provider: "gateway",
+          reason: failure.reason,
+          status: failure.status,
+          code: failure.code
+        }
+      };
     }
-    return synthesizeExpertPrompt(rawInput, intent.targetAi);
+    const fallback = synthesizeExpertPrompt(rawInput, intent.targetAi);
+    return {
+      ...fallback,
+      isFallback: true,
+      providerFailure: {
+        provider: "gateway",
+        reason: "Gateway returned an invalid response",
+        status: 0,
+        code: "SERVER_ERROR"
+      }
+    };
   }
   async testConnection(options) {
     try {
@@ -2624,173 +3254,6 @@ Target AI: ${intent.targetAi}`,
     }
   }
 };
-
-// extension/src/utils/storage.ts
-var DEFAULT_SETTINGS = {
-  defaultMode: "better",
-  provider: "gemini",
-  // Set Google Gemini Flash by default per user specification
-  apiKeys: {},
-  models: {
-    gemini: "gemini-2.5-flash",
-    openai: "gpt-4o-mini",
-    deepseek: "deepseek-chat",
-    openrouter: "meta-llama/llama-3.3-70b-instruct:free"
-  },
-  gatewayUrl: "https://refinzi.com/api/v1/refine",
-  enabledSites: {
-    chatgpt: true,
-    claude: true,
-    gemini: true,
-    perplexity: true
-  },
-  shortcuts: {
-    better: "Ctrl+Shift+B",
-    expert: "Ctrl+Shift+E"
-  },
-  theme: "dark",
-  autoFocus: true,
-  showInlineTrigger: true,
-  holdThresholdMs: 350,
-  autoApply: true,
-  saveHistory: true,
-  hasSeenOnboarding: false
-};
-async function getSettings() {
-  try {
-    const result = await BrowserAPI.storage.local.get(["refinzi_settings"]);
-    if (!result || !result.refinzi_settings) {
-      return { ...DEFAULT_SETTINGS };
-    }
-    return {
-      ...DEFAULT_SETTINGS,
-      ...result.refinzi_settings,
-      apiKeys: {
-        ...DEFAULT_SETTINGS.apiKeys,
-        ...result.refinzi_settings.apiKeys || {}
-      },
-      models: {
-        ...DEFAULT_SETTINGS.models,
-        ...result.refinzi_settings.models || {}
-      },
-      enabledSites: {
-        ...DEFAULT_SETTINGS.enabledSites,
-        ...result.refinzi_settings.enabledSites || {}
-      }
-    };
-  } catch {
-    return { ...DEFAULT_SETTINGS };
-  }
-}
-async function saveSettings(patch) {
-  const current = await getSettings();
-  const updated = {
-    ...current,
-    ...patch,
-    apiKeys: {
-      ...current.apiKeys,
-      ...patch.apiKeys || {}
-    },
-    models: {
-      ...current.models,
-      ...patch.models || {}
-    },
-    enabledSites: {
-      ...current.enabledSites,
-      ...patch.enabledSites || {}
-    }
-  };
-  try {
-    await BrowserAPI.storage.local.set({ refinzi_settings: updated });
-  } catch (err) {
-    console.error("[Refinzi] Failed to save settings:", err);
-  }
-  return updated;
-}
-async function getHistory() {
-  try {
-    const res = await BrowserAPI.storage.local.get(["refinzi_history"]);
-    return res?.refinzi_history || [];
-  } catch {
-    return [];
-  }
-}
-async function addHistoryItem(item) {
-  try {
-    await incrementStats(item.mode);
-    const settings = await getSettings();
-    if (settings.saveHistory === false) return;
-    const now = /* @__PURE__ */ new Date();
-    const dateStr = now.toISOString().split("T")[0];
-    const newItem = {
-      ...item,
-      id: "rfz_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now().toString(36),
-      timestamp: Date.now(),
-      dateStr
-    };
-    const history = await getHistory();
-    const updated = [newItem, ...history].slice(0, 50);
-    await BrowserAPI.storage.local.set({ refinzi_history: updated });
-  } catch (err) {
-    console.error("[Refinzi] Failed to record history:", err);
-  }
-}
-async function clearHistory() {
-  try {
-    await BrowserAPI.storage.local.set({ refinzi_history: [] });
-  } catch (err) {
-    console.error("[Refinzi] Failed to clear history:", err);
-  }
-}
-async function deleteHistoryItem(id) {
-  try {
-    const history = await getHistory();
-    const updated = history.filter((item) => item.id !== id);
-    await BrowserAPI.storage.local.set({ refinzi_history: updated });
-  } catch (err) {
-    console.error("[Refinzi] Failed to delete history item:", err);
-  }
-}
-async function getStats() {
-  try {
-    const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-    const res = await BrowserAPI.storage.local.get(["refinzi_stats"]);
-    const stats = res?.refinzi_stats || {
-      todayBetterCount: 0,
-      todayExpertCount: 0,
-      lastDate: today
-    };
-    if (stats.lastDate !== today) {
-      return {
-        todayBetterCount: 0,
-        todayExpertCount: 0,
-        lastDate: today
-      };
-    }
-    return stats;
-  } catch {
-    return {
-      todayBetterCount: 0,
-      todayExpertCount: 0,
-      lastDate: (/* @__PURE__ */ new Date()).toISOString().split("T")[0]
-    };
-  }
-}
-async function incrementStats(mode) {
-  try {
-    const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-    const stats = await getStats();
-    if (mode === "better") {
-      stats.todayBetterCount = (stats.todayBetterCount || 0) + 1;
-    } else {
-      stats.todayExpertCount = (stats.todayExpertCount || 0) + 1;
-    }
-    stats.lastDate = today;
-    await BrowserAPI.storage.local.set({ refinzi_stats: stats });
-  } catch (err) {
-    console.error("[Refinzi] Failed to update stats:", err);
-  }
-}
 
 // extension/src/engine/intent.ts
 function extractSemanticIntent(rawInput, mode = "better", targetAi = "general") {
@@ -3029,35 +3492,32 @@ var ProviderManager = class {
   static localProvider = new LocalSynthesisProvider();
   static async getActiveProvider() {
     const settings = await getSettings();
-    const providerId = settings.provider || "local";
+    const providerId = settings.provider || "gateway";
+    const getGeminiProvider = () => new GeminiProvider(settings.apiKeys?.gemini || "", settings.models?.gemini || "gemini-flash-latest");
+    const getGatewayProvider = () => new GatewayProvider(settings.gatewayUrl || "https://refinzi.com/api/v1/refine", settings.apiKeys?.gateway);
     switch (providerId) {
+      case "gemini": {
+        return getGeminiProvider();
+      }
       case "openai":
-        if (settings.apiKeys.openai) {
-          return new OpenAIProvider(settings.apiKeys.openai, settings.models.openai);
-        }
-        break;
-      case "gemini":
-        if (settings.apiKeys.gemini) {
-          return new GeminiProvider(settings.apiKeys.gemini, settings.models.gemini);
-        }
-        break;
+        return new OpenAIProvider(settings.apiKeys?.openai || "", settings.models?.openai);
       case "deepseek":
-        if (settings.apiKeys.deepseek) {
-          return new DeepSeekProvider(settings.apiKeys.deepseek, settings.models.deepseek);
+        if (settings.apiKeys?.deepseek) {
+          return new DeepSeekProvider(settings.apiKeys.deepseek, settings.models?.deepseek);
         }
-        break;
+        return getGatewayProvider();
       case "openrouter":
-        if (settings.apiKeys.openrouter) {
-          return new OpenRouterProvider(settings.apiKeys.openrouter, settings.models.openrouter);
+        if (settings.apiKeys?.openrouter) {
+          return new OpenRouterProvider(settings.apiKeys.openrouter, settings.models?.openrouter);
         }
-        break;
+        return getGatewayProvider();
       case "gateway":
-        return new GatewayProvider(settings.gatewayUrl, settings.apiKeys.gateway);
+        return getGatewayProvider();
       case "local":
-      default:
         return this.localProvider;
+      default:
+        return getGatewayProvider();
     }
-    return this.localProvider;
   }
   static async generateBetter(rawInput, targetAi = "general", options) {
     const intent = extractSemanticIntent(rawInput, "better", targetAi);
@@ -3065,11 +3525,31 @@ var ProviderManager = class {
     let result;
     try {
       result = await provider.generateBetter(rawInput, intent, options);
-    } catch {
-      result = synthesizeBetterPrompt(rawInput, targetAi);
+    } catch (err) {
+      const fallback = synthesizeBetterPrompt(rawInput, targetAi);
+      result = {
+        ...fallback,
+        isFallback: true,
+        providerFailure: {
+          provider: provider.id,
+          reason: err?.message || "Provider execution failed",
+          status: err?.status || 0,
+          code: "SERVER_ERROR"
+        }
+      };
     }
     if (!result || !result.prompt || result.prompt.trim().length < 8) {
-      result = synthesizeBetterPrompt(rawInput, targetAi);
+      const fallback = synthesizeBetterPrompt(rawInput, targetAi);
+      result = {
+        ...fallback,
+        isFallback: true,
+        providerFailure: result?.providerFailure || {
+          provider: provider.id,
+          reason: "Provider produced an incomplete response",
+          status: 0,
+          code: "SERVER_ERROR"
+        }
+      };
     }
     return result;
   }
@@ -3079,11 +3559,31 @@ var ProviderManager = class {
     let result;
     try {
       result = await provider.generateExpert(rawInput, intent, options);
-    } catch {
-      result = synthesizeExpertPrompt(rawInput, targetAi);
+    } catch (err) {
+      const fallback = synthesizeExpertPrompt(rawInput, targetAi);
+      result = {
+        ...fallback,
+        isFallback: true,
+        providerFailure: {
+          provider: provider.id,
+          reason: err?.message || "Provider execution failed",
+          status: err?.status || 0,
+          code: "SERVER_ERROR"
+        }
+      };
     }
     if (!result || !result.prompt || result.prompt.trim().length < 15) {
-      result = synthesizeExpertPrompt(rawInput, targetAi);
+      const fallback = synthesizeExpertPrompt(rawInput, targetAi);
+      result = {
+        ...fallback,
+        isFallback: true,
+        providerFailure: result?.providerFailure || {
+          provider: provider.id,
+          reason: "Provider produced an incomplete response",
+          status: 0,
+          code: "SERVER_ERROR"
+        }
+      };
     }
     return result;
   }
@@ -3113,23 +3613,42 @@ var DEFAULT_METRICS_CONFIG = {
   fallbackCostPerIteration: 8e-3
 };
 var MODEL_PRICING = {
-  // OpenAI
+  // OpenAI — current generation
+  "gpt-6-astra": { inputPer1k: 0.01, outputPer1k: 0.05, averageTurnCost: 0.045 },
+  "gpt-5.6-sol": { inputPer1k: 4e-3, outputPer1k: 0.02, averageTurnCost: 0.018 },
+  "gpt-5.6-terra": { inputPer1k: 2e-3, outputPer1k: 0.012, averageTurnCost: 0.0106 },
+  "gpt-5.6-luna": { inputPer1k: 2e-4, outputPer1k: 12e-4, averageTurnCost: 106e-5 },
+  "gpt-5.4-mini": { inputPer1k: 75e-5, outputPer1k: 45e-4, averageTurnCost: 398e-5 },
+  "gpt-5.4-nano": { inputPer1k: 2e-4, outputPer1k: 125e-5, averageTurnCost: 11e-4 },
+  "gpt-5-mini": { inputPer1k: 25e-5, outputPer1k: 2e-3, averageTurnCost: 173e-5 },
+  "gpt-5-nano": { inputPer1k: 5e-5, outputPer1k: 4e-4, averageTurnCost: 35e-5 },
+  // OpenAI — legacy (still billed, retained for historical events)
   "gpt-4o-mini": { inputPer1k: 15e-5, outputPer1k: 6e-4, averageTurnCost: 55e-5 },
   "gpt-4o": { inputPer1k: 25e-4, outputPer1k: 0.01, averageTurnCost: 925e-5 },
   "gpt-4-turbo": { inputPer1k: 0.01, outputPer1k: 0.03, averageTurnCost: 0.029 },
   "o1-mini": { inputPer1k: 3e-3, outputPer1k: 0.012, averageTurnCost: 0.011 },
   "o3-mini": { inputPer1k: 11e-4, outputPer1k: 44e-4, averageTurnCost: 4e-3 },
   // Anthropic / Claude
+  "claude-sonnet-5": { inputPer1k: 2e-3, outputPer1k: 0.01, averageTurnCost: 9e-3 },
+  "claude-opus-5": { inputPer1k: 5e-3, outputPer1k: 0.025, averageTurnCost: 0.0225 },
+  "claude-haiku-4-5": { inputPer1k: 1e-3, outputPer1k: 5e-3, averageTurnCost: 45e-4 },
   "claude-3-5-sonnet": { inputPer1k: 3e-3, outputPer1k: 0.015, averageTurnCost: 0.0135 },
   "claude-3-7-sonnet": { inputPer1k: 3e-3, outputPer1k: 0.015, averageTurnCost: 0.0135 },
   "claude-3-haiku": { inputPer1k: 25e-5, outputPer1k: 125e-5, averageTurnCost: 112e-5 },
   "claude-3-5-haiku": { inputPer1k: 8e-4, outputPer1k: 4e-3, averageTurnCost: 36e-4 },
-  // Google Gemini
+  // Google Gemini — Gemini 3.8 Flash introductory rate ($0.75 / $3.75 per 1M)
+  "gemini-flash-latest": { inputPer1k: 75e-5, outputPer1k: 375e-5, averageTurnCost: 338e-5 },
+  "gemini-3.8-flash": { inputPer1k: 75e-5, outputPer1k: 375e-5, averageTurnCost: 338e-5 },
+  "gemini-pro-latest": { inputPer1k: 125e-5, outputPer1k: 0.01, averageTurnCost: 863e-5 },
+  // Google Gemini — legacy (retired upstream; retained for historical events)
   "gemini-2.5-flash": { inputPer1k: 75e-6, outputPer1k: 3e-4, averageTurnCost: 28e-5 },
   "gemini-2.0-flash": { inputPer1k: 1e-4, outputPer1k: 4e-4, averageTurnCost: 35e-5 },
   "gemini-1.5-flash": { inputPer1k: 75e-6, outputPer1k: 3e-4, averageTurnCost: 28e-5 },
   "gemini-1.5-pro": { inputPer1k: 125e-5, outputPer1k: 5e-3, averageTurnCost: 46e-4 },
-  // DeepSeek
+  // DeepSeek — off-peak rates (peak hours are 2x)
+  "deepseek-flash": { inputPer1k: 15e-5, outputPer1k: 6e-4, averageTurnCost: 56e-5 },
+  "deepseek-v4-pro": { inputPer1k: 66e-5, outputPer1k: 198e-5, averageTurnCost: 191e-5 },
+  // DeepSeek — legacy (retained for historical events)
   "deepseek-chat": { inputPer1k: 14e-5, outputPer1k: 28e-5, averageTurnCost: 29e-5 },
   "deepseek-reasoner": { inputPer1k: 55e-5, outputPer1k: 219e-5, averageTurnCost: 203e-5 }
 };
@@ -3199,10 +3718,6 @@ async function recordUsageEvent(event) {
       return false;
     }
     const events = await getUsageEvents();
-    if (event.id && events.some((e) => e.id === event.id)) {
-      if (event.id) inMemoryRecordedIds.add(event.id);
-      return false;
-    }
     const eventId = event.id || `evt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     inMemoryRecordedIds.add(eventId);
     const newEvent = {
@@ -3217,7 +3732,7 @@ async function recordUsageEvent(event) {
       costUsd: event.costUsd
     };
     const updated = [newEvent, ...events].slice(0, 500);
-    await BrowserAPI.storage.local.set({ refinzi_events: updated });
+    await stageWrite({ refinzi_events: updated });
     return true;
   } catch (err) {
     console.error("[Refinzi] Failed to record usage event:", err);
@@ -3229,7 +3744,7 @@ async function deleteUsageEvent(id) {
     inMemoryRecordedIds.delete(id);
     const events = await getUsageEvents();
     const updated = events.filter((e) => e.id !== id);
-    await BrowserAPI.storage.local.set({ refinzi_events: updated });
+    await stageWrite({ refinzi_events: updated });
   } catch (err) {
     console.error("[Refinzi] Failed to delete usage event:", err);
   }
@@ -3237,7 +3752,7 @@ async function deleteUsageEvent(id) {
 async function clearUsageEvents() {
   try {
     inMemoryRecordedIds.clear();
-    await BrowserAPI.storage.local.set({ refinzi_events: [] });
+    await stageWrite({ refinzi_events: [] });
   } catch (err) {
     console.error("[Refinzi] Failed to clear usage events:", err);
   }
@@ -3392,34 +3907,45 @@ BrowserAPI.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       let executionPromise = inFlightRequests.get(dedupKey);
       if (!executionPromise) {
         executionPromise = ProviderManager.generateBetter(message.text, targetAi).then(async (response) => {
-          const settings = await getSettings();
-          const model = settings.models?.[settings.provider];
-          await recordUsageEvent({
-            id: eventId,
-            mode: "better",
-            targetAi,
-            provider: settings.provider,
-            model,
-            success: true
-          });
-          await addHistoryItem({
-            mode: "better",
-            targetAi,
-            originalPrompt: message.text,
-            refinedPrompt: response.prompt,
-            provider: settings.provider,
-            reasonOrSummary: response.shortReason
+          await runInBatch(async () => {
+            const settings = await getSettings();
+            const model = settings.models?.[settings.provider];
+            const isSuccess = !response.isFallback && !response.providerFailure;
+            await recordUsageEvent({
+              id: eventId,
+              mode: "better",
+              targetAi,
+              provider: response.providerFailure?.provider || settings.provider,
+              model,
+              success: isSuccess
+            });
+            await addHistoryItem({
+              mode: "better",
+              targetAi,
+              originalPrompt: message.text,
+              refinedPrompt: response.prompt,
+              provider: settings.provider,
+              reasonOrSummary: response.shortReason
+            });
+            if (await isFreeKeyActive()) {
+              await incrementFreeUsage();
+            }
           });
           return response;
         }).catch(async (err) => {
-          const settings = await getSettings();
-          await recordUsageEvent({
-            id: eventId,
-            mode: "better",
-            targetAi,
-            provider: settings.provider,
-            success: false
-          });
+          try {
+            await runInBatch(async () => {
+              const settings = await getSettings();
+              await recordUsageEvent({
+                id: eventId,
+                mode: "better",
+                targetAi,
+                provider: settings.provider,
+                success: false
+              });
+            });
+          } catch {
+          }
           throw err;
         }).finally(() => {
           setTimeout(() => {
@@ -3438,34 +3964,45 @@ BrowserAPI.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       let executionPromise = inFlightRequests.get(dedupKey);
       if (!executionPromise) {
         executionPromise = ProviderManager.generateExpert(message.text, targetAi).then(async (response) => {
-          const settings = await getSettings();
-          const model = settings.models?.[settings.provider];
-          await recordUsageEvent({
-            id: eventId,
-            mode: "expert",
-            targetAi,
-            provider: settings.provider,
-            model,
-            success: true
-          });
-          await addHistoryItem({
-            mode: "expert",
-            targetAi,
-            originalPrompt: message.text,
-            refinedPrompt: response.prompt,
-            provider: settings.provider,
-            reasonOrSummary: response.summary
+          await runInBatch(async () => {
+            const settings = await getSettings();
+            const model = settings.models?.[settings.provider];
+            const isSuccess = !response.isFallback && !response.providerFailure;
+            await recordUsageEvent({
+              id: eventId,
+              mode: "expert",
+              targetAi,
+              provider: response.providerFailure?.provider || settings.provider,
+              model,
+              success: isSuccess
+            });
+            await addHistoryItem({
+              mode: "expert",
+              targetAi,
+              originalPrompt: message.text,
+              refinedPrompt: response.prompt,
+              provider: settings.provider,
+              reasonOrSummary: response.summary
+            });
+            if (await isFreeKeyActive()) {
+              await incrementFreeUsage();
+            }
           });
           return response;
         }).catch(async (err) => {
-          const settings = await getSettings();
-          await recordUsageEvent({
-            id: eventId,
-            mode: "expert",
-            targetAi,
-            provider: settings.provider,
-            success: false
-          });
+          try {
+            await runInBatch(async () => {
+              const settings = await getSettings();
+              await recordUsageEvent({
+                id: eventId,
+                mode: "expert",
+                targetAi,
+                provider: settings.provider,
+                success: false
+              });
+            });
+          } catch {
+          }
           throw err;
         }).finally(() => {
           setTimeout(() => {
@@ -3518,6 +4055,36 @@ BrowserAPI.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       saveSelectedPeriod(message.period).then(() => sendResponse({ success: true })).catch((err) => sendResponse({ success: false, error: err.message }));
       return true;
     }
+    case "REFINZI_OPEN_POPUP":
+    case "REFINZI_OPEN_SETTINGS": {
+      (async () => {
+        try {
+          if (typeof chrome !== "undefined") {
+            if (chrome.action?.openPopup) {
+              await chrome.action.openPopup();
+              return { success: true };
+            }
+            if (chrome.runtime?.openOptionsPage) {
+              await chrome.runtime.openOptionsPage();
+              return { success: true };
+            }
+            const url = chrome.runtime.getURL("popup/popup.html");
+            await chrome.tabs.create({ url });
+            return { success: true };
+          }
+        } catch {
+          try {
+            const url = chrome.runtime.getURL("popup/popup.html");
+            await chrome.tabs.create({ url });
+            return { success: true };
+          } catch (e) {
+            return { success: false, error: e?.message };
+          }
+        }
+        return { success: false };
+      })().then((res) => sendResponse(res)).catch((err) => sendResponse({ success: false, error: err.message }));
+      return true;
+    }
     default:
       return false;
   }
@@ -3537,9 +4104,41 @@ BrowserAPI.commands.onCommand.addListener(async (command) => {
   }
 });
 if (typeof chrome !== "undefined" && chrome.runtime?.onInstalled) {
-  chrome.runtime.onInstalled.addListener((details) => {
+  chrome.runtime.onInstalled.addListener(async (details) => {
+    const injectIntoOpenTabs = async () => {
+      try {
+        if (!chrome?.scripting?.executeScript || !chrome?.tabs?.query) return;
+        const tabs = await chrome.tabs.query({ url: ["http://*/*", "https://*/*"] });
+        await Promise.allSettled(
+          tabs.filter((t) => typeof t.id === "number" && !t.url?.startsWith("chrome://")).map(
+            (t) => chrome.scripting.executeScript({ target: { tabId: t.id }, files: ["content.js"] })
+          )
+        );
+      } catch (err) {
+        console.debug("[Refinzi] Open-tab injection skipped:", err);
+      }
+    };
     if (details.reason === "install") {
       console.log("[Refinzi] Extension installed successfully.");
+      await injectIntoOpenTabs();
+      try {
+        const tabs = await BrowserAPI.tabs.query({ active: true, currentWindow: true });
+        const activeTab = tabs[0];
+        if (activeTab?.id) {
+          setTimeout(async () => {
+            try {
+              await BrowserAPI.tabs.sendMessage(activeTab.id, {
+                type: "REFINZI_SHOW_ONBOARDING"
+              });
+            } catch {
+            }
+          }, 800);
+        }
+      } catch (err) {
+        console.debug("[Refinzi] Could not dispatch install-time onboarding:", err);
+      }
+    } else if (details.reason === "update") {
+      await injectIntoOpenTabs();
     }
   });
 }

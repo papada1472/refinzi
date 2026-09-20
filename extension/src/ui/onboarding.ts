@@ -378,10 +378,10 @@ export class RefinziOnboardingModal {
 
       <div class="footer-row">
         <button type="button" class="btn-primary" id="rfz-onboarding-submit">
-          Got it — Start Using Refinzi →
+          Got it — Show me Step 2 →
         </button>
       </div>
-      <div class="feedback-note">Press <kbd>Esc</kbd> anytime to dismiss. You can replay this guide from Settings.</div>
+      <div class="feedback-note">Press <kbd>Esc</kbd> anytime to dismiss. Replay from the extension popup → Settings.</div>
     `;
 
     this.shadow.appendChild(backdrop);
@@ -399,13 +399,158 @@ export class RefinziOnboardingModal {
     const demoBadge = card.querySelector('#demo-mode-badge') as HTMLElement | null;
     const demoRing = card.querySelector('#demo-ring') as SVGCircleElement | null;
 
+    const DEMO_PROMPT = 'Write a landing page hero section for a developer tool SaaS';
+
+    const autoPasteDemoPrompt = () => {
+      try {
+        // Try known AI site composer selectors first (ChatGPT, Claude, Gemini, Perplexity)
+        const aiComposerSelectors = [
+          '#prompt-textarea',
+          'div[id="prompt-textarea"][contenteditable="true"]',
+          'div[contenteditable="true"].ProseMirror',
+          'div[contenteditable="true"][data-placeholder]',
+          'textarea[placeholder*="Ask"]',
+          'textarea[placeholder*="Message"]',
+          'textarea[placeholder*="How can I help"]',
+          'fieldset textarea',
+          'form textarea',
+          'textarea',
+        ];
+
+        let target: HTMLElement | null = null;
+        for (const sel of aiComposerSelectors) {
+          const el = document.querySelector<HTMLElement>(sel);
+          if (el) {
+            const rect = el.getBoundingClientRect();
+            if (rect.width > 40 && rect.height > 10) {
+              target = el;
+              break;
+            }
+          }
+        }
+
+        if (!target) return;
+
+        // Paste using the right method per element type
+        if (target instanceof HTMLTextAreaElement || target instanceof HTMLInputElement) {
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+            window.HTMLTextAreaElement.prototype, 'value'
+          )?.set || Object.getOwnPropertyDescriptor(
+            window.HTMLInputElement.prototype, 'value'
+          )?.set;
+          if (nativeInputValueSetter) {
+            nativeInputValueSetter.call(target, DEMO_PROMPT);
+          } else {
+            target.value = DEMO_PROMPT;
+          }
+          target.dispatchEvent(new Event('input', { bubbles: true }));
+          target.dispatchEvent(new Event('change', { bubbles: true }));
+        } else if (target.isContentEditable) {
+          target.focus();
+          // Clear existing content and insert demo prompt
+          document.execCommand('selectAll', false);
+          document.execCommand('insertText', false, DEMO_PROMPT);
+          // Fallback if execCommand doesn't work (modern browsers)
+          if (!target.textContent?.includes(DEMO_PROMPT.slice(0, 10))) {
+            target.textContent = DEMO_PROMPT;
+            target.dispatchEvent(new InputEvent('input', { bubbles: true, data: DEMO_PROMPT }));
+          }
+        }
+
+        target.focus();
+      } catch {
+        // Non-critical — ignore paste errors silently
+      }
+    };
+
     const dismiss = async () => {
+      autoPasteDemoPrompt();
       await saveSettings({ hasSeenOnboarding: true });
       this.destroy();
     };
 
+    const showStep2 = () => {
+      // Replace the card content with the "You're Ready!" confirmation screen.
+      card.innerHTML = `
+        <button type="button" class="btn-close" id="rfz-step2-close" title="Close (Esc)">✕</button>
+
+        <div class="header-badge" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#34D399">✅ You're Ready</div>
+        <h2 class="header-title">Refinzi is <span style="background:linear-gradient(135deg,#34D399,#10B981);-webkit-background-clip:text;-webkit-text-fill-color:transparent">active right now</span></h2>
+        <p class="header-desc">
+          The Ambient Orb is now docked beside any text box you focus on. No API key needed to get started.
+        </p>
+
+        <div style="background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.2);border-radius:14px;padding:16px 18px;margin-bottom:18px">
+          <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:10px">✨ What's included — free, from day one</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#CBD5E1">
+              <span style="width:22px;height:22px;border-radius:50%;background:rgba(16,185,129,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">✓</span>
+              <span><strong style="color:#F1F5F9">25 free prompt calibrations</strong> — powered by Gemini, zero setup</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#CBD5E1">
+              <span style="width:22px;height:22px;border-radius:50%;background:rgba(16,185,129,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">✓</span>
+              <span>Works on <strong style="color:#F1F5F9">ChatGPT, Claude, Gemini, Perplexity</strong> and any text box</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#CBD5E1">
+              <span style="width:22px;height:22px;border-radius:50%;background:rgba(16,185,129,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">✓</span>
+              <span><strong style="color:#F1F5F9">Zero prompts stored on our servers</strong> — local only, privacy-first</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#CBD5E1">
+              <span style="width:22px;height:22px;border-radius:50%;background:rgba(168,85,247,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">∞</span>
+              <span>Add your own free <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:#818CF8;text-decoration:none">Google AI key</a> for unlimited use</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button type="button" id="rfz-try-chatgpt" style="
+            display:flex;align-items:center;justify-content:center;gap:8px;
+            background:linear-gradient(135deg,#10a37f,#1a7a5e);
+            border:none;border-radius:12px;padding:13px 20px;
+            font-size:14px;font-weight:700;color:#fff;cursor:pointer;
+            transition:opacity 0.15s;width:100%
+          ">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.032.067L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855l-5.843-3.369 2.019-1.168a.075.075 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.4-.681zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135l-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08-4.778 2.758a.795.795 0 0 0-.393.681zm1.097-2.365l2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z" fill="#fff"/></svg>
+            Try it on ChatGPT →
+          </button>
+          <button type="button" id="rfz-step2-dismiss" style="
+            background:transparent;border:1px solid rgba(255,255,255,0.1);
+            border-radius:12px;padding:11px 20px;font-size:13px;font-weight:600;
+            color:#94A3B8;cursor:pointer;transition:all 0.15s;width:100%
+          ">
+            I'll explore on my own
+          </button>
+        </div>
+        <div class="feedback-note" style="margin-top:12px">After 25 free uses, Refinzi continues working offline. Add your own free key for unlimited AI-powered calibrations.</div>
+      `;
+
+      // Step 2 event bindings
+      const step2Close = card.querySelector('#rfz-step2-close');
+      const tryChatGPT = card.querySelector('#rfz-try-chatgpt') as HTMLButtonElement | null;
+      const step2Dismiss = card.querySelector('#rfz-step2-dismiss') as HTMLButtonElement | null;
+
+      const finalDismiss = async () => {
+        await saveSettings({ hasSeenOnboarding: true });
+        this.destroy();
+      };
+
+      step2Close?.addEventListener('click', finalDismiss);
+      step2Dismiss?.addEventListener('click', finalDismiss);
+
+      tryChatGPT?.addEventListener('click', async () => {
+        await saveSettings({ hasSeenOnboarding: true });
+        this.destroy();
+        // Open ChatGPT in a new tab for the reviewer to see the Orb in action
+        try {
+          window.open('https://chatgpt.com', '_blank', 'noopener,noreferrer');
+        } catch {
+          // Silently ignore if popup was blocked
+        }
+      });
+    };
+
     closeBtn?.addEventListener('click', dismiss);
-    submitBtn?.addEventListener('click', dismiss);
+    submitBtn?.addEventListener('click', showStep2);
     backdrop?.addEventListener('click', dismiss);
 
     const onKeydown = (e: KeyboardEvent) => {

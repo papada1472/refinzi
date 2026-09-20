@@ -14,7 +14,7 @@ export class OpenAIProvider implements AIProvider {
 
   constructor(
     private apiKey: string,
-    private model: string = 'gpt-4o-mini',
+    private model: string = 'gpt-5.6-luna',
     private baseURL: string = 'https://api.openai.com/v1'
   ) {}
 
@@ -57,13 +57,40 @@ export class OpenAIProvider implements AIProvider {
     }
   }
 
+  private classifyOpenAIError(err: any): { reason: string; status: number; code: 'INVALID_KEY' | 'QUOTA_EXCEEDED' | 'SERVER_ERROR' | 'TIME_BUDGET_EXHAUSTED' | 'NETWORK_ERROR' } {
+  const msg = err?.message || String(err);
+  if (msg.includes('401') || msg.includes('Incorrect API key') || msg.includes('Unauthorized')) {
+    return { reason: 'OpenAI API key is invalid (HTTP 401)', status: 401, code: 'INVALID_KEY' };
+  }
+  if (msg.includes('429') || msg.includes('quota') || msg.includes('Rate limit')) {
+    return { reason: 'OpenAI quota or rate limit exceeded (HTTP 429)', status: 429, code: 'QUOTA_EXCEEDED' };
+  }
+  if (msg.includes('timeout') || msg.includes('AbortError')) {
+    return { reason: 'OpenAI request timed out', status: 408, code: 'TIME_BUDGET_EXHAUSTED' };
+  }
+  if (msg.includes('500') || msg.includes('502') || msg.includes('503')) {
+    return { reason: 'OpenAI servers temporarily unavailable', status: 503, code: 'SERVER_ERROR' };
+  }
+  return { reason: msg.slice(0, 120), status: 0, code: 'NETWORK_ERROR' };
+}
+
   async generateBetter(
     rawInput: string,
     intent: SemanticIntent,
     options?: ProviderRequestOptions
   ): Promise<BetterPromptResponse> {
     if (!this.apiKey) {
-      return synthesizeBetterPrompt(rawInput, intent.targetAi);
+      const fallback = synthesizeBetterPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback,
+        isFallback: true,
+        providerFailure: {
+          provider: 'openai',
+          reason: 'OpenAI API key is not configured. Add your key in Settings.',
+          status: 0,
+          code: 'NO_KEY',
+        },
+      };
     }
 
     try {
@@ -77,9 +104,31 @@ export class OpenAIProvider implements AIProvider {
       if (validated) return validated;
     } catch (err) {
       console.warn('[Refinzi] OpenAI Better call failed, using local calibration:', err);
+      const failure = this.classifyOpenAIError(err);
+      const fallback = synthesizeBetterPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback,
+        isFallback: true,
+        providerFailure: {
+          provider: 'openai',
+          reason: failure.reason,
+          status: failure.status,
+          code: failure.code,
+        },
+      };
     }
 
-    return synthesizeBetterPrompt(rawInput, intent.targetAi);
+    const fallback = synthesizeBetterPrompt(rawInput, intent.targetAi);
+    return {
+      ...fallback,
+      isFallback: true,
+      providerFailure: {
+        provider: 'openai',
+        reason: 'OpenAI returned an invalid response',
+        status: 0,
+        code: 'SERVER_ERROR',
+      },
+    };
   }
 
   async generateExpert(
@@ -88,7 +137,17 @@ export class OpenAIProvider implements AIProvider {
     options?: ProviderRequestOptions
   ): Promise<ExpertFinalResponse> {
     if (!this.apiKey) {
-      return synthesizeExpertPrompt(rawInput, intent.targetAi);
+      const fallback = synthesizeExpertPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback,
+        isFallback: true,
+        providerFailure: {
+          provider: 'openai',
+          reason: 'OpenAI API key is not configured. Add your key in Settings.',
+          status: 0,
+          code: 'NO_KEY',
+        },
+      };
     }
 
     try {
@@ -102,9 +161,31 @@ export class OpenAIProvider implements AIProvider {
       if (validated) return validated;
     } catch (err) {
       console.warn('[Refinzi] OpenAI Expert call failed, using local briefing:', err);
+      const failure = this.classifyOpenAIError(err);
+      const fallback = synthesizeExpertPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback,
+        isFallback: true,
+        providerFailure: {
+          provider: 'openai',
+          reason: failure.reason,
+          status: failure.status,
+          code: failure.code,
+        },
+      };
     }
 
-    return synthesizeExpertPrompt(rawInput, intent.targetAi);
+    const fallback = synthesizeExpertPrompt(rawInput, intent.targetAi);
+    return {
+      ...fallback,
+      isFallback: true,
+      providerFailure: {
+        provider: 'openai',
+        reason: 'OpenAI returned an invalid response',
+        status: 0,
+        code: 'SERVER_ERROR',
+      },
+    };
   }
 
   async testConnection(options?: ProviderRequestOptions): Promise<{ ok: boolean; message: string }> {

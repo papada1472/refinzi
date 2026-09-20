@@ -80,4 +80,54 @@ describe('Refinzi Popup UI Controller DOM & User Interactions', () => {
     expect(document.getElementById('metric-words')).toBeNull();
     expect(document.getElementById('metric-success-rate')).toBeNull();
   });
+
+  it('keeps the mini dashboard uncluttered: exactly four metric cards, one activity bar, one engine banner', () => {
+    // The Home view must not grow new rows/cards when features are added.
+    // Free-tier status and estimate settings are deliberately placed in the
+    // existing engine banner and the Settings tab instead.
+    expect(document.querySelectorAll('#tab-home .dash-card')).toHaveLength(4);
+    expect(document.querySelectorAll('#tab-home .period-activity-bar')).toHaveLength(1);
+    expect(document.querySelectorAll('#tab-home .engine-banner')).toHaveLength(1);
+
+    // No additional metric tiles or banners were introduced.
+    expect(document.getElementById('card-free-tier')).toBeNull();
+    expect(document.querySelectorAll('#tab-home .dash-card').length).toBeLessThan(5);
+  });
+
+  it('reuses the existing engine banner for free-tier status rather than adding an element', () => {
+    // The runtime appends `<span class="engine-free">` into #engine-name.
+    // Assert the host elements exist and nothing is hardcoded in the static markup.
+    expect(document.getElementById('home-engine-banner')).not.toBeNull();
+    expect(document.getElementById('engine-name')).not.toBeNull();
+    expect(document.querySelectorAll('.engine-free')).toHaveLength(0);
+
+    // The CTA button already exists and is reused for the upgrade nudge.
+    const quickProvider = document.getElementById('btn-quick-provider');
+    expect(quickProvider).not.toBeNull();
+    expect(quickProvider?.textContent).toContain('Configure');
+  });
+
+  it('exposes the three dashboard estimate assumptions as compact Settings controls', () => {
+    const minutes = document.getElementById('setting-est-minutes') as HTMLInputElement | null;
+    const iterations = document.getElementById('setting-est-iterations') as HTMLInputElement | null;
+    const fallbackCost = document.getElementById('setting-fallback-cost') as HTMLInputElement | null;
+
+    expect(minutes).not.toBeNull();
+    expect(iterations).not.toBeNull();
+    expect(fallbackCost).not.toBeNull();
+
+    // Defaults must mirror DEFAULT_METRICS_CONFIG in utils/metrics.ts.
+    expect(minutes?.value).toBe('2.5');
+    expect(iterations?.value).toBe('1.5');
+    expect(fallbackCost?.value).toBe('0.008');
+
+    // Bounds prevent nonsensical estimates.
+    expect(minutes?.getAttribute('min')).toBe('0.5');
+    expect(iterations?.getAttribute('min')).toBe('0');
+    expect(fallbackCost?.getAttribute('step')).toBe('0.001');
+
+    // The three controls live in the Settings tab, not on the Home dashboard.
+    expect(document.querySelectorAll('#tab-settings #setting-est-minutes')).toHaveLength(1);
+    expect(document.querySelectorAll('#tab-home #setting-est-minutes')).toHaveLength(0);
+  });
 });

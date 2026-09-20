@@ -14,7 +14,7 @@ export class OpenRouterProvider implements AIProvider {
 
   constructor(
     private apiKey: string,
-    private model: string = 'meta-llama/llama-3.3-70b-instruct:free'
+    private model: string = 'deepseek/deepseek-v4-flash-0731:free'
   ) {}
 
   private async callOpenRouter(systemPrompt: string, userMessage: string, options?: ProviderRequestOptions): Promise<string> {

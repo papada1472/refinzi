@@ -14,12 +14,14 @@ import os from "os";
 import crypto from "crypto";
 
 const MODELS_TO_TEST = [
+  "gemini-flash-latest",
+  "gemini-3.8-flash",
+  "gemini-3.7-flash",
+  "gemini-3.6-flash",
   "gemini-3.5-flash",
-  "gemini-2.5-flash", 
-  "gemini-2.0-flash",
-  "gemini-2.5-pro",
-  "gemini-3-flash-preview",
-  "gemini-flash-latest"
+  "gemini-3.5-flash-lite",
+  "gemini-pro-latest",
+  "gemini-2.5-flash"
 ];
 
 const TEST_PROMPT = "Say hello in one word.";

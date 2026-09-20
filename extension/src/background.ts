@@ -14,6 +14,8 @@ import {
   clearHistory,
   getStats,
   deleteHistoryItem,
+  isFreeKeyActive,
+  incrementFreeUsage,
 } from './utils/storage';
 import {
   recordUsageEvent,
@@ -26,6 +28,7 @@ import {
   computeMetricsSummary,
 } from './utils/metrics';
 import { ExtensionMessage } from './types';
+import { runInBatch } from './utils/storage-batch';
 
 // In-flight request deduplication map to eliminate duplicate generation & history writes
 const inFlightRequests = new Map<string, Promise<any>>();
@@ -44,40 +47,57 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
       if (!executionPromise) {
         executionPromise = ProviderManager.generateBetter(message.text, targetAi)
           .then(async (response) => {
-            const settings = await getSettings();
-            const model = settings.models?.[settings.provider as keyof typeof settings.models];
+            // All post-generation persistence is staged and flushed as ONE
+            // storage write instead of four sequential IPC round-trips.
+            await runInBatch(async () => {
+              const settings = await getSettings();
+              const model = settings.models?.[settings.provider as keyof typeof settings.models];
 
-            // 1. Record usage event for metrics (idempotent, safe metadata only)
-            await recordUsageEvent({
-              id: eventId,
-              mode: 'better',
-              targetAi,
-              provider: settings.provider,
-              model,
-              success: true,
+              const isSuccess = !response.isFallback && !response.providerFailure;
+              // 1. Record usage event for metrics (idempotent, safe metadata only)
+              await recordUsageEvent({
+                id: eventId,
+                mode: 'better',
+                targetAi,
+                provider: response.providerFailure?.provider || settings.provider,
+                model,
+                success: isSuccess,
+              });
+
+              // 2. Record full history item
+              await addHistoryItem({
+                mode: 'better',
+                targetAi,
+                originalPrompt: message.text,
+                refinedPrompt: response.prompt,
+                provider: settings.provider,
+                reasonOrSummary: response.shortReason,
+              });
+
+              // 3. Increment free tier usage counter when on the bundled default key
+              if (await isFreeKeyActive()) {
+                await incrementFreeUsage();
+              }
             });
 
-            // 2. Record full history item
-            await addHistoryItem({
-              mode: 'better',
-              targetAi,
-              originalPrompt: message.text,
-              refinedPrompt: response.prompt,
-              provider: settings.provider,
-              reasonOrSummary: response.shortReason,
-            });
             return response;
           })
           .catch(async (err) => {
             // Record failed transformation (does not count as successful)
-            const settings = await getSettings();
-            await recordUsageEvent({
-              id: eventId,
-              mode: 'better',
-              targetAi,
-              provider: settings.provider,
-              success: false,
-            });
+            try {
+              await runInBatch(async () => {
+                const settings = await getSettings();
+                await recordUsageEvent({
+                  id: eventId,
+                  mode: 'better',
+                  targetAi,
+                  provider: settings.provider,
+                  success: false,
+                });
+              });
+            } catch {
+              /* never mask the original error */
+            }
             throw err;
           })
           .finally(() => {
@@ -103,40 +123,56 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
       if (!executionPromise) {
         executionPromise = ProviderManager.generateExpert(message.text, targetAi)
           .then(async (response) => {
-            const settings = await getSettings();
-            const model = settings.models?.[settings.provider as keyof typeof settings.models];
+            // Single batched flush — see GENERATE_BETTER above.
+            await runInBatch(async () => {
+              const settings = await getSettings();
+              const model = settings.models?.[settings.provider as keyof typeof settings.models];
 
-            // 1. Record usage event for metrics (idempotent, safe metadata only)
-            await recordUsageEvent({
-              id: eventId,
-              mode: 'expert',
-              targetAi,
-              provider: settings.provider,
-              model,
-              success: true,
+              const isSuccess = !response.isFallback && !response.providerFailure;
+              // 1. Record usage event for metrics (idempotent, safe metadata only)
+              await recordUsageEvent({
+                id: eventId,
+                mode: 'expert',
+                targetAi,
+                provider: response.providerFailure?.provider || settings.provider,
+                model,
+                success: isSuccess,
+              });
+
+              // 2. Record full history item
+              await addHistoryItem({
+                mode: 'expert',
+                targetAi,
+                originalPrompt: message.text,
+                refinedPrompt: response.prompt,
+                provider: settings.provider,
+                reasonOrSummary: response.summary,
+              });
+
+              // 3. Increment free tier usage counter when on the bundled default key
+              if (await isFreeKeyActive()) {
+                await incrementFreeUsage();
+              }
             });
 
-            // 2. Record full history item
-            await addHistoryItem({
-              mode: 'expert',
-              targetAi,
-              originalPrompt: message.text,
-              refinedPrompt: response.prompt,
-              provider: settings.provider,
-              reasonOrSummary: response.summary,
-            });
             return response;
           })
           .catch(async (err) => {
             // Record failed transformation (does not count as successful)
-            const settings = await getSettings();
-            await recordUsageEvent({
-              id: eventId,
-              mode: 'expert',
-              targetAi,
-              provider: settings.provider,
-              success: false,
-            });
+            try {
+              await runInBatch(async () => {
+                const settings = await getSettings();
+                await recordUsageEvent({
+                  id: eventId,
+                  mode: 'expert',
+                  targetAi,
+                  provider: settings.provider,
+                  success: false,
+                });
+              });
+            } catch {
+              /* never mask the original error */
+            }
             throw err;
           })
           .finally(() => {
@@ -222,6 +258,39 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
       return true;
     }
 
+    case 'REFINZI_OPEN_POPUP':
+    case 'REFINZI_OPEN_SETTINGS': {
+      (async () => {
+        try {
+          if (typeof chrome !== 'undefined') {
+            if (chrome.action?.openPopup) {
+              await chrome.action.openPopup();
+              return { success: true };
+            }
+            if (chrome.runtime?.openOptionsPage) {
+              await chrome.runtime.openOptionsPage();
+              return { success: true };
+            }
+            const url = chrome.runtime.getURL('popup/popup.html');
+            await chrome.tabs.create({ url });
+            return { success: true };
+          }
+        } catch {
+          try {
+            const url = chrome.runtime.getURL('popup/popup.html');
+            await chrome.tabs.create({ url });
+            return { success: true };
+          } catch (e: any) {
+            return { success: false, error: e?.message };
+          }
+        }
+        return { success: false };
+      })()
+        .then((res) => sendResponse(res))
+        .catch((err) => sendResponse({ success: false, error: err.message }));
+      return true;
+    }
+
     default:
       return false;
   }
@@ -245,9 +314,58 @@ BrowserAPI.commands.onCommand.addListener(async (command) => {
 });
 
 if (typeof chrome !== 'undefined' && chrome.runtime?.onInstalled) {
-  chrome.runtime.onInstalled.addListener((details) => {
+  chrome.runtime.onInstalled.addListener(async (details) => {
+    // Content scripts only inject on *navigation*. Without this, every tab that
+    // was already open when the user installed or updated Refinzi would show no
+    // Orb until they manually refreshed — the "why do I have to reload?" problem.
+    // Re-injecting is safe because content.js self-guards against double load.
+    const injectIntoOpenTabs = async () => {
+      try {
+        if (!chrome?.scripting?.executeScript || !chrome?.tabs?.query) return;
+        const tabs = await chrome.tabs.query({ url: ['http://*/*', 'https://*/*'] });
+        await Promise.allSettled(
+          tabs
+            .filter((t) => typeof t.id === 'number' && !t.url?.startsWith('chrome://'))
+            .map((t) =>
+              chrome.scripting.executeScript({ target: { tabId: t.id as number }, files: ['content.js'] })
+            )
+        );
+      } catch (err) {
+        console.debug('[Refinzi] Open-tab injection skipped:', err);
+      }
+    };
+
     if (details.reason === 'install') {
       console.log('[Refinzi] Extension installed successfully.');
+
+      await injectIntoOpenTabs();
+
+      // Fire the onboarding modal in the currently active tab immediately on install.
+      // This ensures the CWS reviewer (and all new users) see the walkthrough
+      // the moment the extension is installed, without having to navigate away.
+      try {
+        const tabs = await BrowserAPI.tabs.query({ active: true, currentWindow: true });
+        const activeTab = tabs[0];
+        if (activeTab?.id) {
+          // Small delay to allow the content script to finish initializing on the page
+          setTimeout(async () => {
+            try {
+              await BrowserAPI.tabs.sendMessage(activeTab.id as number, {
+                type: 'REFINZI_SHOW_ONBOARDING',
+              });
+            } catch {
+              // Content script may not yet be injected on restricted pages (e.g. chrome://)
+              // This is expected — silently ignore.
+            }
+          }, 800);
+        }
+      } catch (err) {
+        console.debug('[Refinzi] Could not dispatch install-time onboarding:', err);
+      }
+    } else if (details.reason === 'update') {
+      // After an update the old content-script context is orphaned in every open
+      // tab; re-inject so the new version is live without a manual refresh.
+      await injectIntoOpenTabs();
     }
   });
 }

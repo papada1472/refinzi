@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { BrowserAPI } from '../src/browser/api';
+import { __resetStorageLayerForTests } from '../src/utils/storage-batch';
 import {
   recordUsageEvent,
   clearUsageEvents,
@@ -22,8 +23,11 @@ import path from 'path';
 describe('Refinzi Home Dashboard Metrics & Data Architecture', () => {
   let mockStorage: Record<string, any> = {};
 
-  beforeEach(() => {
+  beforeEach(async () => {
     mockStorage = {};
+    // Storage backend is replaced wholesale: drop cached snapshots and any
+    // open batch so nothing leaks from the previous test.
+    __resetStorageLayerForTests();
 
     vi.spyOn(BrowserAPI.storage.local, 'get').mockImplementation(async (keys: any) => {
       if (!keys) return { ...mockStorage };
@@ -43,7 +47,8 @@ describe('Refinzi Home Dashboard Metrics & Data Architecture', () => {
       mockStorage = {};
     });
 
-    clearUsageEvents();
+    await clearUsageEvents();
+    __resetStorageLayerForTests();
   });
 
   afterEach(() => {
@@ -443,5 +448,64 @@ describe('Refinzi Home Dashboard Metrics & Data Architecture', () => {
 
     history = await getHistory();
     expect(history).toHaveLength(0);
+  });
+
+  // TEST 15: Period invariant — allTimeCount must always ≥ every narrower period count
+  //           and totalPromptsEnhanced must equal the count for the requested period.
+  //           This is the regression test for the "6 vs 5 lifetime total" class of
+  //           contradictions visible in screenshots.
+  it('15. period invariant: allTimeCount >= weekCount >= todayCount and totalPromptsEnhanced equals period slice', async () => {
+    const now = Date.now();
+    const HOUR = 60 * 60 * 1000;
+    const DAY  = 24 * HOUR;
+
+    // 2 events today (within last 24h)
+    await recordUsageEvent({ id: 'p15_t1', timestamp: now - 1 * HOUR,  mode: 'better', targetAi: 'chatgpt', provider: 'local', success: true });
+    await recordUsageEvent({ id: 'p15_t2', timestamp: now - 3 * HOUR,  mode: 'expert', targetAi: 'claude',  provider: 'local', success: true });
+
+    // 2 more events within the week but not today
+    await recordUsageEvent({ id: 'p15_w1', timestamp: now - 3 * DAY,   mode: 'better', targetAi: 'gemini',  provider: 'local', success: true });
+    await recordUsageEvent({ id: 'p15_w2', timestamp: now - 5 * DAY,   mode: 'better', targetAi: 'chatgpt', provider: 'local', success: true });
+
+    // 2 more within the month but not the week
+    await recordUsageEvent({ id: 'p15_m1', timestamp: now - 18 * DAY,  mode: 'expert', targetAi: 'claude',  provider: 'local', success: true });
+    await recordUsageEvent({ id: 'p15_m2', timestamp: now - 25 * DAY,  mode: 'better', targetAi: 'chatgpt', provider: 'local', success: true });
+
+    // 2 older than 30 days — All Time only
+    await recordUsageEvent({ id: 'p15_a1', timestamp: now - 45 * DAY,  mode: 'better', targetAi: 'chatgpt', provider: 'local', success: true });
+    await recordUsageEvent({ id: 'p15_a2', timestamp: now - 90 * DAY,  mode: 'expert', targetAi: 'gemini',  provider: 'local', success: true });
+
+    const events = await getUsageEvents();
+
+    const todaySummary = computeMetricsSummary(events, 'Today',    DEFAULT_METRICS_CONFIG, now);
+    const weekSummary  = computeMetricsSummary(events, 'Week',     DEFAULT_METRICS_CONFIG, now);
+    const monthSummary = computeMetricsSummary(events, 'Month',    DEFAULT_METRICS_CONFIG, now);
+    const allSummary   = computeMetricsSummary(events, 'All Time', DEFAULT_METRICS_CONFIG, now);
+
+    // ── Exact period slice correctness ────────────────────────────────────────
+    expect(todaySummary.totalPromptsEnhanced).toBe(2);  // p15_t1, p15_t2
+    expect(weekSummary.totalPromptsEnhanced ).toBe(4);  // + p15_w1, p15_w2
+    expect(monthSummary.totalPromptsEnhanced).toBe(6);  // + p15_m1, p15_m2
+    expect(allSummary.totalPromptsEnhanced  ).toBe(8);  // + p15_a1, p15_a2
+
+    // ── Cross-period embedded counts satisfy strict hierarchy ─────────────────
+    expect(allSummary.allTimeCount).toBeGreaterThanOrEqual(allSummary.monthCount);
+    expect(allSummary.monthCount  ).toBeGreaterThanOrEqual(allSummary.weekCount);
+    expect(allSummary.weekCount   ).toBeGreaterThanOrEqual(allSummary.todayCount);
+
+    // Same invariants must hold from every period's vantage point
+    for (const summary of [todaySummary, weekSummary, monthSummary, allSummary]) {
+      expect(summary.allTimeCount).toBeGreaterThanOrEqual(summary.monthCount);
+      expect(summary.monthCount  ).toBeGreaterThanOrEqual(summary.weekCount);
+      expect(summary.weekCount   ).toBeGreaterThanOrEqual(summary.todayCount);
+      // The card value must never exceed allTimeCount
+      expect(summary.allTimeCount).toBeGreaterThanOrEqual(summary.totalPromptsEnhanced);
+    }
+
+    // ── Embedded cross-period counts match expected values ────────────────────
+    expect(allSummary.allTimeCount).toBe(8);
+    expect(allSummary.monthCount  ).toBe(6);
+    expect(allSummary.weekCount   ).toBe(4);
+    expect(allSummary.todayCount  ).toBe(2);
   });
 });

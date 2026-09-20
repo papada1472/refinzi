@@ -1,8 +1,8 @@
 /**
- * REFINZI — Master Universal Content Script Controller
+ * REFINZI â€” Master Universal Content Script Controller
  * 
  * UNIVERSAL BROWSER TEXT LAYER:
- * Root Abstraction: BROWSER → EDITABLE TEXT SURFACE → REFINZI
+ * Root Abstraction: BROWSER â†’ EDITABLE TEXT SURFACE â†’ REFINZI
  * 
  * Works seamlessly across ANY website:
  * - Textareas, standard inputs (text, search, email, url, tel)
@@ -46,7 +46,31 @@ export class RefinziController {
   private isMessageListenerRegistered: boolean = false;
   private canUndo: boolean = false;
   private lastCalibratedPrompt: string = '';
+  private byokNudgeShownThisSession: boolean = false;
+  /** Held so the Orb can be constructed lazily, after init() has finished. */
+  private holdThresholdMs: number = 350;
   private boundOnKeyDown = (e: KeyboardEvent) => this.handleGlobalKeyDown(e);
+
+  /**
+   * Returns the Ambient Orb, creating it on first use.
+   *
+   * This content script runs in every frame of every http/https page, and most
+   * of those pages never show an editable surface to the user. Constructing the
+   * orb eagerly meant building a shadow root plus window-level listeners on
+   * every single page load for UI that was never displayed.
+   */
+  private ensureOrb(): AmbientOrb {
+    if (!this.orb) {
+      this.orb = new AmbientOrb(
+        {
+          onBetter: () => this.handleTrigger('better'),
+          onExpert: () => this.handleTrigger('expert'),
+        },
+        this.holdThresholdMs
+      );
+    }
+    return this.orb;
+  }
 
   async init(): Promise<void> {
     if (this.isInitialized) return;
@@ -66,23 +90,18 @@ export class RefinziController {
       }
     }
 
-    // Initialize the Ambient Orb (Click = Better, Hold = Expert)
-    this.orb = new AmbientOrb(
-      {
-        onBetter: () => this.handleTrigger('better'),
-        onExpert: () => this.handleTrigger('expert'),
-      },
-      settings.holdThresholdMs || 350
-    );
+    // The Orb's DOM/shadow tree and its window-level listeners are created
+    // LAZILY on first use (see ensureOrb) â€” this script runs in every frame of
+    // every page, and most never show a surface to interact with.
+    this.holdThresholdMs = settings.holdThresholdMs || 350;
 
     // Initialize the Universal Text Engine
     this.engine = new UniversalTextEngine({
       onSurfaceActivated: (surface: TextSurface) => {
         this.activeSurface = surface;
-        if (this.orb) {
-          this.orb.attach(surface.element);
-          this.orb.show();
-        }
+        const orb = this.ensureOrb();
+        orb.attach(surface.element);
+        orb.show();
         if (!settings.hasSeenOnboarding) {
           RefinziOnboardingModal.checkAndShowFirstRun();
         }
@@ -124,6 +143,18 @@ export class RefinziController {
         }
       });
     }
+
+    // Reactively update settings when changed from popup without requiring a page refresh
+    if (typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
+      chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName === 'local' && changes.settings?.newValue) {
+          const updated = changes.settings.newValue as any;
+          if (typeof updated?.holdThresholdMs === 'number') {
+            this.holdThresholdMs = updated.holdThresholdMs;
+          }
+        }
+      });
+    }
   }
 
   /**
@@ -136,7 +167,8 @@ export class RefinziController {
       const surface = SurfaceFactory.createSurface(active);
       if (surface) {
         this.activeSurface = surface;
-        this.orb?.attach(surface.element);
+        // A surface already exists on load, so the Orb is genuinely needed.
+        this.ensureOrb().attach(surface.element);
         return;
       }
     }
@@ -150,7 +182,7 @@ export class RefinziController {
           const surface = SurfaceFactory.createSurface(composer);
           if (surface) {
             this.activeSurface = surface;
-            this.orb?.attach(surface.element);
+            this.ensureOrb().attach(surface.element);
             return;
           }
         }
@@ -171,7 +203,7 @@ export class RefinziController {
             const surface = SurfaceFactory.createSurface(el);
             if (surface) {
               this.activeSurface = surface;
-              this.orb?.attach(surface.element);
+              this.ensureOrb().attach(surface.element);
               return;
             }
           }
@@ -201,7 +233,7 @@ export class RefinziController {
       if (active instanceof HTMLElement && isSafeEditableElement(active)) {
         this.activeSurface = SurfaceFactory.createSurface(active);
         if (this.activeSurface) {
-          this.orb?.attach(this.activeSurface.element);
+          this.ensureOrb().attach(this.activeSurface.element);
         }
       }
     }
@@ -215,7 +247,7 @@ export class RefinziController {
           if (composer && isSafeEditableElement(composer)) {
             this.activeSurface = SurfaceFactory.createSurface(composer);
             if (this.activeSurface) {
-              this.orb?.attach(this.activeSurface.element);
+              this.ensureOrb().attach(this.activeSurface.element);
             }
           }
         }
@@ -224,7 +256,11 @@ export class RefinziController {
       }
     }
 
-    if (!this.activeSurface || !this.orb) return;
+    // The Orb is created lazily; a trigger means the user wants it, so ensure
+    // it exists here rather than bailing (the old `|| !this.orb` guard silently
+    // dropped shortcuts fired before any surface had activated).
+    if (!this.activeSurface) return;
+    const orb = this.ensureOrb();
 
     // Concurrency Lock & Debounce guard to prevent duplicate generation
     const now = Date.now();
@@ -238,7 +274,7 @@ export class RefinziController {
     const rawInput = (isPartialSelection ? selection!.text : this.activeSurface.getValue()).trim();
 
     if (!rawInput) {
-      this.orb.showUndoToast('Type your raw thought in the text box first!', () => {});
+      orb.showUndoToast('Type your raw thought in the text box first!', () => {});
       return;
     }
 
@@ -251,7 +287,7 @@ export class RefinziController {
     const targetAi = this.activeSurface.siteName || 'general';
 
     // FEATURE 2: Trigger Processing Feedback Animation
-    this.orb.startProcessingFeedback(mode);
+    orb.startProcessingFeedback(mode);
 
     try {
       const messageType = mode === 'better' ? 'REFINZI_GENERATE_BETTER' : 'REFINZI_GENERATE_EXPERT';
@@ -272,7 +308,7 @@ export class RefinziController {
         new Promise((resolve) => setTimeout(resolve, minDuration)),
       ]);
 
-      this.orb.stopProcessingFeedback();
+      orb.stopProcessingFeedback();
 
       if (response && response.success && response.data?.prompt) {
         const calibratedPrompt = response.data.prompt;
@@ -291,10 +327,19 @@ export class RefinziController {
           this.lastCalibratedPrompt = calibratedPrompt;
         }
 
+        const hasProviderFailure = response.data.isFallback || !!response.data.providerFailure;
+        const failureInfo = response.data.providerFailure;
+
         // FEATURE 3: Floating Validation Checklist Toast
-        const summaryLabel = mode === 'better'
+        let summaryLabel = mode === 'better'
           ? `⚡ Calibrated for ${response.data.domain || 'task'}`
           : `🧠 Expert briefing applied`;
+
+        if (hasProviderFailure) {
+          summaryLabel = mode === 'better'
+            ? `⚡ Better (Offline Engine)`
+            : `🧠 Expert (Offline Engine)`;
+        }
 
         const assumptionsList = Array.isArray(response.data.assumptions) ? response.data.assumptions : [];
         const assumedItem = assumptionsList.find((a: string) => a.startsWith('Assumed:')) || assumptionsList[0];
@@ -304,15 +349,15 @@ export class RefinziController {
               'Exact core intent preserved',
               'Scope boundaries locked to task',
               assumedItem ? assumedItem : 'Defensible assumptions explicitly marked',
-              'Execution criteria & constraints added',
+              hasProviderFailure ? `Note: ${failureInfo?.reason || 'Offline calibration used'}` : 'Execution criteria & constraints added',
             ]
           : [
               'Core intent clarified',
               'Vagueness & ambiguity eliminated',
-              'Executable prompt structure calibrated',
+              hasProviderFailure ? `Note: ${failureInfo?.reason || 'Offline calibration used'}` : 'Executable prompt structure calibrated',
             ];
 
-        this.orb.showValidationToast({
+        orb.showValidationToast({
           mode,
           domain: response.data.domain ? response.data.domain.toUpperCase() : (mode === 'better' ? 'BETTER' : 'EXPERT'),
           summary: summaryLabel,
@@ -342,11 +387,42 @@ export class RefinziController {
             }
           },
         });
+
+        // Show BYOK failure nudge if the AI provider failed, or gentle nudge if free tier
+        if (hasProviderFailure && failureInfo) {
+          setTimeout(() => {
+            this.orb?.showByokNudge({
+              reason: failureInfo.reason,
+              isError: true,
+            });
+          }, 600);
+        } else if (!this.byokNudgeShownThisSession) {
+          try {
+            const nudgeSettings = await getSettings();
+            const usingFreeEngine =
+              nudgeSettings.provider === 'gateway' ||
+              nudgeSettings.provider === 'local' ||
+              (nudgeSettings.provider === 'gemini' && !nudgeSettings.apiKeys?.gemini) ||
+              (nudgeSettings.provider === 'openai' && !nudgeSettings.apiKeys?.openai) ||
+              (nudgeSettings.provider === 'deepseek' && !nudgeSettings.apiKeys?.deepseek) ||
+              (nudgeSettings.provider === 'openrouter' && !nudgeSettings.apiKeys?.openrouter);
+
+            if (usingFreeEngine) {
+              this.byokNudgeShownThisSession = true;
+              // Delay nudge 2.5s so it doesn't compete with the validation toast
+              setTimeout(() => {
+                this.orb?.showByokNudge();
+              }, 2500);
+            }
+          } catch {
+            // Ignore nudge errors — non-critical
+          }
+        }
       } else {
         throw new Error(response?.error || 'Calibration failed');
       }
     } catch (err: any) {
-      this.orb.stopProcessingFeedback();
+      orb.stopProcessingFeedback();
 
       const isContextInvalidated =
         err?.message?.includes('Extension context invalidated') ||
@@ -378,8 +454,8 @@ export class RefinziController {
           }
 
           const summaryLabel = mode === 'better'
-            ? `⚡ Better calibrated (Offline engine)`
-            : `🧠 Expert briefing applied (Offline engine)`;
+            ? `âš¡ Better calibrated (Offline engine)`
+            : `ðŸ§  Expert briefing applied (Offline engine)`;
 
           const fallbackAssumptions = 'assumptions' in fallbackRes && Array.isArray(fallbackRes.assumptions)
             ? fallbackRes.assumptions
@@ -399,7 +475,7 @@ export class RefinziController {
                 'Executable prompt structure calibrated',
               ];
 
-          this.orb.showValidationToast({
+          orb.showValidationToast({
             mode,
             domain: fallbackRes.domain.toUpperCase(),
             summary: summaryLabel,
@@ -431,13 +507,23 @@ export class RefinziController {
               }
             },
           });
+
+          // The extension is gone (uninstalled or updated). Finish this last
+          // offline calibration, then tear our UI down so no dead Orb and no
+          // orphaned capture-phase listeners linger until the user refreshes.
+          setTimeout(() => this.destroy(), 4000);
           return;
         } catch (fallbackErr) {
           console.error('[Refinzi] In-page fallback failed:', fallbackErr);
+          this.destroy();
         }
       }
 
-      this.orb.showUndoToast(`⚠️ Calibration error: ${err?.message || 'Try again'}`, () => {});
+      orb.showUndoToast(`⚠️ Calibration error: ${err?.message || 'Try again'}`, () => {});
+      this.orb?.showByokNudge({
+        reason: `API Error: ${err?.message || 'Connection failed'}. Configure BYOK in Settings.`,
+        isError: true,
+      });
     } finally {
       this.isCalibrating = false;
     }
@@ -459,7 +545,7 @@ export class RefinziController {
 
     this.canUndo = false;
     this.activeSurface.focus();
-    this.orb?.showUndoToast('↩ Original prompt restored', () => {});
+    this.orb?.showUndoToast('â†© Original prompt restored', () => {});
   }
 
   /**

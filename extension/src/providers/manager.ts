@@ -36,42 +36,47 @@ export class ProviderManager {
 
   static async getActiveProvider(): Promise<AIProvider> {
     const settings = await getSettings();
-    const providerId = settings.provider || 'local';
+    const providerId = settings.provider || 'gateway';
+
+    // Primary AI Provider: Google Gemini (BYOK only — no bundled key ships anymore)
+    const getGeminiProvider = () =>
+      new GeminiProvider(settings.apiKeys?.gemini || '', settings.models?.gemini || 'gemini-flash-latest');
+
+    // Default Cloud Gateway Provider (server-side DeepSeek backend)
+    const getGatewayProvider = () =>
+      new GatewayProvider(settings.gatewayUrl || 'https://refinzi.com/api/v1/refine', settings.apiKeys?.gateway);
 
     switch (providerId) {
-      case 'openai':
-        if (settings.apiKeys.openai) {
-          return new OpenAIProvider(settings.apiKeys.openai, settings.models.openai);
-        }
-        break;
+      case 'gemini': {
+        return getGeminiProvider();
+      }
 
-      case 'gemini':
-        if (settings.apiKeys.gemini) {
-          return new GeminiProvider(settings.apiKeys.gemini, settings.models.gemini);
-        }
-        break;
+      case 'openai':
+        return new OpenAIProvider(settings.apiKeys?.openai || '', settings.models?.openai);
 
       case 'deepseek':
-        if (settings.apiKeys.deepseek) {
-          return new DeepSeekProvider(settings.apiKeys.deepseek, settings.models.deepseek);
+        if (settings.apiKeys?.deepseek) {
+          return new DeepSeekProvider(settings.apiKeys.deepseek, settings.models?.deepseek);
         }
-        break;
+        return getGatewayProvider();
 
       case 'openrouter':
-        if (settings.apiKeys.openrouter) {
-          return new OpenRouterProvider(settings.apiKeys.openrouter, settings.models.openrouter);
+        if (settings.apiKeys?.openrouter) {
+          return new OpenRouterProvider(settings.apiKeys.openrouter, settings.models?.openrouter);
         }
-        break;
+        return getGatewayProvider();
 
       case 'gateway':
-        return new GatewayProvider(settings.gatewayUrl, settings.apiKeys.gateway);
+        return getGatewayProvider();
 
       case 'local':
-      default:
+        // Explicitly selected local → use deterministic offline engine
         return this.localProvider;
-    }
 
-    return this.localProvider;
+      default:
+        // Unknown provider → default to the gateway
+        return getGatewayProvider();
+    }
   }
 
   static async generateBetter(
@@ -85,13 +90,33 @@ export class ProviderManager {
     let result: BetterPromptResponse;
     try {
       result = await provider.generateBetter(rawInput, intent, options);
-    } catch {
-      result = synthesizeBetterPrompt(rawInput, targetAi);
+    } catch (err: any) {
+      const fallback = synthesizeBetterPrompt(rawInput, targetAi);
+      result = {
+        ...fallback,
+        isFallback: true,
+        providerFailure: {
+          provider: provider.id as AIProviderId,
+          reason: err?.message || 'Provider execution failed',
+          status: err?.status || 0,
+          code: 'SERVER_ERROR',
+        },
+      };
     }
 
     // Quality gate
     if (!result || !result.prompt || result.prompt.trim().length < 8) {
-      result = synthesizeBetterPrompt(rawInput, targetAi);
+      const fallback = synthesizeBetterPrompt(rawInput, targetAi);
+      result = {
+        ...fallback,
+        isFallback: true,
+        providerFailure: result?.providerFailure || {
+          provider: provider.id as AIProviderId,
+          reason: 'Provider produced an incomplete response',
+          status: 0,
+          code: 'SERVER_ERROR',
+        },
+      };
     }
 
     return result;
@@ -108,13 +133,33 @@ export class ProviderManager {
     let result: ExpertFinalResponse;
     try {
       result = await provider.generateExpert(rawInput, intent, options);
-    } catch {
-      result = synthesizeExpertPrompt(rawInput, targetAi);
+    } catch (err: any) {
+      const fallback = synthesizeExpertPrompt(rawInput, targetAi);
+      result = {
+        ...fallback,
+        isFallback: true,
+        providerFailure: {
+          provider: provider.id as AIProviderId,
+          reason: err?.message || 'Provider execution failed',
+          status: err?.status || 0,
+          code: 'SERVER_ERROR',
+        },
+      };
     }
 
     // Quality gate
     if (!result || !result.prompt || result.prompt.trim().length < 15) {
-      result = synthesizeExpertPrompt(rawInput, targetAi);
+      const fallback = synthesizeExpertPrompt(rawInput, targetAi);
+      result = {
+        ...fallback,
+        isFallback: true,
+        providerFailure: result?.providerFailure || {
+          provider: provider.id as AIProviderId,
+          reason: 'Provider produced an incomplete response',
+          status: 0,
+          code: 'SERVER_ERROR',
+        },
+      };
     }
 
     return result;

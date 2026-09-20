@@ -24,7 +24,10 @@ export class UniversalTextEngine {
   private callbacks: UniversalEngineCallbacks;
   private isRunning: boolean = false;
   private blurTimeout: number | null = null;
+  private discoveryTimeout: number | null = null;
   private mutationObserver: MutationObserver | null = null;
+  private geometryRafId: number | null = null;
+  private geometryPending: boolean = false;
 
   // Bound event listeners for clean destruction
   private boundOnFocusIn = (e: FocusEvent) => this.handleFocusIn(e);
@@ -46,6 +49,10 @@ export class UniversalTextEngine {
     if (this.isRunning) return;
     this.isRunning = true;
 
+    // Hook SPA navigation (history.pushState / history.replaceState) so dynamic route
+    // changes (e.g. login/OAuth transitions on ChatGPT/Claude) are detected immediately.
+    this.hookHistoryState();
+
     // Use capturing phase for focus events to catch all inputs across frameworks
     document.addEventListener('focusin', this.boundOnFocusIn, true);
     document.addEventListener('focusout', this.boundOnFocusOut, true);
@@ -57,11 +64,14 @@ export class UniversalTextEngine {
     window.addEventListener('resize', this.boundOnResize, { passive: true });
     window.addEventListener('popstate', this.boundOnPopState, { passive: true });
 
-    // Observe dynamic DOM removals to clean up surface if removed by SPA
+    // Observe dynamic DOM removals and additions to handle SPA transitions
     this.startDOMObserver();
 
-    // If an editable element is already focused upon init, activate it immediately
+    // Check if an editable element or composer is already present upon init
     this.checkCurrentActiveElement();
+    if (!this.activeSurface) {
+      this.discoverInitialSurface();
+    }
   }
 
   /**
@@ -163,15 +173,96 @@ export class UniversalTextEngine {
   }
 
   private handleGeometryChange(): void {
-    if (this.activeSurface && this.activeSurface.detect()) {
-      this.callbacks.onPositionUpdate(this.activeSurface);
-    }
+    // Coalesce high-frequency scroll/resize/mutation callbacks into a single
+    // requestAnimationFrame flush so orb repositioning never triggers layout
+    // thrash on long pages or during smooth scrolling.
+    if (this.geometryPending) return;
+    this.geometryPending = true;
+    this.geometryRafId = requestAnimationFrame(() => {
+      this.geometryRafId = null;
+      this.geometryPending = false;
+      if (this.activeSurface && this.activeSurface.detect()) {
+        this.callbacks.onPositionUpdate(this.activeSurface);
+      }
+    });
   }
 
   private handleNavigationChange(): void {
-    setTimeout(() => {
+    this.scheduleSurfaceDiscovery();
+  }
+
+  private hookHistoryState(): void {
+    if (typeof window === 'undefined' || !window.history) return;
+    const originalPushState = window.history.pushState;
+    const originalReplaceState = window.history.replaceState;
+
+    if (originalPushState && !(originalPushState as any).__refinziHooked__) {
+      window.history.pushState = (...args: Parameters<History['pushState']>) => {
+        const ret = originalPushState.apply(window.history, args);
+        this.handleNavigationChange();
+        return ret;
+      };
+      (window.history.pushState as any).__refinziHooked__ = true;
+    }
+
+    if (originalReplaceState && !(originalReplaceState as any).__refinziHooked__) {
+      window.history.replaceState = (...args: Parameters<History['replaceState']>) => {
+        const ret = originalReplaceState.apply(window.history, args);
+        this.handleNavigationChange();
+        return ret;
+      };
+      (window.history.replaceState as any).__refinziHooked__ = true;
+    }
+  }
+
+  public scheduleSurfaceDiscovery(): void {
+    if (this.discoveryTimeout) return;
+    this.discoveryTimeout = window.setTimeout(() => {
+      this.discoveryTimeout = null;
+      if (this.activeSurface && this.activeSurface.element.isConnected) return;
       this.checkCurrentActiveElement();
+      if (!this.activeSurface) {
+        this.discoverInitialSurface();
+      }
     }, 150);
+  }
+
+  public discoverInitialSurface(): void {
+    if (this.activeSurface && this.activeSurface.element.isConnected) return;
+
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && isSafeEditableElement(active)) {
+      this.tryActivateElement(active);
+      return;
+    }
+
+    const selectors = [
+      '#prompt-textarea',
+      'div[id="prompt-textarea"][contenteditable="true"]',
+      'div[contenteditable="true"].ProseMirror',
+      'div[contenteditable="true"][data-placeholder]',
+      'div[contenteditable="true"].ql-editor',
+      'textarea[data-id="root"]',
+      'textarea:not([disabled]):not([readonly])',
+      '[contenteditable="true"]:not([contenteditable="false"])',
+    ];
+
+    for (const sel of selectors) {
+      try {
+        const els = document.querySelectorAll<HTMLElement>(sel);
+        for (const el of Array.from(els)) {
+          if (isSafeEditableElement(el)) {
+            const rect = el.getBoundingClientRect();
+            if (rect.width > 40 && rect.height > 20) {
+              this.tryActivateElement(el);
+              return;
+            }
+          }
+        }
+      } catch {
+        // Ignore selector errors
+      }
+    }
   }
 
   private tryActivateElement(element: HTMLElement): void {
@@ -217,21 +308,48 @@ export class UniversalTextEngine {
 
   private startDOMObserver(): void {
     this.mutationObserver = new MutationObserver((mutations) => {
-      if (!this.activeSurface) return;
-
-      // If active surface's element was detached from the DOM, deactivate
-      if (!this.activeSurface.element.isConnected) {
-        this.deactivateCurrentSurface();
+      // If there is no active surface yet (e.g. user just completed login),
+      // scan for newly mounted composers when elements are added to the DOM.
+      if (!this.activeSurface) {
+        let hasNewElements = false;
+        for (const m of mutations) {
+          if (m.type === 'childList' && m.addedNodes.length > 0) {
+            hasNewElements = true;
+            break;
+          }
+        }
+        if (hasNewElements) {
+          this.scheduleSurfaceDiscovery();
+        }
         return;
       }
 
-      // Check if mutations affected active surface geometry
+      // If active surface's element was detached from the DOM, deactivate and scan
+      if (!this.activeSurface.element.isConnected) {
+        this.deactivateCurrentSurface();
+        this.scheduleSurfaceDiscovery();
+        return;
+      }
+
+      // Ignore mutations Refinzi itself caused (orb host / toast / undo churn)
+      // so calibration feedback never triggers a reposition loop.
+      let needsReposition = false;
       for (const m of mutations) {
+        const target = m.target;
+        if (target instanceof HTMLElement) {
+          if (
+            target.hasAttribute?.('data-refinzi-orb-host') ||
+            target.closest?.('[data-refinzi-orb-host], .refinzi-orb-host, .undo-toast')
+          ) {
+            continue;
+          }
+        }
         if (m.type === 'childList' || m.type === 'attributes') {
-          this.handleGeometryChange();
+          needsReposition = true;
           break;
         }
       }
+      if (needsReposition) this.handleGeometryChange();
     });
 
     this.mutationObserver.observe(document.body || document.documentElement, {
@@ -252,6 +370,17 @@ export class UniversalTextEngine {
       clearTimeout(this.blurTimeout);
       this.blurTimeout = null;
     }
+
+    if (this.discoveryTimeout) {
+      clearTimeout(this.discoveryTimeout);
+      this.discoveryTimeout = null;
+    }
+
+    if (this.geometryRafId !== null) {
+      cancelAnimationFrame(this.geometryRafId);
+      this.geometryRafId = null;
+    }
+    this.geometryPending = false;
 
     if (this.mutationObserver) {
       this.mutationObserver.disconnect();

@@ -11,11 +11,16 @@ import { extractAndParseJSON, validateBetterResponse, validateExpertFinalRespons
 export class DeepSeekProvider implements AIProvider {
   id = 'deepseek';
   name = 'DeepSeek';
+  private apiKey: string;
+  private model: string;
 
   constructor(
-    private apiKey: string,
-    private model: string = 'deepseek-chat'
-  ) {}
+    apiKey: string,
+    model: string = 'deepseek-flash'
+  ) {
+    this.apiKey = apiKey;
+    this.model = model;
+  }
 
   private async callDeepSeek(systemPrompt: string, userMessage: string, options?: ProviderRequestOptions): Promise<string> {
     const timeoutMs = options?.timeoutMs || 15000;

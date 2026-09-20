@@ -58,9 +58,16 @@ body {
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   flex-shrink: 0;
+}
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
 }
 
 .header-brand {
@@ -115,6 +122,68 @@ body {
 .status-dot.online {
   background: var(--emerald-accent);
   box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+
+/* ==========================================================================
+   ACTIVE TAB CONTEXT PILL
+   ========================================================================== */
+.tab-context-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  border: 1px solid transparent;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+/* State: active on a supported AI site (green) */
+.tab-context-pill.state-active {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+/* State: universal mode on a generic page (blue-indigo) */
+.tab-context-pill.state-universal {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #818cf8;
+}
+
+/* State: restricted tab (chrome://, about:, extensions, etc.) */
+.tab-context-pill.state-restricted {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-subtle);
+  color: var(--text-muted);
+}
+
+/* State: still resolving */
+.tab-context-pill.state-detecting {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border-subtle);
+  color: var(--text-muted);
+}
+
+.tab-context-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.state-active    .tab-context-dot { background: #10b981; animation: tab-pulse 2s ease-in-out infinite; }
+.state-universal .tab-context-dot { background: #6366f1; }
+.state-restricted .tab-context-dot { background: var(--text-muted); }
+.state-detecting .tab-context-dot { background: var(--text-muted); opacity: 0.4; }
+
+@keyframes tab-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+  50%       { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
 }
 
 /* ==========================================================================
@@ -269,6 +338,54 @@ body {
   color: var(--text-muted);
 }
 
+/* 4. Sparkline — 7-day usage trend on Prompts Enhanced card */
+.sparkline-svg {
+  display: block;
+  width: 100%;
+  height: 28px;
+  margin-top: 6px;
+  overflow: visible;
+}
+
+.sparkline-line {
+  fill: none;
+  stroke: var(--gold-accent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
+}
+
+.sparkline-fill {
+  fill: rgba(255, 215, 0, 0.08);
+  stroke: none;
+}
+
+/* 5. Split-bar — proportional Better / Expert visual bar */
+.split-bar {
+  display: flex;
+  height: 4px;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 7px;
+  background: rgba(255, 255, 255, 0.06);
+  gap: 1px;
+}
+
+.split-bar-better {
+  height: 100%;
+  background: var(--gold-accent);
+  border-radius: 3px 0 0 3px;
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.split-bar-expert {
+  height: 100%;
+  background: #a78bfa;
+  border-radius: 0 3px 3px 0;
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 /* 3. Period Activity Breakdown Bar */
 .period-activity-bar {
   display: flex;
@@ -365,6 +482,29 @@ body {
   font-size: 11px;
   font-weight: 500;
   color: var(--text-primary);
+}
+
+/* Free-tier suffix inside the engine banner (dimmed so it reads as secondary) */
+.engine-free {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Attention state — only applied when the free tier is low or exhausted */
+.engine-banner.warn {
+  border-color: rgba(255, 215, 0, 0.45);
+  background: rgba(255, 215, 0, 0.06);
+}
+
+.engine-banner.warn .engine-tag {
+  background: rgba(255, 215, 0, 0.16);
+  color: var(--gold-accent);
+}
+
+.engine-banner.warn .engine-free {
+  color: var(--gold-accent);
+  font-weight: 600;
 }
 
 .btn-ghost-small {
@@ -595,6 +735,45 @@ body {
   border-color: rgba(244, 63, 94, 0.4);
 }
 
+/* History Filter Chips */
+.history-filter-chips {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.filter-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.filter-chip:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.filter-chip.active {
+  background: rgba(255, 215, 0, 0.12);
+  border-color: rgba(255, 215, 0, 0.35);
+  color: var(--gold-accent);
+  font-weight: 600;
+}
+
+.filter-chip[data-filter="expert"].active {
+  background: rgba(167, 139, 250, 0.12);
+  border-color: rgba(167, 139, 250, 0.35);
+  color: #c4b5fd;
+}
+
 /* Detail Modal */
 .history-detail-modal {
   position: absolute;
@@ -741,6 +920,58 @@ body {
 .setting-label {
   font-size: 10.5px;
   color: var(--text-secondary);
+}
+
+/* Explains how a settings group affects the dashboard */
+.setting-hint {
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--text-muted);
+  margin: -2px 0 0;
+}
+
+.setting-hint strong {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* Compact single-row group: keeps estimate controls to one visual line */
+.setting-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.setting-field-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.setting-field-compact .setting-label {
+  font-size: 9.5px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.setting-field-compact .text-field {
+  padding: 5px 6px;
+  font-size: 11px;
+}
+
+/* Hide number spinners so the three inputs stay visually quiet */
+.setting-field-compact .text-field::-webkit-outer-spin-button,
+.setting-field-compact .text-field::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.setting-field-compact .text-field[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .select-field, .text-field {

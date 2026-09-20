@@ -186,6 +186,197 @@
   };
   var BrowserAPI = new BrowserAPIWrapper();
 
+  // extension/src/utils/storage-batch.ts
+  var SNAPSHOT_TTL_MS = 1500;
+  var snapshots = {};
+  function invalidateSnapshot(key) {
+    delete snapshots[key];
+  }
+  async function readSnapshot(key, fallbackEmpty) {
+    const snap = snapshots[key];
+    if (snap && Date.now() - snap.at < SNAPSHOT_TTL_MS && snap.value !== void 0) {
+      return normalize(snap.value, fallbackEmpty);
+    }
+    try {
+      const res = await BrowserAPI.storage.local.get([key]);
+      const raw = res?.[key];
+      snapshots[key] = { value: raw ?? null, at: Date.now() };
+      return normalize(raw, fallbackEmpty);
+    } catch {
+      delete snapshots[key];
+      return fallbackEmpty;
+    }
+  }
+  function normalize(value, fallbackEmpty) {
+    if (Array.isArray(fallbackEmpty)) {
+      return Array.isArray(value) ? value : fallbackEmpty;
+    }
+    return value === null || value === void 0 ? fallbackEmpty : value;
+  }
+
+  // extension/src/utils/storage.ts
+  var DEFAULT_GEMINI_API_KEY = "";
+  var decodeLegacyKey = (b64) => typeof atob === "function" ? atob(b64) : typeof Buffer !== "undefined" ? Buffer.from(b64, "base64").toString("binary") : "";
+  var DEPRECATED_GEMINI_API_KEYS = [
+    decodeLegacyKey("QVEuQWI4Uk42S1g3T0E4dzlLOWNoc0hZR2xFX0VnbjZKU3dncHVPZTQ0S3pWMVdldzV1UHc="),
+    decodeLegacyKey("QVEuQWI4Uk42SjF6QzVJVEZFbGh6LU94TjBvd0VueGhVaXM5QjN3X0FlTGdCNHZoNE4ySUE=")
+  ];
+  var FREE_TIER_PROMPT_CAP = 25;
+  var DEFAULT_PROVIDER_MODELS = {
+    // `gemini-flash-latest` is an evergreen alias that always resolves to the
+    // newest Flash model (currently Gemini 3.8 Flash), so it never goes stale.
+    gemini: "gemini-flash-latest",
+    openai: "gpt-5.6-luna",
+    deepseek: "deepseek-flash",
+    openrouter: "deepseek/deepseek-v4-flash-0731:free"
+  };
+  var DEFAULT_SETTINGS = {
+    defaultMode: "better",
+    // Default: Refinzi Gateway (server-side DeepSeek backend, zero user key setup).
+    provider: "gateway",
+    apiKeys: {},
+    models: { ...DEFAULT_PROVIDER_MODELS },
+    gatewayUrl: "https://refinzi.com/api/v1/refine",
+    enabledSites: {
+      chatgpt: true,
+      claude: true,
+      gemini: true,
+      perplexity: true
+    },
+    shortcuts: {
+      better: "Ctrl+Shift+B",
+      expert: "Ctrl+Shift+E"
+    },
+    theme: "dark",
+    autoFocus: true,
+    showInlineTrigger: true,
+    holdThresholdMs: 350,
+    autoApply: true,
+    saveHistory: true,
+    hasSeenOnboarding: false,
+    freeUsageCount: 0,
+    freeUsageExpired: false
+  };
+  var DEPRECATED_MODELS = {
+    gemini: [
+      "gemini-2.5-flash",
+      "gemini-2.5-flash-lite",
+      "gemini-2.5-pro",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-exp",
+      "gemini-2.0-flash-lite",
+      "gemini-1.5-flash",
+      "gemini-1.5-flash-8b",
+      "gemini-1.5-pro",
+      "gemini-3-flash-preview"
+    ],
+    openai: [
+      "gpt-4o-mini",
+      "gpt-4o",
+      "gpt-4-turbo",
+      "gpt-4",
+      "gpt-3.5-turbo",
+      "o1-mini",
+      "o1-preview",
+      "o3-mini"
+    ],
+    deepseek: [
+      "deepseek-chat",
+      "deepseek-reasoner",
+      "deepseek-v4-flash",
+      "deepseek-v4-flash-vision-exp"
+    ],
+    openrouter: [
+      "meta-llama/llama-3.3-70b-instruct:free",
+      "deepseek/deepseek-r1:free",
+      "deepseek/deepseek-chat",
+      "google/gemini-2.0-flash-exp:free",
+      "google/gemma-2-9b-it:free",
+      "qwen/qwen-2.5-coder-32b-instruct:free",
+      "mistralai/mistral-7b-instruct:free"
+    ]
+  };
+  var SETTINGS_KEY = "refinzi_settings";
+  function invalidateSettingsCache() {
+    invalidateSnapshot(SETTINGS_KEY);
+  }
+  async function getSettings() {
+    try {
+      const saved = await readSnapshot(SETTINGS_KEY, null);
+      if (!saved) {
+        return { ...DEFAULT_SETTINGS };
+      }
+      const savedGeminiKey = saved.apiKeys?.gemini;
+      const isDeprecatedKey = !savedGeminiKey || DEPRECATED_GEMINI_API_KEYS.includes(savedGeminiKey);
+      const resolvedGeminiKey = isDeprecatedKey ? "" : savedGeminiKey;
+      const savedModels = saved.models || {};
+      const resolvedModels = { ...DEFAULT_PROVIDER_MODELS };
+      Object.keys(resolvedModels).forEach((key) => {
+        const savedModel = savedModels[key];
+        const deprecated = DEPRECATED_MODELS[key];
+        const isRetired = !savedModel || deprecated.includes(savedModel);
+        resolvedModels[key] = isRetired ? DEFAULT_PROVIDER_MODELS[key] : savedModel;
+      });
+      return {
+        ...DEFAULT_SETTINGS,
+        ...saved,
+        provider: saved.provider || "gateway",
+        apiKeys: {
+          ...DEFAULT_SETTINGS.apiKeys,
+          ...saved.apiKeys || {},
+          gemini: resolvedGeminiKey
+        },
+        models: resolvedModels,
+        enabledSites: {
+          ...DEFAULT_SETTINGS.enabledSites,
+          ...saved.enabledSites || {}
+        }
+      };
+    } catch {
+      invalidateSettingsCache();
+      return { ...DEFAULT_SETTINGS };
+    }
+  }
+  async function getFreeUsageStatus() {
+    const settings = await getSettings();
+    const count = settings.freeUsageCount ?? 0;
+    const expired = settings.freeUsageExpired ?? false;
+    return {
+      count,
+      cap: FREE_TIER_PROMPT_CAP,
+      remaining: Math.max(0, FREE_TIER_PROMPT_CAP - count),
+      expired
+    };
+  }
+
+  // extension/src/utils/metrics.ts
+  var DEFAULT_METRICS_CONFIG = {
+    estimatedMinutesPerPrompt: 2.5,
+    estimatedAvoidedIterations: 1.5,
+    fallbackCostPerIteration: 8e-3
+  };
+  async function getMetricsConfig() {
+    try {
+      const res = await BrowserAPI.storage.local.get(["refinzi_metrics_config"]);
+      return {
+        ...DEFAULT_METRICS_CONFIG,
+        ...res?.refinzi_metrics_config || {}
+      };
+    } catch {
+      return { ...DEFAULT_METRICS_CONFIG };
+    }
+  }
+  async function saveMetricsConfig(patch) {
+    const current = await getMetricsConfig();
+    const updated = { ...current, ...patch };
+    try {
+      await BrowserAPI.storage.local.set({ refinzi_metrics_config: updated });
+    } catch (err) {
+      console.error("[Refinzi] Failed to save metrics config:", err);
+    }
+    return updated;
+  }
+
   // extension/popup/popup.ts
   document.addEventListener("DOMContentLoaded", async () => {
     const navButtons = document.querySelectorAll(".nav-btn");
@@ -194,6 +385,11 @@
     const btnQuickProvider = document.getElementById("btn-quick-provider");
     const globalStatusText = document.getElementById("global-status-text");
     const engineName = document.getElementById("engine-name");
+    const homeEngineBanner = document.getElementById("home-engine-banner");
+    const engineTag = document.getElementById("engine-tag");
+    const tabContextPill = document.getElementById("tab-context-pill");
+    const tabContextDot = document.getElementById("tab-context-dot");
+    const tabContextText = document.getElementById("tab-context-text");
     const periodBtns = document.querySelectorAll(".period-btn");
     const metricTotalPrompts = document.getElementById("metric-total-prompts");
     const metricPromptsSub = document.getElementById("metric-prompts-sub");
@@ -205,6 +401,11 @@
     const tooltipCostSaved = document.getElementById("tooltip-cost-saved");
     const metricBetterExpertVal = document.getElementById("metric-better-expert-val");
     const metricBetterExpertSub = document.getElementById("metric-better-expert-sub");
+    const sparklineLine = document.getElementById("sparkline-line");
+    const sparklineFill = document.getElementById("sparkline-fill");
+    const splitBarBetter = document.getElementById("split-bar-better");
+    const splitBarExpert = document.getElementById("split-bar-expert");
+    const filterChips = document.querySelectorAll(".filter-chip");
     const periodBetterCount = document.getElementById("period-better-count");
     const periodBetterPct = document.getElementById("period-better-pct");
     const periodExpertCount = document.getElementById("period-expert-count");
@@ -243,9 +444,80 @@
     const settingSaveHistory = document.getElementById("setting-save-history");
     const btnClearAllData = document.getElementById("btn-clear-all-data");
     const privacyFeedback = document.getElementById("privacy-feedback");
-    let currentSettings;
+    const settingEstMinutes = document.getElementById("setting-est-minutes");
+    const settingEstIterations = document.getElementById("setting-est-iterations");
+    const settingFallbackCost = document.getElementById("setting-fallback-cost");
+    const metricsConfigFeedback = document.getElementById("metrics-config-feedback");
+    let currentSettings = {
+      ...DEFAULT_SETTINGS,
+      apiKeys: { ...DEFAULT_SETTINGS.apiKeys, gemini: DEFAULT_GEMINI_API_KEY }
+    };
     let currentPeriod = "Week";
     let allHistory = [];
+    let metricConfig = { ...DEFAULT_METRICS_CONFIG };
+    let currentHistoryFilter = "all";
+    const GUIDEBOOKS = {
+      gemini: {
+        icon: "\u26A1",
+        name: "Google Gemini Flash Setup",
+        url: "https://aistudio.google.com/app/apikey",
+        tier: "Free Tier Available (Gemini 3.8 Flash)",
+        defaultModel: DEFAULT_PROVIDER_MODELS.gemini,
+        steps: [
+          "Open Google AI Studio with your Google account.",
+          'Click "Create API Key" to generate a free Gemini key.',
+          'Paste your key below and click "Verify" to activate Gemini Flash.'
+        ]
+      },
+      openai: {
+        icon: "\u{1F916}",
+        name: "OpenAI API Setup",
+        url: "https://platform.openai.com/api-keys",
+        tier: "Pay-as-you-go",
+        defaultModel: DEFAULT_PROVIDER_MODELS.openai,
+        steps: [
+          "Log in to your OpenAI Developer Platform account.",
+          'Navigate to "API Keys" and click "Create new secret key".',
+          "Paste below (recommended model: gpt-5.6-luna or gpt-5.6-terra)."
+        ]
+      },
+      deepseek: {
+        icon: "\u{1F40B}",
+        name: "DeepSeek API Setup",
+        url: "https://platform.deepseek.com/api_keys",
+        tier: "Ultra-low cost (from ~$0.15/M tokens)",
+        defaultModel: DEFAULT_PROVIDER_MODELS.deepseek,
+        steps: [
+          "Log in to DeepSeek Platform console.",
+          "Create an API key in the API Keys section.",
+          "Paste below (supports deepseek-flash & deepseek-v4-pro)."
+        ]
+      },
+      openrouter: {
+        icon: "\u{1F310}",
+        name: "OpenRouter Multi-Model Setup",
+        url: "https://openrouter.ai/keys",
+        tier: "Free Models Supported",
+        defaultModel: DEFAULT_PROVIDER_MODELS.openrouter,
+        steps: [
+          "Sign in to OpenRouter.ai with GitHub or Google.",
+          "Generate a new API key from the Keys dashboard.",
+          "Paste below (access DeepSeek V4 Flash, GLM 5.2, Gemma 4 and more)."
+        ]
+      },
+      gateway: {
+        icon: "\u2601\uFE0F",
+        name: "Refinzi Cloud Gateway (Free)",
+        url: "https://refinzi.com",
+        tier: "Free \xB7 No API Key Required",
+        defaultModel: "gateway-default",
+        steps: [
+          "You are already connected \u2014 no setup required.",
+          "The Refinzi Cloud Gateway routes through Gemini AI automatically.",
+          "Optionally add your own API key below for priority access."
+        ]
+      }
+    };
     try {
       const [settingsRes, summaryRes, historyRes] = await Promise.allSettled([
         BrowserAPI.runtime.sendMessage({ type: "REFINZI_GET_SETTINGS" }),
@@ -253,19 +525,10 @@
         BrowserAPI.runtime.sendMessage({ type: "REFINZI_GET_HISTORY" })
       ]);
       currentSettings = settingsRes.status === "fulfilled" && settingsRes.value?.data ? settingsRes.value.data : {
-        defaultMode: "better",
-        provider: "gemini",
-        apiKeys: {},
-        models: { gemini: "gemini-2.5-flash" },
-        gatewayUrl: "https://refinzi.com/api/v1/refine",
-        enabledSites: { chatgpt: true, claude: true, gemini: true, perplexity: true },
-        shortcuts: { better: "Ctrl+Shift+B", expert: "Ctrl+Shift+E" },
-        theme: "dark",
-        autoFocus: true,
-        showInlineTrigger: true,
-        holdThresholdMs: 350,
-        autoApply: true,
-        saveHistory: true
+        // Fallback only if the background service worker is unreachable.
+        // Sourced from the single source of truth in utils/storage.ts.
+        ...DEFAULT_SETTINGS,
+        apiKeys: { ...DEFAULT_SETTINGS.apiKeys, gemini: DEFAULT_GEMINI_API_KEY }
       };
       const initialSummary = summaryRes.status === "fulfilled" && summaryRes.value?.data ? summaryRes.value.data : null;
       if (initialSummary?.period) {
@@ -291,7 +554,14 @@
     if (settingHoldTime) settingHoldTime.value = String(currentSettings.holdThresholdMs || 350);
     if (settingDefaultMode) settingDefaultMode.value = currentSettings.defaultMode || "better";
     if (settingSaveHistory) settingSaveHistory.checked = currentSettings.saveHistory !== false;
-    updateHeaderEngineStatus(currentSettings.provider);
+    try {
+      metricConfig = await getMetricsConfig();
+    } catch {
+      metricConfig = { ...DEFAULT_METRICS_CONFIG };
+    }
+    syncMetricConfigInputs();
+    await updateHeaderEngineStatus(currentSettings.provider);
+    resolveActiveTabContext();
     function switchTab(tabId) {
       navButtons.forEach((btn) => {
         if (btn.getAttribute("data-tab") === tabId) {
@@ -349,6 +619,7 @@
         const summary = res?.data;
         if (summary) {
           updateDashboardUI(summary);
+          renderSparkline();
         }
       } catch (err) {
         console.error("[Refinzi] Failed to refresh metrics:", err);
@@ -389,6 +660,7 @@
         else if (summary.period === "All Time") subText = "all time";
         metricBetterExpertSub.textContent = subText;
       }
+      renderSplitBar(summary.betterPercentage, summary.expertPercentage);
       if (periodBetterCount) periodBetterCount.textContent = String(summary.betterCount);
       if (periodBetterPct) periodBetterPct.textContent = `(${summary.betterPercentage}%)`;
       if (periodExpertCount) periodExpertCount.textContent = String(summary.expertCount);
@@ -403,6 +675,7 @@
       }
       renderRecentList(allHistory);
       renderFullHistory(allHistory);
+      renderSparkline();
     }
     function renderRecentList(items) {
       if (!homeRecentList) return;
@@ -440,9 +713,12 @@
     function renderFullHistory(items) {
       if (!fullHistoryList) return;
       const query = historySearch?.value.trim().toLowerCase() || "";
-      const filtered = query ? items.filter(
-        (i) => i.originalPrompt.toLowerCase().includes(query) || i.refinedPrompt.toLowerCase().includes(query) || i.targetAi.toLowerCase().includes(query)
-      ) : items;
+      let filtered = currentHistoryFilter === "all" ? items : items.filter((i) => i.mode === currentHistoryFilter);
+      if (query) {
+        filtered = filtered.filter(
+          (i) => i.originalPrompt.toLowerCase().includes(query) || i.refinedPrompt.toLowerCase().includes(query) || i.targetAi.toLowerCase().includes(query)
+        );
+      }
       if (filtered.length === 0) {
         fullHistoryList.innerHTML = `
         <div class="empty-state" style="margin-top: 20px;">
@@ -464,6 +740,17 @@
     }
     historySearch?.addEventListener("input", () => {
       renderFullHistory(allHistory);
+    });
+    filterChips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const filter = chip.getAttribute("data-filter");
+        currentHistoryFilter = filter || "all";
+        filterChips.forEach((c) => {
+          c.classList.toggle("active", c === chip);
+          c.setAttribute("aria-selected", c === chip ? "true" : "false");
+        });
+        renderFullHistory(allHistory);
+      });
     });
     function createActivityCard(item, onDeleted) {
       const card = document.createElement("div");
@@ -578,7 +865,8 @@
       const provider = settingProvider.value;
       currentSettings.provider = provider;
       updateProviderForm(provider);
-      updateHeaderEngineStatus(provider);
+      await updateHeaderEngineStatus(provider);
+      resolveActiveTabContext();
       await BrowserAPI.runtime.sendMessage({
         type: "REFINZI_SAVE_SETTINGS",
         settings: { provider }
@@ -701,74 +989,177 @@
       await refreshHistory();
       await refreshMetrics();
     });
-    const GUIDEBOOKS = {
-      gemini: {
-        icon: "\u26A1",
-        name: "Google Gemini Flash Setup",
-        url: "https://aistudio.google.com/app/apikey",
-        tier: "Free Tier Available (15 RPM / 1M TPM)",
-        defaultModel: "gemini-2.5-flash",
-        steps: [
-          "Open Google AI Studio with your Google account.",
-          'Click "Create API Key" to generate a free Gemini key.',
-          'Paste your key below and click "Verify" to activate Gemini Flash.'
-        ]
-      },
-      openai: {
-        icon: "\u{1F916}",
-        name: "OpenAI API Setup",
-        url: "https://platform.openai.com/api-keys",
-        tier: "Pay-as-you-go",
-        defaultModel: "gpt-4o-mini",
-        steps: [
-          "Log in to your OpenAI Developer Platform account.",
-          'Navigate to "API Keys" and click "Create new secret key".',
-          "Paste below (recommended model: gpt-4o-mini or o3-mini)."
-        ]
-      },
-      deepseek: {
-        icon: "\u{1F40B}",
-        name: "DeepSeek API Setup",
-        url: "https://platform.deepseek.com/api_keys",
-        tier: "Ultra-low cost (~$0.14/M tokens)",
-        defaultModel: "deepseek-chat",
-        steps: [
-          "Log in to DeepSeek Platform console.",
-          "Create an API key in the API Keys section.",
-          "Paste below (supports V3 deepseek-chat & R1 reasoner)."
-        ]
-      },
-      openrouter: {
-        icon: "\u{1F310}",
-        name: "OpenRouter Multi-Model Setup",
-        url: "https://openrouter.ai/keys",
-        tier: "Free Models Supported",
-        defaultModel: "meta-llama/llama-3.3-70b-instruct:free",
-        steps: [
-          "Sign in to OpenRouter.ai with GitHub or Google.",
-          "Generate a new API key from the Keys dashboard.",
-          "Paste below (access Llama 3.3 70B, DeepSeek R1, and Gemini 2.0)."
-        ]
-      },
-      gateway: {
-        icon: "\u2601\uFE0F",
-        name: "Refinzi Cloud Gateway",
-        url: "https://refinzi.com",
-        tier: "Official Hosted Service",
-        defaultModel: "gateway-default",
-        steps: [
-          "Connects through the official Refinzi Cloud Gateway.",
-          "Provides high-throughput multi-model fallback.",
-          "Requires active Refinzi Pro token."
-        ]
+    function syncMetricConfigInputs() {
+      if (settingEstMinutes) {
+        settingEstMinutes.value = String(metricConfig.estimatedMinutesPerPrompt ?? DEFAULT_METRICS_CONFIG.estimatedMinutesPerPrompt);
       }
-    };
+      if (settingEstIterations) {
+        settingEstIterations.value = String(metricConfig.estimatedAvoidedIterations ?? DEFAULT_METRICS_CONFIG.estimatedAvoidedIterations);
+      }
+      if (settingFallbackCost) {
+        settingFallbackCost.value = String(metricConfig.fallbackCostPerIteration ?? DEFAULT_METRICS_CONFIG.fallbackCostPerIteration);
+      }
+    }
+    async function commitMetricConfig() {
+      const clampOrFallback = (input, fallback, min, max) => {
+        const raw = Number(input?.value);
+        if (!input || input.value.trim() === "" || !Number.isFinite(raw)) return fallback;
+        return Math.min(max, Math.max(min, raw));
+      };
+      metricConfig = {
+        ...metricConfig,
+        estimatedMinutesPerPrompt: clampOrFallback(settingEstMinutes, DEFAULT_METRICS_CONFIG.estimatedMinutesPerPrompt, 0.5, 30),
+        estimatedAvoidedIterations: clampOrFallback(settingEstIterations, DEFAULT_METRICS_CONFIG.estimatedAvoidedIterations, 0, 5),
+        fallbackCostPerIteration: clampOrFallback(settingFallbackCost, DEFAULT_METRICS_CONFIG.fallbackCostPerIteration, 0, 1)
+      };
+      syncMetricConfigInputs();
+      try {
+        await saveMetricsConfig(metricConfig);
+        await refreshMetrics();
+        if (metricsConfigFeedback) {
+          metricsConfigFeedback.textContent = "\u2713 Dashboard updated";
+          metricsConfigFeedback.className = "action-feedback success";
+          setTimeout(() => {
+            if (metricsConfigFeedback) {
+              metricsConfigFeedback.textContent = "";
+              metricsConfigFeedback.className = "action-feedback";
+            }
+          }, 1800);
+        }
+      } catch {
+        if (metricsConfigFeedback) {
+          metricsConfigFeedback.textContent = "Could not save assumptions";
+          metricsConfigFeedback.className = "action-feedback error";
+        }
+      }
+    }
+    [settingEstMinutes, settingEstIterations, settingFallbackCost].forEach((input) => {
+      input?.addEventListener("change", commitMetricConfig);
+    });
+    function resolveActiveTabContext() {
+      if (!tabContextPill || !tabContextDot || !tabContextText) return;
+      setTabContextState("detecting", "Detecting\u2026");
+      const SUPPORTED_SITES = [
+        { match: "chat.openai.com", label: "ChatGPT" },
+        { match: "chatgpt.com", label: "ChatGPT" },
+        { match: "claude.ai", label: "Claude" },
+        { match: "gemini.google.com", label: "Gemini" },
+        { match: "perplexity.ai", label: "Perplexity" }
+      ];
+      const RESTRICTED_PATTERNS = [
+        /^chrome:\/\//,
+        /^chrome-extension:\/\//,
+        /^about:/,
+        /^edge:\/\//,
+        /^moz-extension:\/\//,
+        /^opera:\/\//,
+        /^vivaldi:\/\//
+      ];
+      try {
+        BrowserAPI.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+          const tab = tabs?.[0];
+          const url = tab?.url || "";
+          if (!url) {
+            setTabContextState("restricted", "Restricted Tab");
+            return;
+          }
+          if (RESTRICTED_PATTERNS.some((re) => re.test(url))) {
+            setTabContextState("restricted", "Restricted Tab");
+            return;
+          }
+          if (url === "about:blank" || url === "about:newtab") {
+            setTabContextState("restricted", "New Tab");
+            return;
+          }
+          const matched = SUPPORTED_SITES.find((site) => url.includes(site.match));
+          if (matched) {
+            setTabContextState("active", `Active on ${matched.label}`);
+            return;
+          }
+          let domain = "";
+          try {
+            domain = new URL(url).hostname.replace(/^www\./, "");
+          } catch {
+            domain = "";
+          }
+          const label = domain ? `Universal \xB7 ${domain.slice(0, 18)}${domain.length > 18 ? "\u2026" : ""}` : "Universal Mode";
+          setTabContextState("universal", label);
+        }).catch(() => {
+          setTabContextState("restricted", "Standing By");
+        });
+      } catch {
+        setTabContextState("restricted", "Standing By");
+      }
+    }
+    function setTabContextState(state, label) {
+      if (!tabContextPill || !tabContextText) return;
+      tabContextPill.className = `tab-context-pill state-${state}`;
+      tabContextText.textContent = label;
+    }
+    function renderSparkline() {
+      if (!sparklineLine || !sparklineFill) return;
+      const counts = Array(7).fill(0);
+      const now = Date.now();
+      const DAY_MS = 24 * 60 * 60 * 1e3;
+      for (const item of allHistory) {
+        const daysAgo = Math.floor((now - item.timestamp) / DAY_MS);
+        if (daysAgo >= 0 && daysAgo < 7) {
+          counts[6 - daysAgo]++;
+        }
+      }
+      const maxCount = Math.max(...counts, 1);
+      const W = 120;
+      const H = 28;
+      const PAD = 3;
+      const pts = counts.map((c, i) => {
+        const x = i / (counts.length - 1) * W;
+        const y = PAD + (1 - c / maxCount) * (H - PAD * 2);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      });
+      sparklineLine.setAttribute("points", pts.join(" "));
+      const fillPts = [
+        `0,${H}`,
+        ...pts,
+        `${W},${H}`
+      ];
+      sparklineFill.setAttribute("points", fillPts.join(" "));
+    }
+    function renderSplitBar(betterPct, expertPct) {
+      if (!splitBarBetter || !splitBarExpert) return;
+      if (betterPct === 0 && expertPct === 0) {
+        splitBarBetter.style.width = "0%";
+        splitBarExpert.style.width = "0%";
+        return;
+      }
+      splitBarBetter.style.width = `${betterPct}%`;
+      splitBarExpert.style.width = `${expertPct}%`;
+    }
     function updateProviderForm(provider) {
       if (!settingKeyRow || !settingModelRow || !settingApiKey || !settingModel) return;
       if (provider === "local") {
         providerGuidebook?.classList.add("hidden");
         settingKeyRow.classList.add("hidden");
         settingModelRow.classList.add("hidden");
+      } else if (provider === "gateway") {
+        providerGuidebook?.classList.remove("hidden");
+        settingKeyRow.classList.remove("hidden");
+        settingModelRow.classList.add("hidden");
+        const info = GUIDEBOOKS["gateway"];
+        if (info && providerGuidebook) {
+          if (guidebookIcon) guidebookIcon.textContent = info.icon;
+          if (guidebookName) guidebookName.textContent = info.name;
+          if (guidebookLink) {
+            guidebookLink.href = info.url;
+            guidebookLink.textContent = "Refinzi.com \u2197";
+          }
+          if (guidebookTier) guidebookTier.textContent = info.tier;
+          if (guidebookSteps) {
+            guidebookSteps.innerHTML = info.steps.map((s) => `<li>${s}</li>`).join("");
+          }
+        }
+        const savedKey = currentSettings.apiKeys?.gateway || "";
+        settingApiKey.value = savedKey;
+        settingApiKey.placeholder = "Optional: Paste priority access key\u2026";
       } else {
         providerGuidebook?.classList.remove("hidden");
         settingKeyRow.classList.remove("hidden");
@@ -793,20 +1184,60 @@
         settingModel.value = savedModel;
       }
     }
-    function updateHeaderEngineStatus(provider) {
+    async function updateHeaderEngineStatus(provider) {
       if (provider === "local") {
         if (globalStatusText) globalStatusText.textContent = "Local Ready";
         if (engineName) engineName.textContent = "Instant Local Engine (0ms)";
+      } else if (provider === "gateway") {
+        if (globalStatusText) globalStatusText.textContent = "Gateway Ready";
+        if (engineName) engineName.textContent = "Refinzi Cloud Gateway (Free AI)";
       } else if (provider === "gemini") {
         const hasKey = Boolean(currentSettings?.apiKeys?.gemini);
-        if (globalStatusText) globalStatusText.textContent = hasKey ? "Gemini 2.5 Flash" : "Gemini Flash";
-        if (engineName) engineName.textContent = hasKey ? "Google Gemini 2.5 Flash (BYOK)" : "Google Gemini Flash (Default)";
+        const bundledKeyInUse = !hasKey || currentSettings.apiKeys.gemini === DEFAULT_GEMINI_API_KEY;
+        if (globalStatusText) globalStatusText.textContent = hasKey ? "Gemini 3.8 Flash" : "Gemini Flash";
+        if (engineName) {
+          engineName.textContent = bundledKeyInUse ? "Google Gemini Flash (bundled key)" : "Google Gemini 3.8 Flash (BYOK)";
+        }
       } else {
         const name = capitalize(provider);
         const hasKey = Boolean(currentSettings?.apiKeys?.[provider]);
         if (globalStatusText) globalStatusText.textContent = hasKey ? `${name} Ready` : `${name} (Configure)`;
         if (engineName) engineName.textContent = `${name} Engine (BYOK)`;
       }
+      await applyFreeTierStatus();
+    }
+    async function applyFreeTierStatus() {
+      if (!homeEngineBanner) return;
+      homeEngineBanner.classList.remove("warn");
+      homeEngineBanner.querySelectorAll(".engine-free").forEach((node) => node.remove());
+      const bundledKeyInUse = !currentSettings?.apiKeys?.gemini || currentSettings.apiKeys.gemini === DEFAULT_GEMINI_API_KEY;
+      if (currentSettings?.provider !== "gemini" || !bundledKeyInUse) {
+        if (btnQuickProvider) btnQuickProvider.textContent = "Configure \u2192";
+        return;
+      }
+      if (!engineName) return;
+      let status;
+      try {
+        status = await getFreeUsageStatus();
+      } catch {
+        return;
+      }
+      const suffix = document.createElement("span");
+      suffix.className = "engine-free";
+      if (status.expired) {
+        suffix.textContent = " \xB7 free prompts used up";
+        homeEngineBanner.classList.add("warn");
+        if (btnQuickProvider) btnQuickProvider.textContent = "Add your own key \u2192";
+      } else {
+        suffix.textContent = ` \xB7 ${status.remaining}/${status.cap} free left`;
+        if (status.remaining <= 5) {
+          homeEngineBanner.classList.add("warn");
+          if (btnQuickProvider) btnQuickProvider.textContent = "Add your own key \u2192";
+        } else if (btnQuickProvider) {
+          btnQuickProvider.textContent = "Configure \u2192";
+        }
+      }
+      engineName.appendChild(suffix);
     }
     function formatRelativeTime(ts) {
       const diffMs = Date.now() - ts;

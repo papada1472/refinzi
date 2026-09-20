@@ -478,4 +478,87 @@ export const REFINZI_CSS = `
 .validation-toast:hover .toast-countdown-bar {
   opacity: 0.5;
 }
+
+/* ==========================================================================
+   BYOK NUDGE PILL — Shown after first calibration to guide users to Settings
+   ========================================================================== */
+.byok-nudge-pill {
+  position: fixed;
+  bottom: 72px;
+  right: 16px;
+  z-index: 100001;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(20, 18, 12, 0.97) 0%, rgba(14, 13, 10, 0.97) 100%);
+  border: 1px solid rgba(255, 215, 0, 0.45);
+  border-radius: 12px;
+  padding: 9px 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65), 0 0 18px rgba(255, 215, 0, 0.12);
+  animation: rfzNudgeIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  max-width: 340px;
+  pointer-events: auto;
+}
+
+.byok-nudge-pill.warning-mode {
+  border-color: rgba(245, 158, 11, 0.7);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65), 0 0 18px rgba(245, 158, 11, 0.25);
+}
+
+.byok-nudge-pill.error-mode {
+  border-color: rgba(239, 68, 68, 0.7);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65), 0 0 18px rgba(239, 68, 68, 0.25);
+}
+
+@keyframes rfzNudgeIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.byok-nudge-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.byok-nudge-text {
+  font-size: 12px;
+  color: #D1D5DB;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.byok-nudge-cta {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #FFD700, #FF9500);
+  color: #0F172A;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.byok-nudge-cta:hover {
+  opacity: 0.85;
+}
+
+.byok-nudge-close {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: #6B7280;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.byok-nudge-close:hover {
+  color: #D1D5DB;
+}
 `;

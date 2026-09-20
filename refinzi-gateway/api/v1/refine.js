@@ -4,23 +4,36 @@ import crypto from 'crypto';
 
 const ALLOWED_MODELS = [
   'openrouter/free',
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'google/gemma-2-9b-it:free',
-  'qwen/qwen-2.5-coder-32b-instruct:free',
-  'mistralai/mistral-7b-instruct:free',
+  'openrouter/auto',
+  // OpenRouter — current free pool
+  'deepseek/deepseek-v4-flash-0731:free',
+  'z-ai/glm-5.2:free',
+  'google/gemma-4-31b-it:free',
+  'qwen/qwen3.8-27b:free',
+  'nex-agi/nex-n2.5-pro:free',
+  'thinkingmachines/inkling:free',
+  'inclusionai/ling-3.0-flash-vl:free',
+  'nvidia/nemotron-3-ultra-550b-a55b:free',
+  'cohere/north-mini-code:free',
+  // OpenRouter — paid
   'deepseek/deepseek-chat',
-  'deepseek/deepseek-r1:free',
-  'deepseek-v4-flash',
+  // DeepSeek direct — current
+  'deepseek-flash',
   'deepseek-v4-pro',
+  // DeepSeek direct — legacy names still accepted upstream
+  'deepseek-v4-flash',
   'deepseek-v4-flash-vision-exp',
   'deepseek-chat',
   'deepseek-reasoner',
+  // Google Gemini
   'gemini-flash-latest',
+  'gemini-3.8-flash',
   'gemini-3.7-flash',
   'gemini-3.6-flash',
   'gemini-3.5-flash',
   'gemini-3.5-flash-lite',
   'gemini-3.1-flash-lite',
+  'gemini-pro-latest',
   'gateway-default'
 ];
 
@@ -74,29 +87,40 @@ export default async function handler(req, res) {
   // Gateway-issued tokens (vck_ prefix) are treated as "use server keys" — pass auth but don't forward key upstream
   const isGatewayIssuedToken = isGatewayToken(userProvidedKey);
 
-  // Authorization Check: Must supply a user API key OR a gateway token OR a valid beta session token
-  if (!userProvidedKey && expectedBetaSecret && betaToken !== expectedBetaSecret) {
+  // Gateway-issued tokens use server-side keys only; user-provided keys are forwarded upstream
+  const upstreamApiKey = isGatewayIssuedToken ? null : userProvidedKey;
+  // Default backend is DeepSeek; Gemini/OpenRouter remain available for BYOK or
+  // when configured via environment. No hardcoded shared key lives here anymore.
+  const apiKey = upstreamApiKey || process.env.DEEPSEEK_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY;
+
+  // Authorization: if a beta secret is configured, keyless requests must present
+  // it — unless public gateway access is explicitly enabled. (Previously this
+  // check was dead code because it tested a hardcoded non-empty key constant.)
+  const allowPublic = process.env.ALLOW_PUBLIC_GATEWAY === 'true';
+  if (!userProvidedKey && expectedBetaSecret && betaToken !== expectedBetaSecret && !allowPublic) {
     console.warn(`[Gateway][${requestId}] Unauthorized request rejected. Length: ${text.length}`);
     return res.status(401).json({ error: 'Unauthorized: Missing or invalid beta token' });
   }
 
-  // Gateway-issued tokens use server-side keys only; user-provided keys are forwarded upstream
-  const upstreamApiKey = isGatewayIssuedToken ? null : userProvidedKey;
-  const apiKey = upstreamApiKey || process.env.GEMINI_API_KEY || process.env.DEEPSEEK_API_KEY || process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     return res.status(401).json({ error: 'Unauthorized: No valid provider API key configured on gateway' });
   }
 
   const start = Date.now();
 
-  // 1. Direct Gemini API
+  // 1. Google Gemini (BYOK key or server GEMINI_API_KEY) — only for explicit
+  // Gemini intent or a user-supplied Gemini key; no longer the default backend.
   const isGeminiFormat = apiKey && (apiKey.startsWith('AIza') || apiKey.startsWith('AQ.'));
   const geminiKey = isGeminiFormat ? apiKey : process.env.GEMINI_API_KEY;
-  if (geminiKey && (!requestedModel || requestedModel.startsWith('gemini') || requestedModel === 'gateway-default')) {
-    const geminiModels = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-3.7-flash'];
+  const wantsGemini = !!geminiKey && (
+    (requestedModel && requestedModel.startsWith('gemini')) ||
+    (!requestedModel && isGeminiFormat)
+  );
+  if (wantsGemini) {
+    const geminiModels = ['gemini-flash-latest', 'gemini-3.8-flash', 'gemini-3.7-flash'];
     for (const gModel of geminiModels) {
       try {
-        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${gModel}:generateContent`, {
+        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${gModel}:generateContent?key=${geminiKey}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -104,7 +128,11 @@ export default async function handler(req, res) {
           },
           body: JSON.stringify({
             system_instruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
-            contents: [{ parts: [{ text }] }]
+            contents: [{ parts: [{ text }] }],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              temperature: 0.6
+            }
           }),
           signal: AbortSignal.timeout(12000)
         });
@@ -131,11 +159,21 @@ export default async function handler(req, res) {
     }
   }
 
-  // 2. Direct DeepSeek API
-  const isDeepSeekTarget = requestedModel?.includes('deepseek') || (apiKey && apiKey.startsWith('sk-') && !apiKey.startsWith('sk-or-'));
-  const deepSeekKey = isDeepSeekTarget && apiKey ? apiKey : process.env.DEEPSEEK_API_KEY;
-  if (deepSeekKey) {
-    const dsModel = (requestedModel === 'deepseek-reasoner' || requestedModel?.includes('r1')) ? 'deepseek-reasoner' : 'deepseek-chat';
+  // 2. DeepSeek (default backend) — used when no explicit model is requested or
+  // when the request targets DeepSeek directly.
+  const isDeepSeekKey = apiKey && apiKey.startsWith('sk-') && !apiKey.startsWith('sk-or-');
+  const deepSeekKey = isDeepSeekKey ? apiKey : process.env.DEEPSEEK_API_KEY;
+  const wantsDeepSeek = !!deepSeekKey && (
+    requestedModel === 'gateway-default' ||
+    (requestedModel && requestedModel.includes('deepseek')) ||
+    (!requestedModel && !isGeminiFormat && !apiKey?.startsWith('sk-or-'))
+  );
+  if (wantsDeepSeek) {
+    // Map legacy/aliased model IDs onto the current DeepSeek lineup.
+    const isProModel = requestedModel === 'deepseek-v4-pro'
+      || requestedModel === 'deepseek-reasoner'
+      || requestedModel?.includes('r1');
+    const dsModel = isProModel ? 'deepseek-v4-pro' : 'deepseek-flash';
     try {
       const dsRes = await fetch('https://api.deepseek.com/chat/completions', {
         method: 'POST',
@@ -186,11 +224,11 @@ export default async function handler(req, res) {
     });
 
     const DEFAULT_MODEL_ORDER = [
-      'meta-llama/llama-3.3-70b-instruct:free',
-      'google/gemma-2-9b-it:free',
-      'qwen/qwen-2.5-coder-32b-instruct:free',
-      'deepseek/deepseek-r1:free',
-      'mistralai/mistral-7b-instruct:free',
+      'deepseek/deepseek-v4-flash-0731:free',
+      'z-ai/glm-5.2:free',
+      'google/gemma-4-31b-it:free',
+      'qwen/qwen3.8-27b:free',
+      'nex-agi/nex-n2.5-pro:free',
       'openrouter/free'
     ];
 

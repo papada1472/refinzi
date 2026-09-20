@@ -54,6 +54,23 @@ export class GatewayProvider implements AIProvider {
     }
   }
 
+  private classifyGatewayError(err: any): { reason: string; status: number; code: 'INVALID_KEY' | 'QUOTA_EXCEEDED' | 'SERVER_ERROR' | 'TIME_BUDGET_EXHAUSTED' | 'NETWORK_ERROR' } {
+  const msg = err?.message || String(err);
+  if (msg.includes('401') || msg.includes('Unauthorized')) {
+    return { reason: 'Gateway access unauthorized. Add a BYOK API key in Settings.', status: 401, code: 'INVALID_KEY' };
+  }
+  if (msg.includes('429')) {
+    return { reason: 'Gateway rate limited. Add your free Gemini API key for unlimited speed.', status: 429, code: 'QUOTA_EXCEEDED' };
+  }
+  if (msg.includes('timeout') || msg.includes('AbortError')) {
+    return { reason: 'Gateway request timed out', status: 408, code: 'TIME_BUDGET_EXHAUSTED' };
+  }
+  if (msg.includes('500') || msg.includes('502') || msg.includes('503')) {
+    return { reason: 'Gateway server temporarily unavailable', status: 503, code: 'SERVER_ERROR' };
+  }
+  return { reason: 'Gateway connection error. Configure a BYOK key in Settings.', status: 0, code: 'NETWORK_ERROR' };
+}
+
   async generateBetter(
     rawInput: string,
     intent: SemanticIntent,
@@ -70,9 +87,31 @@ export class GatewayProvider implements AIProvider {
       if (validated) return validated;
     } catch (err) {
       console.warn('[Refinzi] Gateway Better call failed, using local calibration:', err);
+      const failure = this.classifyGatewayError(err);
+      const fallback = synthesizeBetterPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback,
+        isFallback: true,
+        providerFailure: {
+          provider: 'gateway',
+          reason: failure.reason,
+          status: failure.status,
+          code: failure.code,
+        },
+      };
     }
 
-    return synthesizeBetterPrompt(rawInput, intent.targetAi);
+    const fallback = synthesizeBetterPrompt(rawInput, intent.targetAi);
+    return {
+      ...fallback,
+      isFallback: true,
+      providerFailure: {
+        provider: 'gateway',
+        reason: 'Gateway returned an invalid response',
+        status: 0,
+        code: 'SERVER_ERROR',
+      },
+    };
   }
 
   async generateExpert(
@@ -91,9 +130,31 @@ export class GatewayProvider implements AIProvider {
       if (validated) return validated;
     } catch (err) {
       console.warn('[Refinzi] Gateway Expert call failed, using local briefing:', err);
+      const failure = this.classifyGatewayError(err);
+      const fallback = synthesizeExpertPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback,
+        isFallback: true,
+        providerFailure: {
+          provider: 'gateway',
+          reason: failure.reason,
+          status: failure.status,
+          code: failure.code,
+        },
+      };
     }
 
-    return synthesizeExpertPrompt(rawInput, intent.targetAi);
+    const fallback = synthesizeExpertPrompt(rawInput, intent.targetAi);
+    return {
+      ...fallback,
+      isFallback: true,
+      providerFailure: {
+        provider: 'gateway',
+        reason: 'Gateway returned an invalid response',
+        status: 0,
+        code: 'SERVER_ERROR',
+      },
+    };
   }
 
   async testConnection(options?: ProviderRequestOptions): Promise<{ ok: boolean; message: string }> {

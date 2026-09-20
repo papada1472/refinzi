@@ -38,6 +38,13 @@ export interface SemanticIntent {
   mode: PromptMode;
 }
 
+export interface ProviderFailureInfo {
+  provider: AIProviderId;
+  reason: string;
+  status?: number;
+  code?: 'NO_KEY' | 'INVALID_KEY' | 'QUOTA_EXCEEDED' | 'RATE_LIMITED' | 'NETWORK_ERROR' | 'SERVER_ERROR' | 'TIME_BUDGET_EXHAUSTED';
+}
+
 /**
  * Calibrated Better Mode Response Contract
  */
@@ -48,6 +55,8 @@ export interface BetterPromptResponse {
   domain: TaskDomain;
   calibratedDimensions?: string[];
   targetAi?: string;
+  isFallback?: boolean;
+  providerFailure?: ProviderFailureInfo;
 }
 
 /**
@@ -60,6 +69,8 @@ export interface ExpertFinalResponse {
   summary: string;
   domain: TaskDomain;
   assumptions: string[]; // Transparent defensible assumptions
+  isFallback?: boolean;
+  providerFailure?: ProviderFailureInfo;
 }
 
 /**
@@ -147,6 +158,8 @@ export interface RefinziSettings {
   autoApply: boolean; // Grammarly-style in-place replacement (default: true)
   saveHistory: boolean; // Privacy setting (default: true)
   hasSeenOnboarding?: boolean; // Track first-run modal state (default: false)
+  freeUsageCount?: number;    // Number of prompts calibrated on the default free Gemini key
+  freeUsageExpired?: boolean;  // true once the free tier cap (25) is reached
 }
 
 export type PeriodType = 'Today' | 'Week' | 'Month' | 'All Time';
@@ -203,7 +216,9 @@ export type ExtensionMessage =
   | { type: 'REFINZI_GET_METRICS_SUMMARY'; period?: PeriodType }
   | { type: 'REFINZI_SET_PERIOD'; period: PeriodType }
   | { type: 'REFINZI_TRIGGER_BETTER_SHORTCUT' }
-  | { type: 'REFINZI_TRIGGER_EXPERT_SHORTCUT' };
+  | { type: 'REFINZI_TRIGGER_EXPERT_SHORTCUT' }
+  | { type: 'REFINZI_OPEN_POPUP' }
+  | { type: 'REFINZI_OPEN_SETTINGS' };
 
 
 

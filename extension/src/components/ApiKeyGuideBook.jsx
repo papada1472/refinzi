@@ -8,12 +8,19 @@ import React, { useState } from 'react';
 export const PROVIDER_GUIDEBOOKS = {
   gemini: {
     name: 'Google Gemini',
-    badge: 'Recommended · Gemini Flash',
+    badge: 'Recommended · Gemini 3.8 Flash',
     icon: '⚡',
     url: 'https://aistudio.google.com/app/apikey',
-    tier: 'Free Tier Available (15 RPM / 1M TPM)',
-    defaultModel: 'gemini-2.5-flash',
-    models: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'],
+    tier: 'Free Tier Available · $0.75/$3.75 per 1M tokens (paid)',
+    defaultModel: 'gemini-flash-latest',
+    models: [
+      'gemini-flash-latest',
+      'gemini-3.8-flash',
+      'gemini-3.7-flash',
+      'gemini-3.5-flash-lite',
+      'gemini-3.1-flash-lite',
+      'gemini-pro-latest',
+    ],
     steps: [
       'Open Google AI Studio with your Google account.',
       'Click "Create API Key" to generate a free Gemini Flash key.',
@@ -22,30 +29,30 @@ export const PROVIDER_GUIDEBOOKS = {
   },
   openai: {
     name: 'OpenAI',
-    badge: 'GPT-4o Mini / o3-mini',
+    badge: 'GPT-5.6 Luna / Terra',
     icon: '🤖',
     url: 'https://platform.openai.com/api-keys',
-    tier: 'Pay-as-you-go',
-    defaultModel: 'gpt-4o-mini',
-    models: ['gpt-4o-mini', 'gpt-4o', 'o3-mini', 'gpt-3.5-turbo'],
+    tier: 'Pay-as-you-go · from $0.20 per 1M tokens',
+    defaultModel: 'gpt-5.6-luna',
+    models: ['gpt-5.6-luna', 'gpt-5.6-terra', 'gpt-5.6-sol', 'gpt-5.4-nano', 'gpt-6-astra'],
     steps: [
       'Log into your OpenAI Developer Platform account.',
       'Navigate to API Keys and click "Create new secret key".',
-      'Paste below (recommended model: gpt-4o-mini).',
+      'Paste below (recommended model: gpt-5.6-luna).',
     ],
   },
   deepseek: {
     name: 'DeepSeek',
-    badge: 'DeepSeek-V3 / R1 Reasoner',
+    badge: 'DeepSeek-V4.1 Flash / V4 Pro',
     icon: '🐋',
     url: 'https://platform.deepseek.com/api_keys',
-    tier: 'Ultra-low cost (~$0.14/M tokens)',
-    defaultModel: 'deepseek-chat',
-    models: ['deepseek-chat', 'deepseek-reasoner'],
+    tier: 'Ultra-low cost · from $0.15 per 1M tokens (off-peak)',
+    defaultModel: 'deepseek-flash',
+    models: ['deepseek-flash', 'deepseek-v4-pro'],
     steps: [
       'Log in to DeepSeek Platform console.',
       'Create an API key in the API Keys section.',
-      'Paste below (supports V3 chat & R1 reasoner).',
+      'Paste below (supports deepseek-flash & deepseek-v4-pro).',
     ],
   },
   openrouter: {
@@ -54,17 +61,19 @@ export const PROVIDER_GUIDEBOOKS = {
     icon: '🌐',
     url: 'https://openrouter.ai/keys',
     tier: 'Free Models Supported',
-    defaultModel: 'meta-llama/llama-3.3-70b-instruct:free',
+    defaultModel: 'deepseek/deepseek-v4-flash-0731:free',
     models: [
-      'meta-llama/llama-3.3-70b-instruct:free',
-      'deepseek/deepseek-r1:free',
-      'google/gemini-2.0-flash-exp:free',
-      'anthropic/claude-3.5-sonnet',
+      'deepseek/deepseek-v4-flash-0731:free',
+      'z-ai/glm-5.2:free',
+      'google/gemma-4-31b-it:free',
+      'qwen/qwen3.8-27b:free',
+      'nex-agi/nex-n2.5-pro:free',
+      'thinkingmachines/inkling:free',
     ],
     steps: [
       'Sign in to OpenRouter.ai with GitHub or Google.',
       'Generate a new API key from the Keys dashboard.',
-      'Paste below (access Llama 3.3 70B, DeepSeek R1, and Gemini 2.0).',
+      'Paste below (access DeepSeek V4 Flash, GLM 5.2, Gemma 4 and more).',
     ],
   },
   local: {
@@ -90,7 +99,7 @@ export function ApiKeyGuideBook({
 }) {
   const [provider, setProvider] = useState(initialProvider);
   const [apiKey, setApiKey] = useState('');
-  const [model, setModel] = useState(PROVIDER_GUIDEBOOKS[initialProvider]?.defaultModel || 'gemini-2.5-flash');
+  const [model, setModel] = useState(PROVIDER_GUIDEBOOKS[initialProvider]?.defaultModel || 'gemini-flash-latest');
   const [isVerifying, setIsVerifying] = useState(false);
   const [feedback, setFeedback] = useState(null); // { type: 'success'|'error', text: string }
 
@@ -198,9 +207,9 @@ export function ApiKeyGuideBook({
             outline: 'none',
           }}
         >
-          <option value="gemini">Google Gemini (Gemini Flash — Recommended Default)</option>
-          <option value="openai">OpenAI (GPT-4o Mini / o3-mini)</option>
-          <option value="deepseek">DeepSeek (V3 Chat / R1 Reasoner)</option>
+          <option value="gemini">Google Gemini (Gemini 3.8 Flash — Recommended Default)</option>
+          <option value="openai">OpenAI (GPT-5.6 Luna / Terra)</option>
+          <option value="deepseek">DeepSeek (V4.1 Flash / V4 Pro)</option>
           <option value="openrouter">OpenRouter (Multi-Model & Free)</option>
           <option value="local">✨ Instant Local Engine (0ms, Offline)</option>
         </select>

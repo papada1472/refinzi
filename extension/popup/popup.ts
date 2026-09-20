@@ -14,6 +14,18 @@
 
 import { BrowserAPI } from '../src/browser/api';
 import {
+  DEFAULT_SETTINGS,
+  DEFAULT_GEMINI_API_KEY,
+  DEFAULT_PROVIDER_MODELS,
+  getFreeUsageStatus,
+} from '../src/utils/storage';
+import {
+  getMetricsConfig,
+  saveMetricsConfig,
+  DEFAULT_METRICS_CONFIG,
+} from '../src/utils/metrics';
+import type { MetricsConfig } from '../src/utils/metrics';
+import {
   RefinziSettings,
   RefinziHistoryItem,
   AIProviderId,
@@ -31,6 +43,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Elements: Header & Status
   const globalStatusText = document.getElementById('global-status-text') as HTMLSpanElement | null;
   const engineName = document.getElementById('engine-name') as HTMLSpanElement | null;
+  const homeEngineBanner = document.getElementById('home-engine-banner') as HTMLDivElement | null;
+  const engineTag = document.getElementById('engine-tag') as HTMLSpanElement | null;
+
+  // Elements: Active Tab Context Pill
+  const tabContextPill = document.getElementById('tab-context-pill') as HTMLDivElement | null;
+  const tabContextDot = document.getElementById('tab-context-dot') as HTMLSpanElement | null;
+  const tabContextText = document.getElementById('tab-context-text') as HTMLSpanElement | null;
 
   // Elements: Home Mini Dashboard - 4 Top Metrics
   const periodBtns = document.querySelectorAll<HTMLButtonElement>('.period-btn');
@@ -47,6 +66,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const metricBetterExpertVal = document.getElementById('metric-better-expert-val') as HTMLDivElement | null;
   const metricBetterExpertSub = document.getElementById('metric-better-expert-sub') as HTMLDivElement | null;
+
+  // Elements: Sparkline (Prompts Enhanced card)
+  const sparklineLine = document.getElementById('sparkline-line') as SVGPolylineElement | null;
+  const sparklineFill = document.getElementById('sparkline-fill') as SVGPolylineElement | null;
+
+  // Elements: Split-bar (Better / Expert card)
+  const splitBarBetter = document.getElementById('split-bar-better') as HTMLDivElement | null;
+  const splitBarExpert = document.getElementById('split-bar-expert') as HTMLDivElement | null;
+
+  // Elements: History filter chips
+  const filterChips = document.querySelectorAll<HTMLButtonElement>('.filter-chip');
 
   // Elements: Activity Breakdown Bar
   const periodBetterCount = document.getElementById('period-better-count') as HTMLSpanElement | null;
@@ -96,9 +126,107 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnClearAllData = document.getElementById('btn-clear-all-data') as HTMLButtonElement | null;
   const privacyFeedback = document.getElementById('privacy-feedback') as HTMLSpanElement | null;
 
-  let currentSettings: RefinziSettings;
+  // Elements: Dashboard Estimate Assumptions
+  const settingEstMinutes = document.getElementById('setting-est-minutes') as HTMLInputElement | null;
+  const settingEstIterations = document.getElementById('setting-est-iterations') as HTMLInputElement | null;
+  const settingFallbackCost = document.getElementById('setting-fallback-cost') as HTMLInputElement | null;
+  const metricsConfigFeedback = document.getElementById('metrics-config-feedback') as HTMLSpanElement | null;
+
+  // Initialised up-front with the documented defaults rather than assigned only
+  // inside the init try-block: if anything in that block throws, the catch would
+  // previously leave this undefined and every later use (updateProviderForm,
+  // updateHeaderEngineStatus, …) would crash with a TypeError.
+  let currentSettings: RefinziSettings = {
+    ...DEFAULT_SETTINGS,
+    apiKeys: { ...DEFAULT_SETTINGS.apiKeys, gemini: DEFAULT_GEMINI_API_KEY },
+  };
   let currentPeriod: PeriodType = 'Week';
   let allHistory: RefinziHistoryItem[] = [];
+  let metricConfig: MetricsConfig = { ...DEFAULT_METRICS_CONFIG };
+  let currentHistoryFilter: 'all' | 'better' | 'expert' = 'all';
+
+  // -------------------------------------------------------------------------
+  // Provider guidebook content.
+  //
+  // Declared BEFORE the init sequence below on purpose: `updateProviderForm()`
+  // reads GUIDEBOOKS during initial load. As a `const` it sits in the temporal
+  // dead zone until its declaration is evaluated, so declaring it further down
+  // threw "Cannot access 'GUIDEBOOKS' before initialization". Because that
+  // throw happened inside the async DOMContentLoaded callback, it aborted the
+  // remainder of init — silently killing every handler registered below
+  // (tab navigation, period toggles, settings, history, metrics refresh).
+  // -------------------------------------------------------------------------
+  interface GuideBookInfo {
+    icon: string;
+    name: string;
+    url: string;
+    tier: string;
+    defaultModel: string;
+    steps: string[];
+  }
+
+  const GUIDEBOOKS: Record<string, GuideBookInfo> = {
+    gemini: {
+      icon: '⚡',
+      name: 'Google Gemini Flash Setup',
+      url: 'https://aistudio.google.com/app/apikey',
+      tier: 'Free Tier Available (Gemini 3.8 Flash)',
+      defaultModel: DEFAULT_PROVIDER_MODELS.gemini,
+      steps: [
+        'Open Google AI Studio with your Google account.',
+        'Click "Create API Key" to generate a free Gemini key.',
+        'Paste your key below and click "Verify" to activate Gemini Flash.',
+      ],
+    },
+    openai: {
+      icon: '🤖',
+      name: 'OpenAI API Setup',
+      url: 'https://platform.openai.com/api-keys',
+      tier: 'Pay-as-you-go',
+      defaultModel: DEFAULT_PROVIDER_MODELS.openai,
+      steps: [
+        'Log in to your OpenAI Developer Platform account.',
+        'Navigate to "API Keys" and click "Create new secret key".',
+        'Paste below (recommended model: gpt-5.6-luna or gpt-5.6-terra).',
+      ],
+    },
+    deepseek: {
+      icon: '🐋',
+      name: 'DeepSeek API Setup',
+      url: 'https://platform.deepseek.com/api_keys',
+      tier: 'Ultra-low cost (from ~$0.15/M tokens)',
+      defaultModel: DEFAULT_PROVIDER_MODELS.deepseek,
+      steps: [
+        'Log in to DeepSeek Platform console.',
+        'Create an API key in the API Keys section.',
+        'Paste below (supports deepseek-flash & deepseek-v4-pro).',
+      ],
+    },
+    openrouter: {
+      icon: '🌐',
+      name: 'OpenRouter Multi-Model Setup',
+      url: 'https://openrouter.ai/keys',
+      tier: 'Free Models Supported',
+      defaultModel: DEFAULT_PROVIDER_MODELS.openrouter,
+      steps: [
+        'Sign in to OpenRouter.ai with GitHub or Google.',
+        'Generate a new API key from the Keys dashboard.',
+        'Paste below (access DeepSeek V4 Flash, GLM 5.2, Gemma 4 and more).',
+      ],
+    },
+    gateway: {
+      icon: '☁️',
+      name: 'Refinzi Cloud Gateway (Free)',
+      url: 'https://refinzi.com',
+      tier: 'Free · No API Key Required',
+      defaultModel: 'gateway-default',
+      steps: [
+        'You are already connected — no setup required.',
+        'The Refinzi Cloud Gateway routes through Gemini AI automatically.',
+        'Optionally add your own API key below for priority access.',
+      ],
+    },
+  };
 
   // =========================================================================
   // 1. INITIAL LOAD & STATE BINDING
@@ -113,19 +241,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentSettings = settingsRes.status === 'fulfilled' && settingsRes.value?.data
       ? settingsRes.value.data
       : {
-          defaultMode: 'better',
-          provider: 'gemini',
-          apiKeys: {},
-          models: { gemini: 'gemini-2.5-flash' },
-          gatewayUrl: 'https://refinzi.com/api/v1/refine',
-          enabledSites: { chatgpt: true, claude: true, gemini: true, perplexity: true },
-          shortcuts: { better: 'Ctrl+Shift+B', expert: 'Ctrl+Shift+E' },
-          theme: 'dark',
-          autoFocus: true,
-          showInlineTrigger: true,
-          holdThresholdMs: 350,
-          autoApply: true,
-          saveHistory: true,
+          // Fallback only if the background service worker is unreachable.
+          // Sourced from the single source of truth in utils/storage.ts.
+          ...DEFAULT_SETTINGS,
+          apiKeys: { ...DEFAULT_SETTINGS.apiKeys, gemini: DEFAULT_GEMINI_API_KEY },
         };
 
     const initialSummary: RefinziMetricsSummary | null =
@@ -167,8 +286,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (settingDefaultMode) settingDefaultMode.value = currentSettings.defaultMode || 'better';
   if (settingSaveHistory) settingSaveHistory.checked = currentSettings.saveHistory !== false;
 
+  // Populate the Dashboard Estimate assumptions (single source: metrics config)
+  try {
+    metricConfig = await getMetricsConfig();
+  } catch {
+    metricConfig = { ...DEFAULT_METRICS_CONFIG };
+  }
+  syncMetricConfigInputs();
+
   // Update Header & Banner Status
-  updateHeaderEngineStatus(currentSettings.provider);
+  await updateHeaderEngineStatus(currentSettings.provider);
+
+  // Resolve and display active tab context (async, non-blocking)
+  resolveActiveTabContext();
 
   // =========================================================================
   // 2. TAB NAVIGATION
@@ -247,6 +377,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const summary: RefinziMetricsSummary = res?.data;
       if (summary) {
         updateDashboardUI(summary);
+        renderSparkline();
       }
     } catch (err) {
       console.error('[Refinzi] Failed to refresh metrics:', err);
@@ -296,6 +427,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       metricBetterExpertSub.textContent = subText;
     }
 
+    // 4b. Visual split-bar
+    renderSplitBar(summary.betterPercentage, summary.expertPercentage);
+
     // 5. Activity Breakdown Bar
     if (periodBetterCount) periodBetterCount.textContent = String(summary.betterCount);
     if (periodBetterPct) periodBetterPct.textContent = `(${summary.betterPercentage}%)`;
@@ -316,6 +450,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     renderRecentList(allHistory);
     renderFullHistory(allHistory);
+    renderSparkline();
   }
 
   function renderRecentList(items: RefinziHistoryItem[]): void {
@@ -360,14 +495,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!fullHistoryList) return;
 
     const query = historySearch?.value.trim().toLowerCase() || '';
-    const filtered = query
-      ? items.filter(
-          (i) =>
-            i.originalPrompt.toLowerCase().includes(query) ||
-            i.refinedPrompt.toLowerCase().includes(query) ||
-            i.targetAi.toLowerCase().includes(query)
-        )
-      : items;
+
+    // Apply mode filter chip first
+    let filtered = currentHistoryFilter === 'all'
+      ? items
+      : items.filter((i) => i.mode === currentHistoryFilter);
+
+    // Then apply search query
+    if (query) {
+      filtered = filtered.filter(
+        (i) =>
+          i.originalPrompt.toLowerCase().includes(query) ||
+          i.refinedPrompt.toLowerCase().includes(query) ||
+          i.targetAi.toLowerCase().includes(query)
+      );
+    }
 
     if (filtered.length === 0) {
       fullHistoryList.innerHTML = `
@@ -392,6 +534,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   historySearch?.addEventListener('input', () => {
     renderFullHistory(allHistory);
+  });
+
+  // History filter chip handlers
+  filterChips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const filter = chip.getAttribute('data-filter') as 'all' | 'better' | 'expert';
+      currentHistoryFilter = filter || 'all';
+      filterChips.forEach((c) => {
+        c.classList.toggle('active', c === chip);
+        c.setAttribute('aria-selected', c === chip ? 'true' : 'false');
+      });
+      renderFullHistory(allHistory);
+    });
   });
 
   /**
@@ -544,7 +699,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const provider = settingProvider.value as AIProviderId;
     currentSettings.provider = provider;
     updateProviderForm(provider);
-    updateHeaderEngineStatus(provider);
+    await updateHeaderEngineStatus(provider);
+    resolveActiveTabContext();
 
     await BrowserAPI.runtime.sendMessage({
       type: 'REFINZI_SAVE_SETTINGS',
@@ -687,88 +843,266 @@ document.addEventListener('DOMContentLoaded', async () => {
     await refreshMetrics();
   });
 
+  // -------------------------------------------------------------------------
+  // Dashboard Estimate Assumptions
+  // The dashboard's time/cost figures are estimates built on three tunable
+  // assumptions. They live in Settings so the Home view stays uncluttered,
+  // while the numbers on it stay explainable and user-adjustable.
+  // -------------------------------------------------------------------------
+
+  function syncMetricConfigInputs(): void {
+    if (settingEstMinutes) {
+      settingEstMinutes.value = String(metricConfig.estimatedMinutesPerPrompt ?? DEFAULT_METRICS_CONFIG.estimatedMinutesPerPrompt);
+    }
+    if (settingEstIterations) {
+      settingEstIterations.value = String(metricConfig.estimatedAvoidedIterations ?? DEFAULT_METRICS_CONFIG.estimatedAvoidedIterations);
+    }
+    if (settingFallbackCost) {
+      settingFallbackCost.value = String(metricConfig.fallbackCostPerIteration ?? DEFAULT_METRICS_CONFIG.fallbackCostPerIteration);
+    }
+  }
+
+  /**
+   * Persists the assumption inputs, then re-renders the dashboard so the
+   * effect of a change is visible immediately. Values are clamped to sane
+   * bounds and fall back to the default when the field is cleared.
+   */
+  async function commitMetricConfig(): Promise<void> {
+    // Empty or non-numeric input reverts to the default; anything else is clamped.
+    const clampOrFallback = (
+      input: HTMLInputElement | null,
+      fallback: number,
+      min: number,
+      max: number
+    ): number => {
+      const raw = Number(input?.value);
+      if (!input || input.value.trim() === '' || !Number.isFinite(raw)) return fallback;
+      return Math.min(max, Math.max(min, raw));
+    };
+
+    metricConfig = {
+      ...metricConfig,
+      estimatedMinutesPerPrompt: clampOrFallback(settingEstMinutes, DEFAULT_METRICS_CONFIG.estimatedMinutesPerPrompt, 0.5, 30),
+      estimatedAvoidedIterations: clampOrFallback(settingEstIterations, DEFAULT_METRICS_CONFIG.estimatedAvoidedIterations, 0, 5),
+      fallbackCostPerIteration: clampOrFallback(settingFallbackCost, DEFAULT_METRICS_CONFIG.fallbackCostPerIteration, 0, 1),
+    };
+
+    syncMetricConfigInputs();
+
+    try {
+      await saveMetricsConfig(metricConfig);
+      await refreshMetrics();
+      if (metricsConfigFeedback) {
+        metricsConfigFeedback.textContent = '✓ Dashboard updated';
+        metricsConfigFeedback.className = 'action-feedback success';
+        setTimeout(() => {
+          if (metricsConfigFeedback) {
+            metricsConfigFeedback.textContent = '';
+            metricsConfigFeedback.className = 'action-feedback';
+          }
+        }, 1800);
+      }
+    } catch {
+      if (metricsConfigFeedback) {
+        metricsConfigFeedback.textContent = 'Could not save assumptions';
+        metricsConfigFeedback.className = 'action-feedback error';
+      }
+    }
+  }
+
+  [settingEstMinutes, settingEstIterations, settingFallbackCost].forEach((input) => {
+    input?.addEventListener('change', commitMetricConfig);
+  });
+
   // =========================================================================
   // 8. UI HELPERS & GUIDEBOOK
   // =========================================================================
-  interface GuideBookInfo {
-    icon: string;
-    name: string;
-    url: string;
-    tier: string;
-    defaultModel: string;
-    steps: string[];
+
+  /**
+   * Resolves the active browser tab's URL and updates the contextual tab
+   * awareness pill in the header.
+   *
+   * States:
+   *  - state-active    : Active on ChatGPT / Claude / Gemini / Perplexity
+   *  - state-universal : Generic page — universal mode, Refinzi works on any text input
+   *  - state-restricted: chrome://, about:, new tab, extensions page — cannot inject
+   *  - state-detecting : Tab query in flight or permission denied
+   */
+  function resolveActiveTabContext(): void {
+    if (!tabContextPill || !tabContextDot || !tabContextText) return;
+
+    // Start in detecting state while the async tab query is in flight.
+    setTabContextState('detecting', 'Detecting…');
+
+    // SUPPORTED_SITES maps a hostname fragment → human-readable site label
+    const SUPPORTED_SITES: Array<{ match: string; label: string }> = [
+      { match: 'chat.openai.com', label: 'ChatGPT' },
+      { match: 'chatgpt.com',     label: 'ChatGPT' },
+      { match: 'claude.ai',       label: 'Claude' },
+      { match: 'gemini.google.com', label: 'Gemini' },
+      { match: 'perplexity.ai',   label: 'Perplexity' },
+    ];
+
+    // Restricted URL patterns — extension cannot inject into these
+    const RESTRICTED_PATTERNS = [
+      /^chrome:\/\//,
+      /^chrome-extension:\/\//,
+      /^about:/,
+      /^edge:\/\//,
+      /^moz-extension:\/\//,
+      /^opera:\/\//,
+      /^vivaldi:\/\//,
+    ];
+
+    try {
+      BrowserAPI.tabs.query({ active: true, currentWindow: true })
+        .then((tabs) => {
+          const tab = tabs?.[0];
+          const url = tab?.url || '';
+
+          if (!url) {
+            setTabContextState('restricted', 'Restricted Tab');
+            return;
+          }
+
+          // Check for restricted browser-internal pages
+          if (RESTRICTED_PATTERNS.some((re) => re.test(url))) {
+            setTabContextState('restricted', 'Restricted Tab');
+            return;
+          }
+
+          // Check for new tab / empty page
+          if (url === 'about:blank' || url === 'about:newtab') {
+            setTabContextState('restricted', 'New Tab');
+            return;
+          }
+
+          // Check for a supported AI site
+          const matched = SUPPORTED_SITES.find((site) => url.includes(site.match));
+          if (matched) {
+            setTabContextState('active', `Active on ${matched.label}`);
+            return;
+          }
+
+          // Generic page — universal surface mode is active
+          let domain = '';
+          try {
+            domain = new URL(url).hostname.replace(/^www\./, '');
+          } catch {
+            domain = '';
+          }
+          const label = domain ? `Universal · ${domain.slice(0, 18)}${domain.length > 18 ? '…' : ''}` : 'Universal Mode';
+          setTabContextState('universal', label);
+        })
+        .catch(() => {
+          // tabs.query can fail if extension doesn't have tabs permission
+          setTabContextState('restricted', 'Standing By');
+        });
+    } catch {
+      setTabContextState('restricted', 'Standing By');
+    }
   }
 
-  const GUIDEBOOKS: Record<string, GuideBookInfo> = {
-    gemini: {
-      icon: '⚡',
-      name: 'Google Gemini Flash Setup',
-      url: 'https://aistudio.google.com/app/apikey',
-      tier: 'Free Tier Available (15 RPM / 1M TPM)',
-      defaultModel: 'gemini-2.5-flash',
-      steps: [
-        'Open Google AI Studio with your Google account.',
-        'Click "Create API Key" to generate a free Gemini key.',
-        'Paste your key below and click "Verify" to activate Gemini Flash.',
-      ],
-    },
-    openai: {
-      icon: '🤖',
-      name: 'OpenAI API Setup',
-      url: 'https://platform.openai.com/api-keys',
-      tier: 'Pay-as-you-go',
-      defaultModel: 'gpt-4o-mini',
-      steps: [
-        'Log in to your OpenAI Developer Platform account.',
-        'Navigate to "API Keys" and click "Create new secret key".',
-        'Paste below (recommended model: gpt-4o-mini or o3-mini).',
-      ],
-    },
-    deepseek: {
-      icon: '🐋',
-      name: 'DeepSeek API Setup',
-      url: 'https://platform.deepseek.com/api_keys',
-      tier: 'Ultra-low cost (~$0.14/M tokens)',
-      defaultModel: 'deepseek-chat',
-      steps: [
-        'Log in to DeepSeek Platform console.',
-        'Create an API key in the API Keys section.',
-        'Paste below (supports V3 deepseek-chat & R1 reasoner).',
-      ],
-    },
-    openrouter: {
-      icon: '🌐',
-      name: 'OpenRouter Multi-Model Setup',
-      url: 'https://openrouter.ai/keys',
-      tier: 'Free Models Supported',
-      defaultModel: 'meta-llama/llama-3.3-70b-instruct:free',
-      steps: [
-        'Sign in to OpenRouter.ai with GitHub or Google.',
-        'Generate a new API key from the Keys dashboard.',
-        'Paste below (access Llama 3.3 70B, DeepSeek R1, and Gemini 2.0).',
-      ],
-    },
-    gateway: {
-      icon: '☁️',
-      name: 'Refinzi Cloud Gateway',
-      url: 'https://refinzi.com',
-      tier: 'Official Hosted Service',
-      defaultModel: 'gateway-default',
-      steps: [
-        'Connects through the official Refinzi Cloud Gateway.',
-        'Provides high-throughput multi-model fallback.',
-        'Requires active Refinzi Pro token.',
-      ],
-    },
-  };
+  /** Applies a named state class + text label to the tab context pill. */
+  function setTabContextState(
+    state: 'active' | 'universal' | 'restricted' | 'detecting',
+    label: string
+  ): void {
+    if (!tabContextPill || !tabContextText) return;
+    tabContextPill.className = `tab-context-pill state-${state}`;
+    tabContextText.textContent = label;
+  }
+
+  /**
+   * Draws a 7-day sparkline inside the Prompts Enhanced card.
+   * Buckets allHistory into daily counts over the last 7 days,
+   * then maps each count to a Y coordinate within the 120×28 viewBox.
+   */
+  function renderSparkline(): void {
+    if (!sparklineLine || !sparklineFill) return;
+
+    // Build a 7-element array of daily counts (index 0 = 6 days ago, 6 = today)
+    const counts: number[] = Array(7).fill(0);
+    const now = Date.now();
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
+    for (const item of allHistory) {
+      const daysAgo = Math.floor((now - item.timestamp) / DAY_MS);
+      if (daysAgo >= 0 && daysAgo < 7) {
+        counts[6 - daysAgo]++;
+      }
+    }
+
+    const maxCount = Math.max(...counts, 1); // avoid division by zero
+    const W = 120;
+    const H = 28;
+    const PAD = 3; // vertical padding so line doesn't clip at edges
+
+    // Map each day to (x, y) within the viewBox
+    const pts = counts.map((c, i) => {
+      const x = (i / (counts.length - 1)) * W;
+      const y = PAD + (1 - c / maxCount) * (H - PAD * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+
+    sparklineLine.setAttribute('points', pts.join(' '));
+
+    // Fill polygon: close the path by running along the bottom edge
+    const fillPts = [
+      `0,${H}`,
+      ...pts,
+      `${W},${H}`,
+    ];
+    sparklineFill.setAttribute('points', fillPts.join(' '));
+  }
+
+  /**
+   * Animates the visual proportional split-bar on the Better / Expert card.
+   * betterPct and expertPct are integers 0–100 that must sum to 100.
+   */
+  function renderSplitBar(betterPct: number, expertPct: number): void {
+    if (!splitBarBetter || !splitBarExpert) return;
+    // Guard: if both are 0 (no data yet), show an empty bar
+    if (betterPct === 0 && expertPct === 0) {
+      splitBarBetter.style.width = '0%';
+      splitBarExpert.style.width = '0%';
+      return;
+    }
+    splitBarBetter.style.width = `${betterPct}%`;
+    splitBarExpert.style.width = `${expertPct}%`;
+  }
 
   function updateProviderForm(provider: AIProviderId): void {
+
     if (!settingKeyRow || !settingModelRow || !settingApiKey || !settingModel) return;
 
     if (provider === 'local') {
       providerGuidebook?.classList.add('hidden');
       settingKeyRow.classList.add('hidden');
       settingModelRow.classList.add('hidden');
+    } else if (provider === 'gateway') {
+      // Gateway: show guidebook but make API key optional
+      providerGuidebook?.classList.remove('hidden');
+      settingKeyRow.classList.remove('hidden');
+      settingModelRow.classList.add('hidden');
+
+      const info = GUIDEBOOKS['gateway'];
+      if (info && providerGuidebook) {
+        if (guidebookIcon) guidebookIcon.textContent = info.icon;
+        if (guidebookName) guidebookName.textContent = info.name;
+        if (guidebookLink) {
+          guidebookLink.href = info.url;
+          guidebookLink.textContent = 'Refinzi.com ↗';
+        }
+        if (guidebookTier) guidebookTier.textContent = info.tier;
+        if (guidebookSteps) {
+          guidebookSteps.innerHTML = info.steps.map((s) => `<li>${s}</li>`).join('');
+        }
+      }
+
+      const savedKey = currentSettings.apiKeys?.gateway || '';
+      settingApiKey.value = savedKey;
+      settingApiKey.placeholder = 'Optional: Paste priority access key…';
     } else {
       providerGuidebook?.classList.remove('hidden');
       settingKeyRow.classList.remove('hidden');
@@ -797,20 +1131,85 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  function updateHeaderEngineStatus(provider: AIProviderId): void {
+  async function updateHeaderEngineStatus(provider: AIProviderId): Promise<void> {
     if (provider === 'local') {
       if (globalStatusText) globalStatusText.textContent = 'Local Ready';
       if (engineName) engineName.textContent = 'Instant Local Engine (0ms)';
+    } else if (provider === 'gateway') {
+      if (globalStatusText) globalStatusText.textContent = 'Gateway Ready';
+      if (engineName) engineName.textContent = 'Refinzi Cloud Gateway (Free AI)';
     } else if (provider === 'gemini') {
       const hasKey = Boolean(currentSettings?.apiKeys?.gemini);
-      if (globalStatusText) globalStatusText.textContent = hasKey ? 'Gemini 2.5 Flash' : 'Gemini Flash';
-      if (engineName) engineName.textContent = hasKey ? 'Google Gemini 2.5 Flash (BYOK)' : 'Google Gemini Flash (Default)';
+      // The bundled free key also lives in apiKeys, so distinguish it from a
+      // real user-supplied key rather than always claiming "BYOK".
+      const bundledKeyInUse = !hasKey || currentSettings.apiKeys.gemini === DEFAULT_GEMINI_API_KEY;
+      if (globalStatusText) globalStatusText.textContent = hasKey ? 'Gemini 3.8 Flash' : 'Gemini Flash';
+      if (engineName) {
+        engineName.textContent = bundledKeyInUse
+          ? 'Google Gemini Flash (bundled key)'
+          : 'Google Gemini 3.8 Flash (BYOK)';
+      }
     } else {
       const name = capitalize(provider);
       const hasKey = Boolean(currentSettings?.apiKeys?.[provider as keyof typeof currentSettings.apiKeys]);
       if (globalStatusText) globalStatusText.textContent = hasKey ? `${name} Ready` : `${name} (Configure)`;
       if (engineName) engineName.textContent = `${name} Engine (BYOK)`;
     }
+
+    // Fold free-tier usage into the same banner (no extra dashboard rows).
+    await applyFreeTierStatus();
+  }
+
+  /**
+   * Free-tier visibility, folded into the existing engine banner so the Home
+   * view gains no extra rows. The banner only takes on the attention (amber)
+   * state when the user is close to — or past — the free cap, which is the
+   * point where the information is actually actionable.
+   */
+  async function applyFreeTierStatus(): Promise<void> {
+    if (!homeEngineBanner) return;
+    homeEngineBanner.classList.remove('warn');
+
+    // Idempotent: drop any suffix left by a previous render before re-adding,
+    // so repeated calls can never stack up duplicate badges.
+    homeEngineBanner.querySelectorAll('.engine-free').forEach((node) => node.remove());
+
+    const bundledKeyInUse =
+      !currentSettings?.apiKeys?.gemini ||
+      currentSettings.apiKeys.gemini === DEFAULT_GEMINI_API_KEY;
+
+    // Free-tier accounting only applies to the bundled Gemini key.
+    if (currentSettings?.provider !== 'gemini' || !bundledKeyInUse) {
+      if (btnQuickProvider) btnQuickProvider.textContent = 'Configure →';
+      return;
+    }
+    if (!engineName) return;
+
+    let status: { remaining: number; cap: number; expired: boolean };
+    try {
+      status = await getFreeUsageStatus();
+    } catch {
+      return;
+    }
+
+    const suffix = document.createElement('span');
+    suffix.className = 'engine-free';
+
+    if (status.expired) {
+      suffix.textContent = ' · free prompts used up';
+      homeEngineBanner.classList.add('warn');
+      if (btnQuickProvider) btnQuickProvider.textContent = 'Add your own key →';
+    } else {
+      suffix.textContent = ` · ${status.remaining}/${status.cap} free left`;
+      if (status.remaining <= 5) {
+        homeEngineBanner.classList.add('warn');
+        if (btnQuickProvider) btnQuickProvider.textContent = 'Add your own key →';
+      } else if (btnQuickProvider) {
+        btnQuickProvider.textContent = 'Configure →';
+      }
+    }
+
+    engineName.appendChild(suffix);
   }
 
   function formatRelativeTime(ts: number): string {
