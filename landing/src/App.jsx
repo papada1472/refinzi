@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Download, RotateCcw, X, Zap, Brain, Lock, Check, ArrowRight, Copy, Play, Pause, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Download, RotateCcw, X, Zap, Brain, Lock, Check, ArrowRight, Copy, Play, Pause, Sparkles, Menu } from "lucide-react";
 import PrivacyPage from "./pages/PrivacyPage.jsx";
 import TermsPage from "./pages/TermsPage.jsx";
 import DocsPage from "./pages/DocsPage.jsx";
@@ -487,7 +487,19 @@ export default function App() {
 function HeroVideoPlayer() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
+  const [playbackRate, setPlaybackRate] = useState(2.0);
   const videoRef = useRef(null);
+
+  // Enforce 2.0x playback speed by default
+  const applySpeed = useCallback((speed) => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = speed;
+    }
+  }, []);
+
+  useEffect(() => {
+    applySpeed(playbackRate);
+  }, [playbackRate, applySpeed]);
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -497,6 +509,7 @@ function HeroVideoPlayer() {
     } else {
       videoRef.current.play();
       setIsPlaying(true);
+      applySpeed(playbackRate);
     }
   };
 
@@ -506,67 +519,92 @@ function HeroVideoPlayer() {
     setIsMuted(!isMuted);
   };
 
+  const cycleSpeed = () => {
+    const next = playbackRate === 2.0 ? 1.0 : playbackRate === 1.0 ? 1.5 : 2.0;
+    setPlaybackRate(next);
+    applySpeed(next);
+  };
+
   return (
-    <div className="mt-10 sm:mt-14 w-full max-w-4xl mx-auto px-1 sm:px-0">
-      <div className="relative rounded-2xl border border-white/[0.12] bg-[#0c0d14]/90 p-2 sm:p-3.5 shadow-2xl shadow-indigo-950/40 backdrop-blur-xl transition-all">
-        {/* Window Chrome Header */}
-        <div className="mb-2 flex items-center justify-between px-2 py-1 border-b border-white/[0.06] pb-2">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
+    <div className="mt-8 sm:mt-12 w-full max-w-5xl lg:max-w-6xl mx-auto px-1 sm:px-4">
+      <div className="relative group">
+        {/* Ambient Backlight Glow for large high-impact visual presence */}
+        <div className="absolute -inset-1 sm:-inset-2 rounded-[24px] sm:rounded-[32px] bg-gradient-to-r from-indigo-500/25 via-purple-500/25 to-pink-500/15 blur-xl sm:blur-2xl opacity-80 pointer-events-none transition-opacity" />
+
+        {/* Window Chrome Container */}
+        <div className="relative rounded-2xl sm:rounded-3xl border border-white/[0.14] bg-[#0c0d14]/95 p-2 sm:p-3.5 shadow-2xl shadow-indigo-950/50 backdrop-blur-2xl transition-all">
+          {/* Window Chrome Header */}
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-2 py-1 border-b border-white/[0.06] pb-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
+                <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
+              </div>
+              <span className="text-[11px] sm:text-xs font-mono text-zinc-300 font-medium ml-1 truncate">
+                Refinzi Live Demo · Browser-Native AI Prompt Layer
+              </span>
             </div>
-            <span className="text-[11px] font-mono text-zinc-400 font-medium ml-1">
-              Refinzi Live Demo · In-Composer AI Prompt Layer
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={togglePlay}
-              aria-label={isPlaying ? "Pause video demo" : "Play video demo"}
-              className="text-[11px] text-zinc-300 hover:text-white bg-white/[0.06] hover:bg-white/[0.12] px-2.5 py-1 rounded-md border border-white/[0.08] transition-all flex items-center gap-1.5 cursor-pointer font-medium"
-            >
-              {isPlaying ? "⏸ Pause Demo" : "▶ Play Demo"}
-            </button>
-            <button
-              type="button"
-              onClick={toggleMute}
-              aria-label={isMuted ? "Unmute video demo" : "Mute video demo"}
-              className="text-[11px] text-zinc-400 hover:text-zinc-200 bg-white/[0.04] px-2 py-1 rounded-md border border-white/[0.06] transition-all cursor-pointer"
-            >
-              {isMuted ? "🔇 Muted" : "🔊 Sound"}
-            </button>
-          </div>
-        </div>
 
-        {/* Video Screen Container */}
-        <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-white/[0.06] shadow-inner group">
-          <video
-            ref={videoRef}
-            src="/refinzi-demo.mp4"
-            autoPlay
-            loop
-            muted={isMuted}
-            playsInline
-            preload="metadata"
-            className="w-full h-full object-cover"
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-          />
+            <div className="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
+              {/* 2x Speed badge / toggle button */}
+              <button
+                type="button"
+                onClick={cycleSpeed}
+                title="Toggle playback speed (1x, 1.5x, 2x)"
+                className="text-[10px] sm:text-[11px] font-semibold text-amber-300 hover:text-amber-200 bg-amber-950/60 hover:bg-amber-900/60 px-2 sm:px-2.5 py-1 rounded-md border border-amber-500/40 transition-all flex items-center gap-1 cursor-pointer"
+              >
+                <span>⚡ {playbackRate}× Speed</span>
+              </button>
 
-          {/* Floating Feature Micro-Badges */}
-          <div className="absolute bottom-3 left-3 right-3 hidden sm:flex items-center justify-between pointer-events-none">
-            <span className="text-[10px] font-semibold text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-2.5 py-1 rounded-full backdrop-blur-md shadow-lg">
-              ⚡ Click = Better Prompt (&lt; 350ms)
-            </span>
-            <span className="text-[10px] font-semibold text-indigo-300 bg-indigo-950/80 border border-indigo-500/40 px-2.5 py-1 rounded-full backdrop-blur-md shadow-lg">
-              🧠 Hold = Senior Brief (≥ 350ms)
-            </span>
-            <span className="text-[10px] font-semibold text-zinc-300 bg-zinc-900/80 border border-white/20 px-2.5 py-1 rounded-full backdrop-blur-md shadow-lg">
-              ↩ Native Ctrl+Z In-Place
-            </span>
+              <button
+                type="button"
+                onClick={togglePlay}
+                aria-label={isPlaying ? "Pause video demo" : "Play video demo"}
+                className="text-[10px] sm:text-[11px] text-zinc-300 hover:text-white bg-white/[0.06] hover:bg-white/[0.12] px-2 sm:px-2.5 py-1 rounded-md border border-white/[0.08] transition-all flex items-center gap-1 cursor-pointer font-medium"
+              >
+                {isPlaying ? "⏸ Pause" : "▶ Play"}
+              </button>
+
+              <button
+                type="button"
+                onClick={toggleMute}
+                aria-label={isMuted ? "Unmute video demo" : "Mute video demo"}
+                className="text-[10px] sm:text-[11px] text-zinc-400 hover:text-zinc-200 bg-white/[0.04] hover:bg-white/[0.08] px-2 py-1 rounded-md border border-white/[0.06] transition-all cursor-pointer"
+              >
+                {isMuted ? "🔇 Muted" : "🔊 Sound"}
+              </button>
+            </div>
+          </div>
+
+          {/* Video Screen Container */}
+          <div className="relative aspect-video w-full overflow-hidden rounded-xl sm:rounded-2xl bg-black border border-white/[0.06] shadow-inner group">
+            <video
+              ref={videoRef}
+              src="/refinzi-demo.mp4"
+              autoPlay
+              loop
+              muted={isMuted}
+              playsInline
+              preload="auto"
+              className="w-full h-full object-cover"
+              onLoadedMetadata={() => applySpeed(playbackRate)}
+              onPlay={() => applySpeed(playbackRate)}
+              onPause={() => setIsPlaying(false)}
+            />
+
+            {/* Floating Feature Micro-Badges */}
+            <div className="absolute bottom-2.5 sm:bottom-3 left-2.5 right-2.5 sm:left-4 sm:right-4 flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 pointer-events-none">
+              <span className="text-[9px] sm:text-[11px] font-semibold text-emerald-300 bg-emerald-950/85 border border-emerald-500/40 px-2 sm:px-2.5 py-1 rounded-full backdrop-blur-md shadow-lg">
+                ⚡ Click = Better Prompt (&lt; 350ms)
+              </span>
+              <span className="hidden xs:inline-block text-[9px] sm:text-[11px] font-semibold text-indigo-300 bg-indigo-950/85 border border-indigo-500/40 px-2 sm:px-2.5 py-1 rounded-full backdrop-blur-md shadow-lg">
+                🧠 Hold = Senior Brief (≥ 350ms)
+              </span>
+              <span className="text-[9px] sm:text-[11px] font-semibold text-zinc-300 bg-zinc-900/85 border border-white/20 px-2 sm:px-2.5 py-1 rounded-full backdrop-blur-md shadow-lg">
+                ↩ Native Ctrl+Z In-Place
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -584,6 +622,7 @@ function HomePage() {
   const [holdProgress, setHoldProgress] = useState(0);
   const [isExpertReady, setIsExpertReady] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   /* Browser detection */
   const detectedBrowser = detectBrowser();
@@ -784,24 +823,24 @@ function HomePage() {
 
       {/* ── Sticky bottom bar ── */}
       {showSticky && (
-        <div className="fixed bottom-0 inset-x-0 z-40 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-sm">
-          <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-            <p className="text-sm text-zinc-400 hidden sm:block">
+        <div className="fixed bottom-0 inset-x-0 z-40 border-t border-zinc-800/80 bg-zinc-950/95 backdrop-blur-md">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-3">
+            <p className="text-xs sm:text-sm text-zinc-400 hidden md:block truncate">
               Stop rewriting prompts.{" "}
-              <span className="text-zinc-200">Refinzi fixes them in one click.</span>
+              <span className="text-zinc-200 font-medium">Refinzi fixes them in one click.</span>
             </p>
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
               <a
                 href={currentDownloadUrl}
                 download
-                className="h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 transition-colors"
+                className="flex-1 md:flex-initial h-9 px-3.5 sm:px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-1.5 transition-colors shadow-sm"
               >
-                <Download className="w-3.5 h-3.5" />
-                {browserCtaLabel}
+                <Download className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{browserCtaLabel}</span>
               </a>
               <button
                 onClick={() => setShowCheckout(true)}
-                className="h-9 px-4 rounded-lg border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white text-sm font-medium transition-colors cursor-pointer"
+                className="h-9 px-3 sm:px-4 rounded-lg border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white text-xs sm:text-sm font-medium transition-colors cursor-pointer shrink-0"
               >
                 Get Pro $12
               </button>
@@ -812,10 +851,10 @@ function HomePage() {
 
       {/* ══ NAV ══ */}
       <header className="sticky top-0 z-50 border-b border-zinc-800/60 bg-zinc-950/90 backdrop-blur-md">
-        <nav className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+        <nav className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2" aria-label="Refinzi">
             <span className="w-7 h-7 rounded-md bg-indigo-600 flex items-center justify-center font-black text-white text-sm">R</span>
-            <span className="font-bold text-white tracking-tight">Refinzi</span>
+            <span className="font-bold text-white tracking-tight text-base">Refinzi</span>
           </a>
 
           <ul className="hidden md:flex items-center gap-7 text-sm text-zinc-400">
@@ -829,27 +868,82 @@ function HomePage() {
             <a
               href={currentDownloadUrl}
               download
-              className="h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 transition-colors"
+              className="h-9 px-3.5 sm:px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 transition-colors shadow-sm"
             >
               <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{browserCtaLabel}</span>
-              <span className="sm:hidden">Install</span>
+              <span className="sm:hidden">Install Free</span>
             </a>
+
+            {/* Mobile Hamburger Button */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden h-9 w-9 rounded-lg border border-zinc-800 bg-zinc-900/80 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
           </div>
         </nav>
+
+        {/* Mobile Dropdown Drawer */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-zinc-800/80 bg-zinc-950/98 px-4 py-4 backdrop-blur-2xl animate-slideUp">
+            <div className="flex flex-col gap-3 text-sm font-medium text-zinc-300">
+              <a
+                href="#how"
+                onClick={() => { setMobileMenuOpen(false); scrollTo("how"); }}
+                className="py-1.5 hover:text-white transition-colors"
+              >
+                How it works
+              </a>
+              <a
+                href="#proof"
+                onClick={() => { setMobileMenuOpen(false); scrollTo("proof"); }}
+                className="py-1.5 hover:text-white transition-colors"
+              >
+                Examples
+              </a>
+              <a
+                href="#pricing"
+                onClick={() => { setMobileMenuOpen(false); scrollTo("pricing"); }}
+                className="py-1.5 hover:text-white transition-colors"
+              >
+                Pricing
+              </a>
+              <a
+                href="#faq"
+                onClick={() => { setMobileMenuOpen(false); scrollTo("faq"); }}
+                className="py-1.5 hover:text-white transition-colors"
+              >
+                FAQ
+              </a>
+              <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setMobileMenuOpen(false); setShowCheckout(true); }}
+                  className="w-full h-10 rounded-lg border border-zinc-700 bg-zinc-900 text-white font-medium text-sm flex items-center justify-center hover:bg-zinc-800 transition-colors"
+                >
+                  Get Lifetime Pro $12
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       <main>
 
         {/* ══ FR-1 HERO ══ */}
-        <section className="pt-16 pb-12 sm:pt-24 sm:pb-20 text-center px-4">
+        <section className="pt-12 sm:pt-20 pb-12 sm:pb-20 text-center px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
           <div className="max-w-3xl mx-auto">
             <p className="text-xs font-semibold tracking-[0.15em] uppercase text-indigo-400 mb-4 inline-flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" />
               The simple way to get better AI results
             </p>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.08] mb-5">
+            <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] mb-5">
               Write Naturally.<br />
               <span className="text-indigo-400">Get Better AI Results.</span>
             </h1>
@@ -880,9 +974,9 @@ function HomePage() {
               </a>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-500 mb-3">
+            <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs text-zinc-500 mb-3">
               <div className="inline-flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-zinc-500" />
+                <Lock className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                 <span>Private by design — prompts never leave your browser.{" "}
                   <a href="/privacy/" className="text-zinc-400 underline underline-offset-2 hover:text-white">Details →</a>
                 </span>
@@ -898,7 +992,7 @@ function HomePage() {
             </p>
           </div>
 
-          {/* Restored Hero Video Player */}
+          {/* Restored Hero Video Player - Prominent Large Space with 2x Speed */}
           <HeroVideoPlayer />
         </section>
 
@@ -907,7 +1001,7 @@ function HomePage() {
           <p className="text-center text-xs font-medium text-zinc-600 mb-6 uppercase tracking-widest">
             Works wherever you type
           </p>
-          <div className="flex items-center justify-center flex-wrap gap-6 px-6 max-w-3xl mx-auto">
+          <div className="flex items-center justify-center flex-wrap gap-4 sm:gap-6 px-4 max-w-4xl mx-auto">
             {PLATFORM_LOGOS.map(({ name, Icon, color }) => (
               <div
                 key={name}
@@ -924,9 +1018,9 @@ function HomePage() {
         </section>
 
         {/* ══ FR-2 DEMO ══ */}
-        <section id="demo" className="py-16 sm:py-24 px-4">
-          <div className="max-w-2xl mx-auto">
-            <div className="text-center mb-10">
+        <section id="demo" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+          <div>
+            <div className="text-center mb-8 sm:mb-10">
               <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
                 See the difference in 2 seconds.
               </h2>
@@ -934,31 +1028,33 @@ function HomePage() {
             </div>
 
             {/* Demo box */}
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden shadow-xl">
               {/* Window chrome */}
-              <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-3">
-                <div className="flex gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-zinc-700" />
-                  <span className="w-3 h-3 rounded-full bg-zinc-700" />
-                  <span className="w-3 h-3 rounded-full bg-zinc-700" />
+              <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-1.5">
+                    <span className="w-3 h-3 rounded-full bg-zinc-700" />
+                    <span className="w-3 h-3 rounded-full bg-zinc-700" />
+                    <span className="w-3 h-3 rounded-full bg-zinc-700" />
+                  </div>
+                  <span className="text-xs text-zinc-500 font-mono">refinzi — browser demo</span>
                 </div>
-                <span className="text-xs text-zinc-600 font-mono">refinzi — browser demo</span>
                 {demoMode && (
-                  <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${demoMode === "expert" ? "bg-violet-950 text-violet-300 border border-violet-700/40" : "bg-indigo-950 text-indigo-300 border border-indigo-700/40"}`}>
+                  <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full ${demoMode === "expert" ? "bg-violet-950 text-violet-300 border border-violet-700/40" : "bg-indigo-950 text-indigo-300 border border-indigo-700/40"}`}>
                     {demoMode === "expert" ? "Expert" : "Better"}
                   </span>
                 )}
               </div>
 
               {/* Input area */}
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block">
+              <div className="p-4 sm:p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
+                  <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">
                     {demoOutput ? "Refinzi calibrated your prompt:" : "Your prompt:"}
                   </label>
                   {!demoOutput && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-zinc-600 font-medium">Try:</span>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-[10px] text-zinc-500 font-medium">Try:</span>
                       {[
                         { label: "Marketing", text: "make a marketing plan for my business" },
                         { label: "Email", text: "draft an email to client asking if they reviewed the proposal" },
@@ -972,9 +1068,9 @@ function HomePage() {
                             setDemoInput(p.text);
                             resetDemo();
                           }}
-                          className={`text-[10px] px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+                          className={`text-[11px] px-2.5 py-1 rounded-md border transition-all cursor-pointer font-medium ${
                             demoInput === p.text
-                              ? "bg-indigo-600/25 text-indigo-300 border-indigo-500/40"
+                              ? "bg-indigo-600/25 text-indigo-300 border-indigo-500/40 shadow-sm"
                               : "bg-zinc-800/60 text-zinc-400 border-zinc-700/60 hover:text-zinc-200"
                           }`}
                         >
@@ -986,12 +1082,12 @@ function HomePage() {
                 </div>
 
                 {demoOutput ? (
-                  <div className="text-sm text-zinc-200 whitespace-pre-wrap font-mono leading-relaxed min-h-[120px] bg-zinc-950/50 rounded-lg p-4 border border-zinc-800">
+                  <div className="text-sm text-zinc-200 whitespace-pre-wrap font-mono leading-relaxed min-h-[120px] bg-zinc-950/60 rounded-lg p-3.5 sm:p-4 border border-zinc-800">
                     {demoOutput}
                   </div>
                 ) : (
                   <textarea
-                    className="w-full text-sm text-zinc-200 bg-zinc-950/50 rounded-lg p-4 border border-zinc-800 focus:border-indigo-500/50 focus:outline-none resize-none min-h-[80px] font-mono leading-relaxed placeholder:text-zinc-600 transition-colors"
+                    className="w-full text-base sm:text-sm text-zinc-200 bg-zinc-950/60 rounded-lg p-3.5 sm:p-4 border border-zinc-800 focus:border-indigo-500/50 focus:outline-none resize-none min-h-[90px] font-mono leading-relaxed placeholder:text-zinc-600 transition-colors"
                     value={demoInput}
                     onChange={(e) => setDemoInput(e.target.value)}
                     placeholder="Type anything — an email, a request, a question…"
@@ -1000,58 +1096,60 @@ function HomePage() {
                 )}
 
                 {!demoOutput && (
-                  <p className="text-[11px] text-zinc-600 mt-2">
+                  <p className="text-[11px] text-zinc-500 mt-2">
                     Try your own — email, research, code, marketing, anything.
                   </p>
                 )}
               </div>
 
               {/* Orb controls */}
-              <div className="px-5 pb-5 flex items-center gap-4">
-                {/* Orb button */}
-                <button
-                  type="button"
-                  onPointerDown={handlePtrDown}
-                  onPointerUp={handlePtrUp}
-                  onPointerCancel={handlePtrCancel}
-                  disabled={!demoInput.trim()}
-                  className={`relative w-12 h-12 rounded-full select-none touch-none transition-all cursor-pointer shrink-0 ${
-                    isExpertReady
-                      ? "bg-violet-600 ring-4 ring-violet-400/30 scale-110"
-                      : isHolding
-                      ? "bg-indigo-700 scale-95"
-                      : "bg-indigo-600 hover:bg-indigo-500 hover:scale-105"
-                  } disabled:opacity-40 disabled:cursor-not-allowed`}
-                  aria-label="Click for Better, hold for Expert"
-                >
-                  {/* Progress ring */}
-                  <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 48 48">
-                    <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2.5" fill="none" className="text-white/10" />
-                    <circle
-                      cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2.5" fill="none"
-                      strokeDasharray={125.6}
-                      strokeDashoffset={125.6 - 125.6 * holdProgress}
-                      strokeLinecap="round"
-                      className={isExpertReady ? "text-violet-300" : "text-indigo-300"}
-                    />
-                  </svg>
-                  {isExpertReady
-                    ? <Brain className="w-5 h-5 text-white animate-bounce mx-auto" />
-                    : <Zap className="w-5 h-5 text-white mx-auto" />
-                  }
-                </button>
+              <div className="px-4 sm:px-5 pb-5 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  {/* Orb button */}
+                  <button
+                    type="button"
+                    onPointerDown={handlePtrDown}
+                    onPointerUp={handlePtrUp}
+                    onPointerCancel={handlePtrCancel}
+                    disabled={!demoInput.trim()}
+                    className={`relative w-12 h-12 rounded-full select-none touch-none transition-all cursor-pointer shrink-0 ${
+                      isExpertReady
+                        ? "bg-violet-600 ring-4 ring-violet-400/30 scale-110"
+                        : isHolding
+                        ? "bg-indigo-700 scale-95"
+                        : "bg-indigo-600 hover:bg-indigo-500 hover:scale-105"
+                    } disabled:opacity-40 disabled:cursor-not-allowed`}
+                    aria-label="Click for Better, hold for Expert"
+                  >
+                    {/* Progress ring */}
+                    <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 48 48">
+                      <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2.5" fill="none" className="text-white/10" />
+                      <circle
+                        cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="2.5" fill="none"
+                        strokeDasharray={125.6}
+                        strokeDashoffset={125.6 - 125.6 * holdProgress}
+                        strokeLinecap="round"
+                        className={isExpertReady ? "text-violet-300" : "text-indigo-300"}
+                      />
+                    </svg>
+                    {isExpertReady
+                      ? <Brain className="w-5 h-5 text-white animate-bounce mx-auto" />
+                      : <Zap className="w-5 h-5 text-white mx-auto" />
+                    }
+                  </button>
 
-                <div>
-                  <p className="text-xs font-semibold text-white">
-                    {isExpertReady ? "Release for Expert" : isHolding ? "Hold for Expert…" : "Refinzi Orb"}
-                  </p>
-                  <p className="text-[11px] text-zinc-500">
-                    <strong className="text-zinc-400">Click</strong> = Better &nbsp;·&nbsp;
-                    <strong className="text-zinc-400">Hold</strong> = Expert
-                  </p>
+                  <div>
+                    <p className="text-xs sm:text-sm font-semibold text-white">
+                      {isExpertReady ? "Release for Expert" : isHolding ? "Hold for Expert…" : "Refinzi Orb"}
+                    </p>
+                    <p className="text-[11px] sm:text-xs text-zinc-400">
+                      <strong className="text-indigo-400">Click</strong> = Better &nbsp;·&nbsp;
+                      <strong className="text-violet-400">Hold</strong> = Expert
+                    </p>
+                  </div>
                 </div>
 
-                <div className="ml-auto flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   {demoOutput && (
                     <button
                       type="button"
@@ -1062,7 +1160,7 @@ function HomePage() {
                           setTimeout(() => setCopied(false), 2000);
                         }
                       }}
-                      className="flex items-center gap-1.5 text-xs text-zinc-300 hover:text-white border border-zinc-700 hover:border-zinc-500 px-3 py-1.5 rounded-lg transition-colors cursor-pointer bg-zinc-800/40"
+                      className="flex items-center gap-1.5 text-xs text-zinc-300 hover:text-white border border-zinc-700 hover:border-zinc-500 px-3 py-1.5 rounded-lg transition-colors cursor-pointer bg-zinc-800/60"
                     >
                       {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copied ? "Copied!" : "Copy"}</span>
@@ -1456,12 +1554,12 @@ function HomePage() {
                   ))}
                 </ul>
                 <a
-                  href={DOWNLOADS.chrome}
+                  href={currentDownloadUrl}
                   download
                   className="w-full h-10 rounded-lg border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white text-sm font-medium flex items-center justify-center gap-2 transition-colors"
                 >
                   <Download className="w-4 h-4" />
-                  Add to Chrome
+                  {browserCtaLabel}
                 </a>
               </div>
 
@@ -1502,7 +1600,7 @@ function HomePage() {
         </section>
 
         {/* ══ FR-11 GUARANTEE ══ */}
-        <section className="py-12 px-4 border-t border-zinc-800/50">
+        <section className="py-12 px-4 sm:px-6 lg:px-8 border-t border-zinc-800/50">
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="text-xl font-bold text-white mb-2">Try it without the risk.</h2>
             <p className="text-sm text-zinc-400">
@@ -1512,7 +1610,7 @@ function HomePage() {
         </section>
 
         {/* ══ FR-13 FAQ ══ */}
-        <section id="faq" className="py-16 sm:py-24 px-4 border-t border-zinc-800/50 bg-zinc-900/20">
+        <section id="faq" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 border-t border-zinc-800/50 bg-zinc-900/20">
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-10">
               <h2 className="text-2xl sm:text-3xl font-bold text-white">Common questions.</h2>
@@ -1543,7 +1641,7 @@ function HomePage() {
         </section>
 
         {/* ══ FR-14 FINAL CTA ══ */}
-        <section className="py-20 sm:py-28 px-4 border-t border-zinc-800/50 text-center">
+        <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 border-t border-zinc-800/50 text-center">
           <div className="max-w-2xl mx-auto">
             <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-4">
               Stop rewriting prompts.<br />Get on with the work.
@@ -1576,11 +1674,11 @@ function HomePage() {
       </main>
 
       {/* ══ FR-15 FOOTER ══ */}
-      <footer className="border-t border-zinc-800/50 py-8 px-4">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer className="border-t border-zinc-800/50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="w-6 h-6 rounded bg-indigo-600 flex items-center justify-center font-black text-white text-xs">R</span>
-            <span className="text-sm text-zinc-500">Refinzi</span>
+            <span className="text-sm text-zinc-500 font-semibold">Refinzi</span>
           </div>
           <nav className="flex flex-wrap items-center justify-center gap-5 text-sm text-zinc-500">
             <a href="/privacy/" className="hover:text-zinc-300 transition-colors">Privacy Policy</a>
@@ -1599,7 +1697,7 @@ function HomePage() {
           role="status"
           aria-live="polite"
           aria-label="Recent activity notification"
-          className="fixed bottom-16 sm:bottom-4 left-4 z-40 max-w-xs sm:max-w-sm rounded-xl border border-white/[0.1] bg-zinc-900/95 p-3 shadow-2xl backdrop-blur-md transition-all"
+          className="fixed bottom-16 sm:bottom-4 left-3 right-3 sm:right-auto sm:left-4 z-40 max-w-sm rounded-xl border border-white/[0.1] bg-zinc-900/95 p-3 shadow-2xl backdrop-blur-md transition-all"
         >
           <div className="flex items-start gap-2.5">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-600/20 border border-indigo-500/30 text-sm">
