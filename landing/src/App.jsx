@@ -816,7 +816,6 @@ function HomePage() {
           <a href="/" className="flex items-center gap-2" aria-label="Refinzi">
             <span className="w-7 h-7 rounded-md bg-indigo-600 flex items-center justify-center font-black text-white text-sm">R</span>
             <span className="font-bold text-white tracking-tight">Refinzi</span>
-            <span className="text-[10px] font-semibold text-indigo-400 border border-indigo-500/30 px-1.5 py-0.5 rounded-full">2.1.0</span>
           </a>
 
           <ul className="hidden md:flex items-center gap-7 text-sm text-zinc-400">
@@ -1581,7 +1580,7 @@ function HomePage() {
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="w-6 h-6 rounded bg-indigo-600 flex items-center justify-center font-black text-white text-xs">R</span>
-            <span className="text-sm text-zinc-500">Refinzi 2.1.0</span>
+            <span className="text-sm text-zinc-500">Refinzi</span>
           </div>
           <nav className="flex flex-wrap items-center justify-center gap-5 text-sm text-zinc-500">
             <a href="/privacy/" className="hover:text-zinc-300 transition-colors">Privacy Policy</a>

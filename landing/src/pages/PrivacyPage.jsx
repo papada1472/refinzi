@@ -16,7 +16,7 @@ export default function PrivacyPage() {
           </a>
           <div className="flex items-center gap-2 text-xs font-bold text-white">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" />
-            <span>Refinzi 2.1.0</span>
+            <span>Refinzi</span>
           </div>
         </div>
       </header>
@@ -28,7 +28,7 @@ export default function PrivacyPage() {
           <span>Chrome Web Store &amp; User Data Compliance</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-          Privacy Policy — Refinzi 2.1.0
+          Privacy Policy — Refinzi
         </h1>
         <p className="mt-2 text-xs text-zinc-500 font-mono">
           Effective Date: September 19, 2026 • Version: 2.1.0 (WebExtension MV3)

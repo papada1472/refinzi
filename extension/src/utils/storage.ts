@@ -89,6 +89,7 @@ export const DEFAULT_SETTINGS: RefinziSettings = {
   saveHistory: true,
   hasSeenOnboarding: false,
   freeUsageCount: 0,
+  freeUsageDate: '',
   freeUsageExpired: false,
 };
 
@@ -248,8 +249,12 @@ export async function saveSettings(patch: Partial<RefinziSettings>): Promise<Ref
 }
 
 // -------------------------------------------------------------
-// FREE TIER MANAGEMENT
+// 25/DAY FREE TIER MANAGEMENT (ROLLING DAILY RESET)
 // -------------------------------------------------------------
+
+export function getTodayDateString(): string {
+  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC/ISO)
+}
 
 /**
  * Returns true when the user is actively on the bundled default Gemini key
@@ -264,21 +269,24 @@ export async function isFreeKeyActive(): Promise<boolean> {
 }
 
 /**
- * Increments the free-tier usage counter. Called from background.ts after
- * each successful generation that uses the default bundled Gemini key.
- * Marks the tier as expired once FREE_TIER_PROMPT_CAP is reached.
+ * Increments the daily free-tier usage counter (25 prompts/day).
+ * Auto-resets if a new calendar day has started, and caps at FREE_TIER_PROMPT_CAP.
  */
 export async function incrementFreeUsage(): Promise<void> {
   try {
     const settings = await getSettings();
-    if (settings.freeUsageExpired) return;
+    const today = getTodayDateString();
 
-    const currentCount = settings.freeUsageCount ?? 0;
-    const newCount = currentCount + 1;
+    // Check if new day
+    const isNewDay = settings.freeUsageDate !== today;
+    const currentCount = isNewDay ? 0 : (settings.freeUsageCount ?? 0);
+
+    const newCount = Math.min(currentCount + 1, FREE_TIER_PROMPT_CAP);
     const expired = newCount >= FREE_TIER_PROMPT_CAP;
 
     await saveSettings({
       freeUsageCount: newCount,
+      freeUsageDate: today,
       freeUsageExpired: expired,
     });
   } catch (err) {
@@ -287,22 +295,28 @@ export async function incrementFreeUsage(): Promise<void> {
 }
 
 /**
- * Returns a snapshot of the current free tier status for UI display.
+ * Returns a snapshot of the current 25/day free tier status for UI display.
  */
 export async function getFreeUsageStatus(): Promise<{
   count: number;
   cap: number;
   remaining: number;
   expired: boolean;
+  date: string;
 }> {
   const settings = await getSettings();
-  const count = settings.freeUsageCount ?? 0;
-  const expired = settings.freeUsageExpired ?? false;
+  const today = getTodayDateString();
+  const isNewDay = settings.freeUsageDate !== today;
+
+  const count = isNewDay ? 0 : (settings.freeUsageCount ?? 0);
+  const expired = isNewDay ? false : (settings.freeUsageExpired ?? false);
+
   return {
     count,
     cap: FREE_TIER_PROMPT_CAP,
     remaining: Math.max(0, FREE_TIER_PROMPT_CAP - count),
     expired,
+    date: today,
   };
 }
 

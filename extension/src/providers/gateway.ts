@@ -59,8 +59,11 @@ export class GatewayProvider implements AIProvider {
   if (msg.includes('401') || msg.includes('Unauthorized')) {
     return { reason: 'Gateway access unauthorized. Add a BYOK API key in Settings.', status: 401, code: 'INVALID_KEY' };
   }
-  if (msg.includes('429')) {
-    return { reason: 'Gateway rate limited. Add your free Gemini API key for unlimited speed.', status: 429, code: 'QUOTA_EXCEEDED' };
+  if (msg.includes('429') || msg.includes('DAILY_FREE_QUOTA_EXCEEDED')) {
+    return { reason: 'Daily free limit reached (25/25 prompts). Configure a BYOK key in Settings for unlimited calibration.', status: 429, code: 'QUOTA_EXCEEDED' };
+  }
+  if (msg.includes('403') || msg.includes('UPSTREAM_QUOTA_EXHAUSTED') || msg.includes('AllocationQuota')) {
+    return { reason: 'Community free tier capacity temporarily full. Add your BYOK key in Settings for unlimited speed.', status: 403, code: 'QUOTA_EXCEEDED' };
   }
   if (msg.includes('timeout') || msg.includes('AbortError')) {
     return { reason: 'Gateway request timed out', status: 408, code: 'TIME_BUDGET_EXHAUSTED' };

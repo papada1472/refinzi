@@ -2448,6 +2448,7 @@ var DEFAULT_SETTINGS = {
   saveHistory: true,
   hasSeenOnboarding: false,
   freeUsageCount: 0,
+  freeUsageDate: "",
   freeUsageExpired: false
 };
 var DEPRECATED_MODELS = {
@@ -2564,6 +2565,9 @@ async function saveSettings(patch) {
   }
   return updated;
 }
+function getTodayDateString() {
+  return (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+}
 async function isFreeKeyActive() {
   const settings = await getSettings();
   const usingDefaultKey = settings.provider === "gemini" && (!settings.apiKeys?.gemini || settings.apiKeys.gemini === DEFAULT_GEMINI_API_KEY);
@@ -2572,12 +2576,14 @@ async function isFreeKeyActive() {
 async function incrementFreeUsage() {
   try {
     const settings = await getSettings();
-    if (settings.freeUsageExpired) return;
-    const currentCount = settings.freeUsageCount ?? 0;
-    const newCount = currentCount + 1;
+    const today = getTodayDateString();
+    const isNewDay = settings.freeUsageDate !== today;
+    const currentCount = isNewDay ? 0 : settings.freeUsageCount ?? 0;
+    const newCount = Math.min(currentCount + 1, FREE_TIER_PROMPT_CAP);
     const expired = newCount >= FREE_TIER_PROMPT_CAP;
     await saveSettings({
       freeUsageCount: newCount,
+      freeUsageDate: today,
       freeUsageExpired: expired
     });
   } catch (err) {
@@ -3181,8 +3187,11 @@ var GatewayProvider = class {
     if (msg.includes("401") || msg.includes("Unauthorized")) {
       return { reason: "Gateway access unauthorized. Add a BYOK API key in Settings.", status: 401, code: "INVALID_KEY" };
     }
-    if (msg.includes("429")) {
-      return { reason: "Gateway rate limited. Add your free Gemini API key for unlimited speed.", status: 429, code: "QUOTA_EXCEEDED" };
+    if (msg.includes("429") || msg.includes("DAILY_FREE_QUOTA_EXCEEDED")) {
+      return { reason: "Daily free limit reached (25/25 prompts). Configure a BYOK key in Settings for unlimited calibration.", status: 429, code: "QUOTA_EXCEEDED" };
+    }
+    if (msg.includes("403") || msg.includes("UPSTREAM_QUOTA_EXHAUSTED") || msg.includes("AllocationQuota")) {
+      return { reason: "Community free tier capacity temporarily full. Add your BYOK key in Settings for unlimited speed.", status: 403, code: "QUOTA_EXCEEDED" };
     }
     if (msg.includes("timeout") || msg.includes("AbortError")) {
       return { reason: "Gateway request timed out", status: 408, code: "TIME_BUDGET_EXHAUSTED" };

@@ -1600,6 +1600,7 @@
     saveHistory: true,
     hasSeenOnboarding: false,
     freeUsageCount: 0,
+    freeUsageDate: "",
     freeUsageExpired: false
   };
   var DEPRECATED_MODELS = {

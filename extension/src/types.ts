@@ -163,8 +163,9 @@ export interface RefinziSettings {
   autoApply: boolean; // Grammarly-style in-place replacement (default: true)
   saveHistory: boolean; // Privacy setting (default: true)
   hasSeenOnboarding?: boolean; // Track first-run modal state (default: false)
-  freeUsageCount?: number;    // Number of prompts calibrated on the default free Gemini key
-  freeUsageExpired?: boolean;  // true once the free tier cap (25) is reached
+  freeUsageCount?: number;    // Number of prompts calibrated on the default free tier today
+  freeUsageDate?: string;     // YYYY-MM-DD tracking the active day for 25/day rolling reset
+  freeUsageExpired?: boolean;  // true once the daily free tier cap (25) is reached
 }
 
 export type PeriodType = 'Today' | 'Week' | 'Month' | 'All Time';

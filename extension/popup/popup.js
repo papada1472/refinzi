@@ -262,6 +262,7 @@
     saveHistory: true,
     hasSeenOnboarding: false,
     freeUsageCount: 0,
+    freeUsageDate: "",
     freeUsageExpired: false
   };
   var DEPRECATED_MODELS = {
@@ -351,15 +352,21 @@
       return { ...DEFAULT_SETTINGS };
     }
   }
+  function getTodayDateString() {
+    return (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+  }
   async function getFreeUsageStatus() {
     const settings = await getSettings();
-    const count = settings.freeUsageCount ?? 0;
-    const expired = settings.freeUsageExpired ?? false;
+    const today = getTodayDateString();
+    const isNewDay = settings.freeUsageDate !== today;
+    const count = isNewDay ? 0 : settings.freeUsageCount ?? 0;
+    const expired = isNewDay ? false : settings.freeUsageExpired ?? false;
     return {
       count,
       cap: FREE_TIER_PROMPT_CAP,
       remaining: Math.max(0, FREE_TIER_PROMPT_CAP - count),
-      expired
+      expired,
+      date: today
     };
   }
 

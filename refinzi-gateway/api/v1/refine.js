@@ -48,6 +48,40 @@ const DEFAULT_MAAS_API_KEY = process.env.MAAS_API_KEY || process.env.BAI_API_KEY
 // Gateway-issued tokens (vck_ prefix) indicate use of server-side API keys
 const isGatewayToken = (key) => typeof key === 'string' && key.startsWith('vck_');
 
+// 25 free calibrations per day per user/device for keyless traffic
+const DAILY_FREE_CAP = 25;
+const dailyUsageMap = new Map(); // key: `${clientId}:${dateStr}` -> count
+
+function getClientIdentifier(req) {
+  return (
+    req.headers['x-device-token'] ||
+    req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+    req.socket?.remoteAddress ||
+    'anonymous_client'
+  );
+}
+
+function checkAndIncrementDailyUsage(clientId) {
+  const dateStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+  const key = `${clientId}:${dateStr}`;
+  const current = dailyUsageMap.get(key) || 0;
+
+  if (current >= DAILY_FREE_CAP) {
+    return { allowed: false, current, cap: DAILY_FREE_CAP, dateStr };
+  }
+
+  dailyUsageMap.set(key, current + 1);
+
+  // Periodic cleanup of older date entries
+  if (dailyUsageMap.size > 2000) {
+    for (const k of dailyUsageMap.keys()) {
+      if (!k.endsWith(dateStr)) dailyUsageMap.delete(k);
+    }
+  }
+
+  return { allowed: true, current: current + 1, cap: DAILY_FREE_CAP, dateStr };
+}
+
 export const maxDuration = 60;
 
 export default async function handler(req, res) {
@@ -112,6 +146,32 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized: No valid provider API key configured on gateway' });
   }
 
+  // Check if request is using server-side keys (Free Tier) or user's BYOK key
+  const isByokRequest = Boolean(upstreamApiKey);
+
+  if (!isByokRequest) {
+    const clientId = getClientIdentifier(req);
+    const quotaCheck = checkAndIncrementDailyUsage(clientId);
+
+    res.setHeader('X-Daily-Quota-Limit', String(DAILY_FREE_CAP));
+    res.setHeader('X-Daily-Quota-Remaining', String(Math.max(0, DAILY_FREE_CAP - quotaCheck.current)));
+
+    if (!quotaCheck.allowed) {
+      console.warn(`[Gateway][${requestId}] Daily free quota exceeded for client ${clientId}: ${quotaCheck.current}/${DAILY_FREE_CAP}`);
+      return res.status(429).json({
+        error: {
+          code: 'DAILY_FREE_QUOTA_EXCEEDED',
+          message: `Daily free quota reached (25/25 prompts used today). Configure a BYOK key in Refinzi Settings to continue unlimited calibration.`,
+          cap: DAILY_FREE_CAP,
+          remaining: 0,
+        },
+        requestId
+      });
+    }
+  } else {
+    res.setHeader('X-BYOK-Active', 'true');
+  }
+
   const start = Date.now();
 
   // 1. Primary Default: Alibaba Cloud MaaS / Qwen 3.8 / DeepSeek V4.1 / Qwen 3.7
@@ -119,6 +179,8 @@ export default async function handler(req, res) {
   const wantsMaas = isMaasModel || requestedModel === 'gateway-default' || (!requestedModel && !isGeminiFormat);
   if (wantsMaas) {
     const maasModel = isMaasModel ? requestedModel : (process.env.DEFAULT_MODEL || 'qwen3.8-flash');
+    const promptCombined = `${systemPrompt || ''} ${text}`.toLowerCase();
+    const useJsonMode = promptCombined.includes('json');
     const maasKey = (isGatewayIssuedToken || !upstreamApiKey) ? DEFAULT_MAAS_API_KEY : upstreamApiKey;
     try {
       const maasRes = await fetch(`${DEFAULT_MAAS_ENDPOINT.replace(/\/+$/, '')}/chat/completions`, {
@@ -130,7 +192,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           model: maasModel,
           enable_thinking: false,
-          response_format: { type: 'json_object' },
+          ...(useJsonMode ? { response_format: { type: 'json_object' } } : {}),
           messages: [
             ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
             { role: 'user', content: text }
@@ -156,6 +218,16 @@ export default async function handler(req, res) {
       } else {
         const errText = await maasRes.text().catch(() => '');
         console.warn(`[Gateway][${requestId}] MaaS (${maasModel}) HTTP ${maasRes.status}: ${errText.slice(0, 120)}`);
+
+        if (maasRes.status === 403 && errText.includes('AllocationQuota.FreeTierOnly')) {
+          return res.status(403).json({
+            error: {
+              code: 'UPSTREAM_QUOTA_EXHAUSTED',
+              message: 'Refinzi Cloud free token capacity is currently exhausted for this model. Please add your BYOK key in Settings for instant unlimited speed.',
+            },
+            requestId
+          });
+        }
       }
     } catch (mErr) {
       console.error(`[Gateway][${requestId}] MaaS (${maasModel}) failed:`, mErr?.message || mErr);

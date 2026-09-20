@@ -15,7 +15,7 @@ export default function TermsPage() {
           </a>
           <div className="flex items-center gap-2 text-xs font-bold text-white">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" />
-            <span>Refinzi 2.1.0</span>
+            <span>Refinzi</span>
           </div>
         </div>
       </header>
@@ -26,7 +26,7 @@ export default function TermsPage() {
           <span>Legal Agreement</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-          Terms of Service — Refinzi 2.1.0
+          Terms of Service — Refinzi
         </h1>
         <p className="mt-2 text-xs text-zinc-500 font-mono">
           Last Updated: September 19, 2026 • License: MIT Open Source

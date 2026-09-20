@@ -1,4 +1,4 @@
-# Refinzi 2.1.0 — Browser-Native AI Prompt Layer
+# Refinzi — Browser-Native AI Prompt Layer
 
 > Refinzi is a free browser extension that rewrites rough prompts in-place inside ChatGPT, Claude, Gemini, and Perplexity. Write naturally. Click the Orb for a Better prompt, or hold it for an Expert one. No forms. No prompt engineering. No questions.
 

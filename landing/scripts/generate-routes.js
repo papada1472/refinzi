@@ -9,13 +9,13 @@ const indexPath = path.join(distDir, "index.html");
 
 const ROUTE_METADATA = {
   docs: {
-    title: "Documentation & User Manual — Refinzi 2.1.0",
+    title: "Documentation & User Manual — Refinzi",
     description: "Complete user manual, the 1-Click Refinzi Orb workflow, Click versus Hold modes, and Bring-Your-Own-Key (BYOK) setup for OpenAI, Anthropic, Gemini, and OpenRouter.",
     canonical: "https://refinzi.com/docs/",
     bodyHtml: `
       <main id="main-content" class="mx-auto max-w-[900px] px-4 py-12 sm:px-6 sm:py-16 text-zinc-300">
         <div class="mb-3 text-xs font-semibold text-blue-400 uppercase tracking-widest">User Manual &amp; Architecture Guide</div>
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Refinzi 2.1.0 Documentation</h1>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Refinzi Documentation</h1>
         <p class="mt-2 text-xs text-zinc-500 font-mono">Universal Browser Prompt Layer • Manifest V3</p>
         <div class="my-8 border-t border-white/[0.08]"></div>
         <div class="space-y-6 text-sm leading-relaxed">
@@ -35,7 +35,7 @@ const ROUTE_METADATA = {
       "@graph": [
         {
           "@type": "TechArticle",
-          "headline": "Refinzi 2.1.0 Official Documentation & User Manual",
+          "headline": "Refinzi Official Documentation & User Manual",
           "url": "https://refinzi.com/docs/",
           "description": "User guide covering the 1-Click Refinzi Orb, Click for Better vs Hold for Expert modes, and Bring-Your-Own-Key (BYOK) setup for OpenAI, Anthropic, Gemini, and OpenRouter.",
           "author": {
@@ -64,13 +64,13 @@ const ROUTE_METADATA = {
     }
   },
   privacy: {
-    title: "Privacy Policy — Refinzi 2.1.0",
+    title: "Privacy Policy — Refinzi",
     description: "Refinzi Privacy Policy. Learn about our local-first architecture, on-device synthesis, zero prompt logging, and BYOK data safety guarantees.",
     canonical: "https://refinzi.com/privacy/",
     bodyHtml: `
       <main id="main-content" class="mx-auto max-w-[900px] px-4 py-12 sm:px-6 sm:py-16 text-zinc-300">
         <div class="mb-3 text-xs font-semibold text-blue-400 uppercase tracking-widest">Chrome Web Store &amp; User Data Compliance</div>
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Privacy Policy — Refinzi 2.1.0</h1>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Privacy Policy — Refinzi</h1>
         <p class="mt-2 text-xs text-zinc-500 font-mono">Effective Date: September 19, 2026 • Version: 2.1.0 (WebExtension MV3)</p>
         <div class="my-8 border-t border-white/[0.08]"></div>
 
@@ -116,7 +116,7 @@ const ROUTE_METADATA = {
       "@graph": [
         {
           "@type": "WebPage",
-          "name": "Privacy Policy — Refinzi 2.1.0",
+          "name": "Privacy Policy — Refinzi",
           "url": "https://refinzi.com/privacy/",
           "description": "Refinzi Privacy Policy explaining local-first architecture, on-device synthesis, zero prompt logs, and Bring-Your-Own-Key data safety."
         },
@@ -141,13 +141,13 @@ const ROUTE_METADATA = {
     }
   },
   terms: {
-    title: "Terms of Service — Refinzi 2.1.0",
+    title: "Terms of Service — Refinzi",
     description: "Refinzi Terms of Service, software licensing details, and extension usage terms.",
     canonical: "https://refinzi.com/terms/",
     bodyHtml: `
       <main id="main-content" class="mx-auto max-w-[900px] px-4 py-12 sm:px-6 sm:py-16 text-zinc-300">
         <div class="mb-3 text-xs font-semibold text-blue-400 uppercase tracking-widest">Legal Agreement</div>
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Terms of Service — Refinzi 2.1.0</h1>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Terms of Service — Refinzi</h1>
         <p class="mt-2 text-xs text-zinc-500 font-mono">Last Updated: September 19, 2026 • License: MIT Open Source</p>
         <div class="my-8 border-t border-white/[0.08]"></div>
         <div class="space-y-6 text-sm leading-relaxed">
@@ -165,7 +165,7 @@ const ROUTE_METADATA = {
       "@graph": [
         {
           "@type": "WebPage",
-          "name": "Terms of Service — Refinzi 2.1.0",
+          "name": "Terms of Service — Refinzi",
           "url": "https://refinzi.com/terms/",
           "description": "Refinzi Terms of Service and Software License Agreement."
         },

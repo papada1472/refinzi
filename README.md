@@ -1,4 +1,4 @@
-# Refinzi 2.1.0
+# Refinzi
 
 > **"Grammarly for prompts."**  
 > *"It doesn't just rewrite your words. It understands what you're trying to accomplish and turns that rough thought into a prompt the AI can execute better."*

@@ -15,7 +15,7 @@ export default function DocsPage() {
           </a>
           <div className="flex items-center gap-2 text-xs font-bold text-white">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" />
-            <span>Refinzi 2.1.0 Docs</span>
+            <span>Refinzi Docs</span>
           </div>
         </div>
       </header>
@@ -26,7 +26,7 @@ export default function DocsPage() {
           <span>User Manual &amp; Architecture Guide</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-          Refinzi 2.1.0 Documentation
+          Refinzi Documentation
         </h1>
         <p className="mt-2 text-xs text-zinc-500 font-mono">
           Universal Browser Prompt Layer • Manifest V3
