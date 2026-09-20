@@ -411,9 +411,6 @@
     const periodExpertCount = document.getElementById("period-expert-count");
     const periodExpertPct = document.getElementById("period-expert-pct");
     const homeRecentList = document.getElementById("home-recent-list");
-    const heroActivationTitle = document.getElementById("hero-activation-title");
-    const heroSiteBadge = document.getElementById("hero-site-badge");
-    const plgNudgeContainer = document.getElementById("plg-nudge-container");
     const historySearch = document.getElementById("history-search");
     const fullHistoryList = document.getElementById("full-history-list");
     const btnClearHistoryTop = document.getElementById("btn-clear-history-top");
@@ -521,72 +518,6 @@
         ]
       }
     };
-    function switchTab(tabId) {
-      navButtons.forEach((btn) => {
-        if (btn.getAttribute("data-tab") === tabId) {
-          btn.classList.add("active");
-        } else {
-          btn.classList.remove("active");
-        }
-      });
-      tabViews.forEach((view) => {
-        if (view.id === tabId) {
-          view.classList.add("active");
-        } else {
-          view.classList.remove("active");
-        }
-      });
-    }
-    const PLG_NUDGES = [
-      {
-        id: "nudge_first_use",
-        pillar: "adoption",
-        icon: "\u{1F680}",
-        title: "Ready for your first calibration?",
-        desc: "Type a draft in ChatGPT, Claude, or Perplexity and click the golden Orb for instant polish.",
-        ctaText: "Settings \u2192",
-        onCta: () => switchTab("tab-settings"),
-        condition: (summary) => (summary.allTimeCount ?? summary.totalPromptsEnhanced) === 0
-      },
-      {
-        id: "nudge_expert_mode",
-        pillar: "adoption",
-        icon: "\u{1F9E0}",
-        title: "Try Expert mode (Hold 350ms)",
-        desc: "Single click gives instant Better polish. Hold the Orb for 350ms to generate deep structured reasoning.",
-        condition: (summary) => summary.betterCount > 0 && summary.expertCount === 0
-      },
-      {
-        id: "nudge_milestone_5",
-        pillar: "advocacy",
-        icon: "\u{1F3C6}",
-        title: "Prompt master in the making!",
-        desc: "You have enhanced 5+ prompts with Refinzi. Share Refinzi with a colleague to boost their workflow.",
-        ctaText: "Copy Link",
-        onCta: () => {
-          navigator.clipboard?.writeText("https://refinzi.com");
-        },
-        condition: (summary) => (summary.allTimeCount ?? summary.totalPromptsEnhanced) >= 5
-      },
-      {
-        id: "nudge_awareness_provider",
-        pillar: "awareness",
-        icon: "\u26A1",
-        title: "Connect a direct AI provider",
-        desc: "Add your own free Gemini Flash or DeepSeek API key for 0-latency priority throughput.",
-        ctaText: "Connect Key \u2192",
-        onCta: () => switchTab("tab-settings"),
-        condition: (_summary, settings) => settings.provider === "gateway" && !settings.apiKeys?.gemini
-      },
-      {
-        id: "nudge_privacy_insight",
-        pillar: "innovation",
-        icon: "\u{1F512}",
-        title: "Privacy-First Architecture",
-        desc: "Your prompts and API keys are stored strictly in local browser storage, never sent to external servers.",
-        condition: (summary) => (summary.allTimeCount ?? summary.totalPromptsEnhanced) >= 3
-      }
-    ];
     try {
       const [settingsRes, summaryRes, historyRes] = await Promise.allSettled([
         BrowserAPI.runtime.sendMessage({ type: "REFINZI_GET_SETTINGS" }),
@@ -631,7 +562,22 @@
     syncMetricConfigInputs();
     await updateHeaderEngineStatus(currentSettings.provider);
     resolveActiveTabContext();
-    initAccessibleTooltips();
+    function switchTab(tabId) {
+      navButtons.forEach((btn) => {
+        if (btn.getAttribute("data-tab") === tabId) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      });
+      tabViews.forEach((view) => {
+        if (view.id === tabId) {
+          view.classList.add("active");
+        } else {
+          view.classList.remove("active");
+        }
+      });
+    }
     navButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
         const tab = btn.getAttribute("data-tab");
@@ -694,7 +640,6 @@
       }
       if (tooltipTimeSaved && summary.estimatedTimeSavedTooltip) {
         tooltipTimeSaved.title = summary.estimatedTimeSavedTooltip;
-        tooltipTimeSaved.setAttribute("data-tooltip", summary.estimatedTimeSavedTooltip);
       }
       if (metricCostSaved) {
         metricCostSaved.textContent = summary.estimatedCostSavedFormatted;
@@ -704,7 +649,6 @@
       }
       if (tooltipCostSaved && summary.estimatedCostSavedTooltip) {
         tooltipCostSaved.title = summary.estimatedCostSavedTooltip;
-        tooltipCostSaved.setAttribute("data-tooltip", summary.estimatedCostSavedTooltip);
       }
       if (metricBetterExpertVal) {
         metricBetterExpertVal.textContent = `${summary.betterCount} / ${summary.expertCount}`;
@@ -721,7 +665,6 @@
       if (periodBetterPct) periodBetterPct.textContent = `(${summary.betterPercentage}%)`;
       if (periodExpertCount) periodExpertCount.textContent = String(summary.expertCount);
       if (periodExpertPct) periodExpertPct.textContent = `(${summary.expertPercentage}%)`;
-      renderPlgNudges(summary, currentSettings);
     }
     async function refreshHistory() {
       try {
@@ -1093,116 +1036,6 @@
     [settingEstMinutes, settingEstIterations, settingFallbackCost].forEach((input) => {
       input?.addEventListener("change", commitMetricConfig);
     });
-    function initAccessibleTooltips() {
-      const globalTooltip = document.getElementById("refinzi-global-tooltip");
-      if (!globalTooltip) return;
-      let activeTrigger = null;
-      function showTooltip(el) {
-        if (!globalTooltip) return;
-        const text = el.getAttribute("data-tooltip") || el.getAttribute("title");
-        if (!text) return;
-        if (el.hasAttribute("title")) {
-          el.setAttribute("data-stored-title", el.getAttribute("title") || "");
-          el.removeAttribute("title");
-        }
-        globalTooltip.textContent = text;
-        globalTooltip.classList.remove("hidden");
-        globalTooltip.classList.add("visible");
-        globalTooltip.setAttribute("aria-hidden", "false");
-        activeTrigger = el;
-        const rect = el.getBoundingClientRect();
-        const tooltipRect = globalTooltip.getBoundingClientRect();
-        const tooltipWidth = tooltipRect.width || 200;
-        const tooltipHeight = tooltipRect.height || 32;
-        let left = rect.left + rect.width / 2 - tooltipWidth / 2;
-        if (left < 8) left = 8;
-        if (left + tooltipWidth > window.innerWidth - 8) {
-          left = window.innerWidth - tooltipWidth - 8;
-        }
-        let top = rect.bottom + 6;
-        if (top + tooltipHeight > window.innerHeight - 8) {
-          top = Math.max(8, rect.top - tooltipHeight - 6);
-        }
-        globalTooltip.style.left = `${Math.round(left)}px`;
-        globalTooltip.style.top = `${Math.round(top)}px`;
-      }
-      function hideTooltip() {
-        if (!globalTooltip) return;
-        globalTooltip.classList.remove("visible");
-        globalTooltip.classList.add("hidden");
-        globalTooltip.setAttribute("aria-hidden", "true");
-        if (activeTrigger && activeTrigger.hasAttribute("data-stored-title")) {
-          activeTrigger.setAttribute("title", activeTrigger.getAttribute("data-stored-title") || "");
-          activeTrigger.removeAttribute("data-stored-title");
-        }
-        activeTrigger = null;
-      }
-      document.addEventListener("mouseover", (e) => {
-        const target = e.target?.closest("[data-tooltip], .info-tooltip-trigger");
-        if (target) showTooltip(target);
-      });
-      document.addEventListener("mouseout", (e) => {
-        const target = e.target?.closest("[data-tooltip], .info-tooltip-trigger");
-        if (target) hideTooltip();
-      });
-      document.addEventListener("focusin", (e) => {
-        const target = e.target?.closest("[data-tooltip], .info-tooltip-trigger");
-        if (target) showTooltip(target);
-      });
-      document.addEventListener("focusout", (e) => {
-        const target = e.target?.closest("[data-tooltip], .info-tooltip-trigger");
-        if (target) hideTooltip();
-      });
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          hideTooltip();
-        }
-      });
-    }
-    async function renderPlgNudges(summary, settings) {
-      if (!plgNudgeContainer) return;
-      let dismissed = [];
-      try {
-        const stored = await BrowserAPI.storage.local.get(["refinzi_dismissed_nudges"]);
-        dismissed = Array.isArray(stored?.refinzi_dismissed_nudges) ? stored.refinzi_dismissed_nudges : [];
-      } catch {
-        dismissed = [];
-      }
-      const activeNudge = PLG_NUDGES.find(
-        (nudge) => !dismissed.includes(nudge.id) && nudge.condition(summary, settings)
-      );
-      if (!activeNudge) {
-        plgNudgeContainer.innerHTML = "";
-        plgNudgeContainer.classList.add("hidden");
-        return;
-      }
-      plgNudgeContainer.classList.remove("hidden");
-      plgNudgeContainer.innerHTML = `
-      <div class="plg-nudge-card nudge-${activeNudge.pillar}" id="${activeNudge.id}" role="note" aria-live="polite">
-        <div class="plg-nudge-body">
-          <span class="plg-nudge-icon" aria-hidden="true">${activeNudge.icon}</span>
-          <div class="plg-nudge-text">
-            <span class="plg-nudge-title">${escapeHtml(activeNudge.title)}</span>
-            <span class="plg-nudge-desc">${escapeHtml(activeNudge.desc)}</span>
-          </div>
-        </div>
-        ${activeNudge.ctaText ? `<button type="button" class="plg-nudge-cta" id="btn-nudge-cta">${escapeHtml(activeNudge.ctaText)}</button>` : ""}
-        <button type="button" class="plg-nudge-dismiss" id="btn-dismiss-nudge" aria-label="Dismiss tip">\u2715</button>
-      </div>
-    `;
-      if (activeNudge.ctaText && activeNudge.onCta) {
-        document.getElementById("btn-nudge-cta")?.addEventListener("click", activeNudge.onCta);
-      }
-      document.getElementById("btn-dismiss-nudge")?.addEventListener("click", async () => {
-        dismissed.push(activeNudge.id);
-        try {
-          await BrowserAPI.storage.local.set({ refinzi_dismissed_nudges: dismissed });
-        } catch {
-        }
-        plgNudgeContainer.innerHTML = "";
-        plgNudgeContainer.classList.add("hidden");
-      });
-    }
     function resolveActiveTabContext() {
       if (!tabContextPill || !tabContextDot || !tabContextText) return;
       setTabContextState("detecting", "Detecting\u2026");
@@ -1259,23 +1092,9 @@
       }
     }
     function setTabContextState(state, label) {
-      if (tabContextPill && tabContextText) {
-        tabContextPill.className = `tab-context-pill state-${state}`;
-        tabContextText.textContent = label;
-      }
-      if (heroActivationTitle && heroSiteBadge) {
-        if (state === "active") {
-          const siteName = label.replace(/^Active on /, "");
-          heroActivationTitle.textContent = `Ready to enhance in ${siteName}`;
-          heroSiteBadge.textContent = siteName;
-        } else if (state === "universal") {
-          heroActivationTitle.textContent = "Universal prompt layer ready";
-          heroSiteBadge.textContent = "Universal";
-        } else {
-          heroActivationTitle.textContent = "Ready to enhance your next prompt";
-          heroSiteBadge.textContent = "Universal";
-        }
-      }
+      if (!tabContextPill || !tabContextText) return;
+      tabContextPill.className = `tab-context-pill state-${state}`;
+      tabContextText.textContent = label;
     }
     function renderSparkline() {
       if (!sparklineLine || !sparklineFill) return;
