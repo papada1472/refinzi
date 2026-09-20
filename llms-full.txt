@@ -1,6 +1,6 @@
 # https://refinzi.com/ llms-full.txt
 
-# Refinzi 2.1.0 — Browser-Native AI Prompt Layer & Autonomous Calibration Engine
+# Refinzi — Browser-Native AI Prompt Layer & Autonomous Calibration Engine
 
 > Last updated: 2026 | Version: 2.1.0 | License: MIT (Open Source)
 > Canonical URL: https://refinzi.com/
