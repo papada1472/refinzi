@@ -488,6 +488,9 @@ function HeroVideoPlayer() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [playbackRate, setPlaybackRate] = useState(2.0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isSeeking, setIsSeeking] = useState(false);
   const videoRef = useRef(null);
 
   // Enforce 2.0x playback speed by default
@@ -525,87 +528,145 @@ function HeroVideoPlayer() {
     applySpeed(next);
   };
 
+  const handleTimeUpdate = () => {
+    if (!isSeeking && videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration || 0);
+      applySpeed(playbackRate);
+    }
+  };
+
+  const handleSliderChange = (e) => {
+    const val = parseFloat(e.target.value);
+    setCurrentTime(val);
+    if (videoRef.current) {
+      videoRef.current.currentTime = val;
+    }
+  };
+
+  const formatTime = (secs) => {
+    if (isNaN(secs) || secs < 0) return "0:00";
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
   return (
-    <div className="mt-8 sm:mt-12 w-full max-w-5xl lg:max-w-6xl mx-auto px-1 sm:px-4">
-      <div className="relative group">
-        {/* Ambient Backlight Glow for large high-impact visual presence */}
-        <div className="absolute -inset-1 sm:-inset-2 rounded-[24px] sm:rounded-[32px] bg-gradient-to-r from-indigo-500/25 via-purple-500/25 to-pink-500/15 blur-xl sm:blur-2xl opacity-80 pointer-events-none transition-opacity" />
+    <div className="w-full relative group">
+      {/* Ambient Backlight Glow */}
+      <div className="absolute -inset-1 sm:-inset-2 rounded-[24px] sm:rounded-[30px] bg-gradient-to-r from-indigo-500/25 via-purple-500/25 to-pink-500/15 blur-xl sm:blur-2xl opacity-75 sm:opacity-90 pointer-events-none transition-opacity" />
 
-        {/* Window Chrome Container */}
-        <div className="relative rounded-2xl sm:rounded-3xl border border-white/[0.14] bg-[#0c0d14]/95 p-2 sm:p-3.5 shadow-2xl shadow-indigo-950/50 backdrop-blur-2xl transition-all">
-          {/* Window Chrome Header */}
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-2 py-1 border-b border-white/[0.06] pb-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
-              </div>
-              <span className="text-[11px] sm:text-xs font-mono text-zinc-300 font-medium ml-1 truncate">
-                Refinzi Live Demo · Browser-Native AI Prompt Layer
-              </span>
+      {/* Window Chrome Container */}
+      <div className="relative rounded-2xl sm:rounded-3xl border border-white/[0.14] bg-[#0c0d14]/95 p-2 sm:p-3 shadow-2xl shadow-indigo-950/50 backdrop-blur-2xl transition-all">
+        {/* Window Chrome Header */}
+        <div className="mb-2 flex items-center justify-between gap-2 px-2 py-1 border-b border-white/[0.06] pb-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
             </div>
-
-            <div className="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
-              {/* 2x Speed badge / toggle button */}
-              <button
-                type="button"
-                onClick={cycleSpeed}
-                title="Toggle playback speed (1x, 1.5x, 2x)"
-                className="text-[10px] sm:text-[11px] font-semibold text-amber-300 hover:text-amber-200 bg-amber-950/60 hover:bg-amber-900/60 px-2 sm:px-2.5 py-1 rounded-md border border-amber-500/40 transition-all flex items-center gap-1 cursor-pointer"
-              >
-                <span>⚡ {playbackRate}× Speed</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={togglePlay}
-                aria-label={isPlaying ? "Pause video demo" : "Play video demo"}
-                className="text-[10px] sm:text-[11px] text-zinc-300 hover:text-white bg-white/[0.06] hover:bg-white/[0.12] px-2 sm:px-2.5 py-1 rounded-md border border-white/[0.08] transition-all flex items-center gap-1 cursor-pointer font-medium"
-              >
-                {isPlaying ? "⏸ Pause" : "▶ Play"}
-              </button>
-
-              <button
-                type="button"
-                onClick={toggleMute}
-                aria-label={isMuted ? "Unmute video demo" : "Mute video demo"}
-                className="text-[10px] sm:text-[11px] text-zinc-400 hover:text-zinc-200 bg-white/[0.04] hover:bg-white/[0.08] px-2 py-1 rounded-md border border-white/[0.06] transition-all cursor-pointer"
-              >
-                {isMuted ? "🔇 Muted" : "🔊 Sound"}
-              </button>
-            </div>
+            <span className="text-[11px] sm:text-xs font-mono text-zinc-300 font-medium truncate">
+              Refinzi Live Demo · Browser-Native Prompt Layer
+            </span>
           </div>
 
-          {/* Video Screen Container */}
-          <div className="relative aspect-video w-full overflow-hidden rounded-xl sm:rounded-2xl bg-black border border-white/[0.06] shadow-inner group">
-            <video
-              ref={videoRef}
-              src="/refinzi-demo.mp4"
-              autoPlay
-              loop
-              muted={isMuted}
-              playsInline
-              preload="auto"
-              className="w-full h-full object-cover"
-              onLoadedMetadata={() => applySpeed(playbackRate)}
-              onPlay={() => applySpeed(playbackRate)}
-              onPause={() => setIsPlaying(false)}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* 2x Speed badge / toggle button */}
+            <button
+              type="button"
+              onClick={cycleSpeed}
+              title="Toggle playback speed (1x, 1.5x, 2x)"
+              className="text-[10px] sm:text-[11px] font-semibold text-amber-300 hover:text-amber-200 bg-amber-950/60 hover:bg-amber-900/60 px-2 sm:px-2.5 py-1 rounded-md border border-amber-500/40 transition-all flex items-center gap-1 cursor-pointer shadow-sm"
+            >
+              <span>⚡ {playbackRate}× Speed</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleMute}
+              aria-label={isMuted ? "Unmute video demo" : "Mute video demo"}
+              className="text-[10px] sm:text-[11px] text-zinc-400 hover:text-zinc-200 bg-white/[0.04] hover:bg-white/[0.08] px-2 py-1 rounded-md border border-white/[0.06] transition-all cursor-pointer"
+            >
+              {isMuted ? "🔇 Muted" : "🔊 Sound"}
+            </button>
+          </div>
+        </div>
+
+        {/* Video Screen Container */}
+        <div className="relative aspect-video w-full overflow-hidden rounded-xl sm:rounded-2xl bg-black border border-white/[0.06] shadow-inner group">
+          <video
+            ref={videoRef}
+            src="/refinzi-demo.mp4"
+            autoPlay
+            loop
+            muted={isMuted}
+            playsInline
+            preload="auto"
+            className="w-full h-full object-cover"
+            onTimeUpdate={handleTimeUpdate}
+            onLoadedMetadata={handleLoadedMetadata}
+            onPlay={() => applySpeed(playbackRate)}
+            onPause={() => setIsPlaying(false)}
+          />
+
+          {/* Floating Feature Micro-Badges */}
+          <div className="absolute bottom-2 sm:bottom-2.5 left-2 right-2 sm:left-3 sm:right-3 flex flex-wrap items-center justify-between gap-1 pointer-events-none">
+            <span className="text-[9px] sm:text-[10px] font-semibold text-emerald-300 bg-emerald-950/85 border border-emerald-500/40 px-2 py-0.5 rounded-full backdrop-blur-md shadow-md">
+              ⚡ Click = Better (&lt; 350ms)
+            </span>
+            <span className="hidden xs:inline-block text-[9px] sm:text-[10px] font-semibold text-indigo-300 bg-indigo-950/85 border border-indigo-500/40 px-2 py-0.5 rounded-full backdrop-blur-md shadow-md">
+              🧠 Hold = Senior Brief (≥ 350ms)
+            </span>
+            <span className="text-[9px] sm:text-[10px] font-semibold text-zinc-300 bg-zinc-900/85 border border-white/20 px-2 py-0.5 rounded-full backdrop-blur-md shadow-md">
+              ↩ Native Ctrl+Z
+            </span>
+          </div>
+        </div>
+
+        {/* Interactive Video Timeline Scrubber / Slider */}
+        <div className="px-2 pt-2.5 pb-1 flex items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={togglePlay}
+            aria-label={isPlaying ? "Pause demo video" : "Play demo video"}
+            className="text-zinc-300 hover:text-white transition-colors cursor-pointer shrink-0 p-1 rounded hover:bg-white/[0.06]"
+          >
+            {isPlaying ? <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-400" /> : <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />}
+          </button>
+
+          {/* Timeline slider input */}
+          <div className="relative flex-1 flex items-center">
+            <input
+              type="range"
+              min="0"
+              max={duration || 100}
+              step="0.05"
+              value={currentTime}
+              onMouseDown={() => setIsSeeking(true)}
+              onMouseUp={() => setIsSeeking(false)}
+              onTouchStart={() => setIsSeeking(true)}
+              onTouchEnd={() => setIsSeeking(false)}
+              onChange={handleSliderChange}
+              aria-label="Video timeline slider"
+              className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-indigo-500 focus:outline-none"
+              style={{
+                background: `linear-gradient(to right, #6366f1 0%, #8b5cf6 ${progressPercent}%, #27272a ${progressPercent}%, #27272a 100%)`
+              }}
             />
-
-            {/* Floating Feature Micro-Badges */}
-            <div className="absolute bottom-2.5 sm:bottom-3 left-2.5 right-2.5 sm:left-4 sm:right-4 flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 pointer-events-none">
-              <span className="text-[9px] sm:text-[11px] font-semibold text-emerald-300 bg-emerald-950/85 border border-emerald-500/40 px-2 sm:px-2.5 py-1 rounded-full backdrop-blur-md shadow-lg">
-                ⚡ Click = Better Prompt (&lt; 350ms)
-              </span>
-              <span className="hidden xs:inline-block text-[9px] sm:text-[11px] font-semibold text-indigo-300 bg-indigo-950/85 border border-indigo-500/40 px-2 sm:px-2.5 py-1 rounded-full backdrop-blur-md shadow-lg">
-                🧠 Hold = Senior Brief (≥ 350ms)
-              </span>
-              <span className="text-[9px] sm:text-[11px] font-semibold text-zinc-300 bg-zinc-900/85 border border-white/20 px-2 sm:px-2.5 py-1 rounded-full backdrop-blur-md shadow-lg">
-                ↩ Native Ctrl+Z In-Place
-              </span>
-            </div>
           </div>
+
+          {/* Time display */}
+          <span className="text-[10px] sm:text-[11px] font-mono text-zinc-400 shrink-0 font-medium">
+            {formatTime(currentTime)} / {formatTime(duration)}
+          </span>
         </div>
       </div>
     </div>
@@ -935,65 +996,72 @@ function HomePage() {
 
       <main>
 
-        {/* ══ FR-1 HERO ══ */}
-        <section className="pt-12 sm:pt-20 pb-12 sm:pb-20 text-center px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
-          <div className="max-w-3xl mx-auto">
-            <p className="text-xs font-semibold tracking-[0.15em] uppercase text-indigo-400 mb-4 inline-flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              The simple way to get better AI results
-            </p>
+        {/* ══ FR-1 HERO (CRISP 2-COLUMN SPLIT: TEXT LEFT, VIDEO ON RIGHT) ══ */}
+        <section className="pt-4 sm:pt-6 pb-10 sm:pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-12 items-center">
+            
+            {/* Left Column: Crisp Headline, Description, CTAs & Proof */}
+            <div className="lg:col-span-6 xl:col-span-5 text-left">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/25 text-indigo-400 text-xs font-semibold tracking-wide uppercase mb-3.5 shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                <span>The simple way to get better AI results</span>
+              </div>
 
-            <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] mb-5">
-              Write Naturally.<br />
-              <span className="text-indigo-400">Get Better AI Results.</span>
-            </h1>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black text-white tracking-tight leading-[1.08] mb-4">
+                Write Naturally.<br />
+                <span className="text-indigo-400">Get Better AI Results.</span>
+              </h1>
 
-            <p className="text-base sm:text-lg text-zinc-400 max-w-xl mx-auto leading-relaxed mb-3">
-              You don&rsquo;t need to learn prompt engineering. Just type what you want, then click Refinzi for a better prompt&nbsp;&mdash; or hold for an expert one.
-            </p>
+              <p className="text-sm sm:text-base text-zinc-300 leading-relaxed mb-2">
+                You don&rsquo;t need to learn prompt engineering. Just type what you want, then click Refinzi for a better prompt&nbsp;&mdash; or hold for an expert one.
+              </p>
 
-            <p className="text-sm text-zinc-500 mb-8">
-              No forms. No complicated settings. No questions.
-            </p>
+              <p className="text-xs sm:text-sm text-zinc-400 font-medium mb-6">
+                No forms. No complicated settings. No questions.
+              </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
-              <a
-                href={currentDownloadUrl}
-                download
-                className="w-full sm:w-auto h-12 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm inline-flex items-center justify-center gap-2 transition-colors shadow-lg shadow-indigo-600/20"
-              >
-                <Download className="w-4 h-4" />
-                {browserCtaLabel}
-              </a>
-              <a
-                href="#how"
-                onClick={(e) => { e.preventDefault(); scrollTo("how"); }}
-                className="w-full sm:w-auto h-12 px-6 rounded-xl border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white font-medium text-sm inline-flex items-center justify-center gap-2 transition-colors"
-              >
-                See How It Works <ArrowRight className="w-4 h-4" />
-              </a>
-            </div>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
+                <a
+                  href={currentDownloadUrl}
+                  download
+                  className="h-11 sm:h-12 px-5 sm:px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm inline-flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/25 hover:shadow-indigo-600/40"
+                >
+                  <Download className="w-4 h-4" />
+                  {browserCtaLabel}
+                </a>
+                <a
+                  href="#how"
+                  onClick={(e) => { e.preventDefault(); scrollTo("how"); }}
+                  className="h-11 sm:h-12 px-5 rounded-xl border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white font-medium text-sm inline-flex items-center justify-center gap-2 transition-colors bg-zinc-900/50"
+                >
+                  See How It Works <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs text-zinc-500 mb-3">
-              <div className="inline-flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                <span>Private by design — prompts never leave your browser.{" "}
-                  <a href="/privacy/" className="text-zinc-400 underline underline-offset-2 hover:text-white">Details →</a>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400 mb-3">
+                <div className="inline-flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>Private by design — prompts never leave your browser.{" "}
+                    <a href="/privacy/" className="text-zinc-300 underline underline-offset-2 hover:text-white">Details →</a>
+                  </span>
+                </div>
+                <span className="text-zinc-600 hidden sm:inline">•</span>
+                <span className="font-mono text-zinc-400">
+                  Shortcut: <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px]">Ctrl+Shift+B</kbd>
                 </span>
               </div>
-              <span className="text-zinc-700 hidden sm:inline">•</span>
-              <span className="font-mono text-zinc-400">
-                Shortcut: <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 text-[10px]">Ctrl+Shift+B</kbd>
-              </span>
+
+              <p className="text-xs text-zinc-400 font-medium">
+                ⭐ 4.9/5 from early users • Works natively in ChatGPT, Claude, Gemini &amp; Perplexity.
+              </p>
             </div>
 
-            <p className="text-xs text-zinc-500">
-              ⭐ 4.9/5 from early users • Works natively in ChatGPT, Claude, Gemini &amp; Perplexity.
-            </p>
-          </div>
+            {/* Right Column: Hero Video Player with Video Slider */}
+            <div className="lg:col-span-6 xl:col-span-7 w-full">
+              <HeroVideoPlayer />
+            </div>
 
-          {/* Restored Hero Video Player - Prominent Large Space with 2x Speed */}
-          <HeroVideoPlayer />
+          </div>
         </section>
 
         {/* ══ Platform Logo Strip ══ */}
