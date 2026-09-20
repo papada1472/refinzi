@@ -170,4 +170,84 @@ describe('Refinzi Ambient Orb Component & State Machine', () => {
     // Should only trigger once
     expect(onBetterMock).toHaveBeenCalledTimes(1);
   });
+
+  it('renders accessible tooltip element with attributes and shortcut labels', () => {
+    orb.attach(composer);
+    const host = document.querySelector('[data-refinzi-orb-host="true"]');
+    const orbEl = host?.shadowRoot?.querySelector('.refinzi-orb') as HTMLElement;
+    const tooltip = host?.shadowRoot?.querySelector('.orb-tooltip') as HTMLElement;
+
+    expect(tooltip).not.toBeNull();
+    expect(tooltip.getAttribute('role')).toBe('tooltip');
+    expect(tooltip.getAttribute('aria-hidden')).toBe('true');
+    expect(tooltip.id).toBe('rfz-orb-tooltip');
+
+    expect(orbEl.getAttribute('data-tooltip')).toContain('Better');
+    expect(orbEl.getAttribute('data-tooltip')).toContain('Expert');
+    expect(orbEl.getAttribute('aria-describedby')).toBe('rfz-orb-tooltip');
+    expect(orbEl.getAttribute('title')).toContain('Refinzi');
+
+    expect(tooltip.textContent).toContain('Better');
+    expect(tooltip.textContent).toContain('Expert');
+    expect(tooltip.textContent).toContain('Shift');
+  });
+
+  it('shows tooltip on mouseenter / focus and hides on mouseleave / blur', () => {
+    orb.attach(composer);
+    const host = document.querySelector('[data-refinzi-orb-host="true"]');
+    const orbEl = host?.shadowRoot?.querySelector('.refinzi-orb') as HTMLElement;
+    const tooltip = host?.shadowRoot?.querySelector('.orb-tooltip') as HTMLElement;
+
+    // Initially hidden
+    expect(tooltip.classList.contains('visible')).toBe(false);
+    expect(tooltip.getAttribute('aria-hidden')).toBe('true');
+
+    // Mouseenter shows tooltip
+    orbEl.dispatchEvent(new MouseEvent('mouseenter'));
+    expect(tooltip.classList.contains('visible')).toBe(true);
+    expect(tooltip.getAttribute('aria-hidden')).toBe('false');
+
+    // Mouseleave hides tooltip
+    orbEl.dispatchEvent(new MouseEvent('mouseleave'));
+    expect(tooltip.classList.contains('visible')).toBe(false);
+    expect(tooltip.getAttribute('aria-hidden')).toBe('true');
+
+    // Focus shows tooltip
+    orbEl.dispatchEvent(new FocusEvent('focus'));
+    expect(tooltip.classList.contains('visible')).toBe(true);
+    expect(tooltip.getAttribute('aria-hidden')).toBe('false');
+
+    // Blur hides tooltip
+    orbEl.dispatchEvent(new FocusEvent('blur'));
+    expect(tooltip.classList.contains('visible')).toBe(false);
+    expect(tooltip.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('dismisses hover tooltip on Escape keydown', () => {
+    orb.attach(composer);
+    const host = document.querySelector('[data-refinzi-orb-host="true"]');
+    const orbEl = host?.shadowRoot?.querySelector('.refinzi-orb') as HTMLElement;
+    const tooltip = host?.shadowRoot?.querySelector('.orb-tooltip') as HTMLElement;
+
+    orbEl.dispatchEvent(new MouseEvent('mouseenter'));
+    expect(tooltip.classList.contains('visible')).toBe(true);
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(tooltip.classList.contains('visible')).toBe(false);
+    expect(tooltip.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('suppresses hover tooltip when pointerdown begins holding', () => {
+    orb.attach(composer);
+    const host = document.querySelector('[data-refinzi-orb-host="true"]');
+    const orbEl = host?.shadowRoot?.querySelector('.refinzi-orb') as HTMLElement;
+    const tooltip = host?.shadowRoot?.querySelector('.orb-tooltip') as HTMLElement;
+
+    orbEl.dispatchEvent(new MouseEvent('mouseenter'));
+    expect(tooltip.classList.contains('visible')).toBe(true);
+
+    orbEl.dispatchEvent(createPointerEvent('pointerdown', { button: 0, bubbles: true }));
+    expect(tooltip.classList.contains('suppressed')).toBe(true);
+    expect(tooltip.classList.contains('visible')).toBe(false);
+  });
 });

@@ -69,6 +69,7 @@ export class AmbientOrb {
   private boundOnWindowBlur = () => this.resetState();
   private boundOnWindowKeydown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
+      this.hideHoverTooltip();
       if (this.isHolding || this.isDragging) {
         this.resetState();
       }
@@ -116,11 +117,20 @@ export class AmbientOrb {
     this.orbEl.setAttribute('tabindex', '0');
     this.orbEl.setAttribute('aria-label', 'Refinzi: Click for Better Prompt, Hold for Expert Prompt');
 
+    const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+    const modKey = isMac ? '⌘' : 'Ctrl';
+
+    this.orbEl.setAttribute('data-tooltip', `Click ⚡ Better (${modKey}+Shift+B) · Hold 🧠 Expert (${modKey}+Shift+E)`);
+    this.orbEl.setAttribute('title', `Refinzi: Click for Better Prompt (${modKey}+Shift+B), Hold for Expert Prompt (${modKey}+Shift+E)`);
+    this.orbEl.setAttribute('aria-describedby', 'rfz-orb-tooltip');
+
     // Tooltip
     this.tooltipEl = document.createElement('div');
+    this.tooltipEl.id = 'rfz-orb-tooltip';
     this.tooltipEl.className = 'orb-tooltip';
-    this.tooltipEl.innerHTML = 'Click <strong>⚡ Better</strong> · Hold <strong>🧠 Expert</strong>';
-    this.shadow.appendChild(this.tooltipEl);
+    this.tooltipEl.setAttribute('role', 'tooltip');
+    this.tooltipEl.setAttribute('aria-hidden', 'true');
+    this.renderTooltipContent();
 
     // Golden Lightning & Brain Icons with Radial Progress Ring
     this.orbEl.innerHTML = `
@@ -146,7 +156,9 @@ export class AmbientOrb {
     this.progressCircle = this.orbEl.querySelector('#rfz-progress');
     this.bindEvents(this.orbEl);
 
+    // Append orbEl first, then tooltipEl so sibling CSS selectors match inside Shadow DOM
     this.shadow.appendChild(this.orbEl);
+    this.shadow.appendChild(this.tooltipEl);
     document.body.appendChild(this.container);
 
     this.updatePosition(composer);
@@ -198,6 +210,12 @@ export class AmbientOrb {
     orb.addEventListener('pointerup', (e) => this.handlePointerUp(e));
     orb.addEventListener('pointercancel', () => this.handlePointerCancel());
 
+    // Hover & focus tooltip triggers
+    orb.addEventListener('mouseenter', () => this.showHoverTooltip());
+    orb.addEventListener('mouseleave', () => this.hideHoverTooltip());
+    orb.addEventListener('focus', () => this.showHoverTooltip());
+    orb.addEventListener('blur', () => this.hideHoverTooltip());
+
     // Double click resets to default composer docking
     orb.addEventListener('dblclick', (e) => {
       e.preventDefault();
@@ -232,6 +250,8 @@ export class AmbientOrb {
     e.preventDefault();
     e.stopPropagation();
 
+    this.hideHoverTooltip();
+    this.tooltipEl?.classList.add('suppressed');
     this.hideUndoToast();
 
     this.pointerStartTime = performance.now();
@@ -283,6 +303,9 @@ export class AmbientOrb {
       this.isDragging = true;
       this.isHolding = false;
       this.isExpertReady = false;
+
+      this.hideHoverTooltip();
+      this.tooltipEl?.classList.add('suppressed');
 
       if (this.holdTimer) {
         clearTimeout(this.holdTimer);
@@ -414,9 +437,8 @@ export class AmbientOrb {
     this.orbEl?.classList.remove('processing', 'expert-processing', 'calibrating');
     this.isProcessing = false;
 
-    if (this.tooltipEl) {
-      this.tooltipEl.innerHTML = 'Click <strong>⚡ Better</strong> · Hold <strong>🧠 Expert</strong>';
-    }
+    this.renderTooltipContent();
+    this.tooltipEl?.classList.remove('suppressed');
   }
 
   setLoading(loading: boolean, label?: string, mode: PromptMode = 'better'): void {
@@ -646,6 +668,7 @@ export class AmbientOrb {
 
     this.orbEl?.classList.remove('holding', 'expert-ready', 'dragging');
     this.resetCoreIcon();
+    this.tooltipEl?.classList.remove('suppressed');
 
     if (this.progressCircle) {
       this.progressCircle.style.strokeDashoffset = '94.2';
@@ -658,6 +681,51 @@ export class AmbientOrb {
 
   isInteracting(): boolean {
     return this.isHolding || this.isDragging || this.isProcessing || this.isExpertReady;
+  }
+
+  showHoverTooltip(): void {
+    if (this.isInteracting() || this.undoToastEl || !this.tooltipEl) return;
+
+    if (this.container) {
+      const rect = this.container.getBoundingClientRect();
+      if (rect.top < 65) {
+        this.tooltipEl.classList.add('tooltip-bottom');
+      } else {
+        this.tooltipEl.classList.remove('tooltip-bottom');
+      }
+    }
+
+    this.tooltipEl.classList.remove('suppressed');
+    this.tooltipEl.classList.add('visible');
+    this.tooltipEl.setAttribute('aria-hidden', 'false');
+  }
+
+  hideHoverTooltip(): void {
+    if (!this.tooltipEl) return;
+    this.tooltipEl.classList.remove('visible');
+    this.tooltipEl.setAttribute('aria-hidden', 'true');
+  }
+
+  private renderTooltipContent(): void {
+    if (!this.tooltipEl) return;
+    const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+    const modKey = isMac ? '⌘' : 'Ctrl';
+
+    this.tooltipEl.innerHTML = `
+      <div class="orb-tooltip-row">
+        <span class="orb-tooltip-badge better">⚡ Click</span>
+        <span class="orb-tooltip-action">Better Prompt</span>
+      </div>
+      <div class="orb-tooltip-row">
+        <span class="orb-tooltip-badge expert">🧠 Hold</span>
+        <span class="orb-tooltip-action">Expert Briefing</span>
+      </div>
+      <div class="orb-tooltip-shortcuts">
+        <kbd>${modKey}+Shift+B</kbd>
+        <span>·</span>
+        <kbd>${modKey}+Shift+E</kbd>
+      </div>
+    `;
   }
 
   private showHoldPill(text: string): void {

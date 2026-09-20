@@ -165,30 +165,127 @@
 /* Tooltip */
 .orb-tooltip {
   position: absolute;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + 9px);
   right: 0;
   white-space: nowrap;
-  background: #0F1015;
-  color: #94A3B8;
+  background: rgba(14, 16, 22, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #E2E8F0;
   font-size: 11px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  line-height: 1.35;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
   pointer-events: none;
   opacity: 0;
-  transform: translateY(4px);
-  transition: opacity 0.15s ease, transform 0.15s ease;
-  z-index: 100;
+  visibility: hidden;
+  transform: translateY(4px) scale(0.98);
+  transition: opacity 0.16s cubic-bezier(0.16, 1, 0.3, 1), transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.16s;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .orb-tooltip strong {
   color: #FFD700;
 }
 
-.refinzi-orb-host:hover .orb-tooltip {
+.orb-tooltip.tooltip-bottom {
+  bottom: auto;
+  top: calc(100% + 9px);
+  transform: translateY(-4px) scale(0.98);
+}
+
+.orb-tooltip.tooltip-bottom.visible,
+:host(:hover) .orb-tooltip.tooltip-bottom,
+:host(:focus-within) .orb-tooltip.tooltip-bottom,
+.refinzi-orb:hover ~ .orb-tooltip.tooltip-bottom,
+.refinzi-orb:focus-visible ~ .orb-tooltip.tooltip-bottom {
+  transform: translateY(0) scale(1);
+}
+
+/* Tooltip Rows & Highlights */
+.orb-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.orb-tooltip-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 600;
+  font-size: 10.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.orb-tooltip-badge.better {
+  color: #FBBF24;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.orb-tooltip-badge.expert {
+  color: #34D399;
+  background: rgba(52, 211, 153, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.orb-tooltip-action {
+  color: #94A3B8;
+  font-size: 11px;
+}
+
+.orb-tooltip-shortcuts {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #64748B;
+  font-size: 10px;
+  padding-top: 3px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.orb-tooltip-shortcuts kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9.5px;
+  color: #CBD5E1;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+
+/* Tooltip visibility triggers: Shadow host hover/focus, orb element hover/focus, and explicit class */
+:host(:hover) .orb-tooltip,
+:host(:focus-within) .orb-tooltip,
+.refinzi-orb:hover ~ .orb-tooltip,
+.refinzi-orb:focus-visible ~ .orb-tooltip,
+.refinzi-orb-host:hover .orb-tooltip,
+.orb-tooltip.visible {
   opacity: 1;
-  transform: translateY(0);
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+/* Suppress tooltip during active interactions */
+:host(.is-holding) .orb-tooltip,
+:host(.is-dragging) .orb-tooltip,
+:host(.is-processing) .orb-tooltip,
+.refinzi-orb.holding ~ .orb-tooltip,
+.refinzi-orb.expert-ready ~ .orb-tooltip,
+.refinzi-orb.dragging ~ .orb-tooltip,
+.refinzi-orb.processing ~ .orb-tooltip,
+.orb-tooltip.suppressed {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 /* ==========================================================================
@@ -593,6 +690,7 @@
     boundOnWindowBlur = () => this.resetState();
     boundOnWindowKeydown = (e) => {
       if (e.key === "Escape") {
+        this.hideHoverTooltip();
         if (this.isHolding || this.isDragging) {
           this.resetState();
         }
@@ -631,10 +729,17 @@
       this.orbEl.setAttribute("role", "button");
       this.orbEl.setAttribute("tabindex", "0");
       this.orbEl.setAttribute("aria-label", "Refinzi: Click for Better Prompt, Hold for Expert Prompt");
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+      const modKey = isMac ? "\u2318" : "Ctrl";
+      this.orbEl.setAttribute("data-tooltip", `Click \u26A1 Better (${modKey}+Shift+B) \xB7 Hold \u{1F9E0} Expert (${modKey}+Shift+E)`);
+      this.orbEl.setAttribute("title", `Refinzi: Click for Better Prompt (${modKey}+Shift+B), Hold for Expert Prompt (${modKey}+Shift+E)`);
+      this.orbEl.setAttribute("aria-describedby", "rfz-orb-tooltip");
       this.tooltipEl = document.createElement("div");
+      this.tooltipEl.id = "rfz-orb-tooltip";
       this.tooltipEl.className = "orb-tooltip";
-      this.tooltipEl.innerHTML = "Click <strong>\u26A1 Better</strong> \xB7 Hold <strong>\u{1F9E0} Expert</strong>";
-      this.shadow.appendChild(this.tooltipEl);
+      this.tooltipEl.setAttribute("role", "tooltip");
+      this.tooltipEl.setAttribute("aria-hidden", "true");
+      this.renderTooltipContent();
       this.orbEl.innerHTML = `
       <div class="orb-core">
         <svg viewBox="0 0 24 24" fill="none">
@@ -657,6 +762,7 @@
       this.progressCircle = this.orbEl.querySelector("#rfz-progress");
       this.bindEvents(this.orbEl);
       this.shadow.appendChild(this.orbEl);
+      this.shadow.appendChild(this.tooltipEl);
       document.body.appendChild(this.container);
       this.updatePosition(composer);
     }
@@ -694,6 +800,10 @@
       orb.addEventListener("pointermove", (e) => this.handlePointerMove(e));
       orb.addEventListener("pointerup", (e) => this.handlePointerUp(e));
       orb.addEventListener("pointercancel", () => this.handlePointerCancel());
+      orb.addEventListener("mouseenter", () => this.showHoverTooltip());
+      orb.addEventListener("mouseleave", () => this.hideHoverTooltip());
+      orb.addEventListener("focus", () => this.showHoverTooltip());
+      orb.addEventListener("blur", () => this.hideHoverTooltip());
       orb.addEventListener("dblclick", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -721,6 +831,8 @@
       if (e.button !== 0 || this.isProcessing) return;
       e.preventDefault();
       e.stopPropagation();
+      this.hideHoverTooltip();
+      this.tooltipEl?.classList.add("suppressed");
       this.hideUndoToast();
       this.pointerStartTime = performance.now();
       this.isHolding = true;
@@ -762,6 +874,8 @@
         this.isDragging = true;
         this.isHolding = false;
         this.isExpertReady = false;
+        this.hideHoverTooltip();
+        this.tooltipEl?.classList.add("suppressed");
         if (this.holdTimer) {
           clearTimeout(this.holdTimer);
           this.holdTimer = null;
@@ -866,9 +980,8 @@
       this.stagePillEl = null;
       this.orbEl?.classList.remove("processing", "expert-processing", "calibrating");
       this.isProcessing = false;
-      if (this.tooltipEl) {
-        this.tooltipEl.innerHTML = "Click <strong>\u26A1 Better</strong> \xB7 Hold <strong>\u{1F9E0} Expert</strong>";
-      }
+      this.renderTooltipContent();
+      this.tooltipEl?.classList.remove("suppressed");
     }
     setLoading(loading, label, mode = "better") {
       if (loading) {
@@ -1054,6 +1167,7 @@
       this.isDragging = false;
       this.orbEl?.classList.remove("holding", "expert-ready", "dragging");
       this.resetCoreIcon();
+      this.tooltipEl?.classList.remove("suppressed");
       if (this.progressCircle) {
         this.progressCircle.style.strokeDashoffset = "94.2";
       }
@@ -1063,6 +1177,45 @@
     }
     isInteracting() {
       return this.isHolding || this.isDragging || this.isProcessing || this.isExpertReady;
+    }
+    showHoverTooltip() {
+      if (this.isInteracting() || this.undoToastEl || !this.tooltipEl) return;
+      if (this.container) {
+        const rect = this.container.getBoundingClientRect();
+        if (rect.top < 65) {
+          this.tooltipEl.classList.add("tooltip-bottom");
+        } else {
+          this.tooltipEl.classList.remove("tooltip-bottom");
+        }
+      }
+      this.tooltipEl.classList.remove("suppressed");
+      this.tooltipEl.classList.add("visible");
+      this.tooltipEl.setAttribute("aria-hidden", "false");
+    }
+    hideHoverTooltip() {
+      if (!this.tooltipEl) return;
+      this.tooltipEl.classList.remove("visible");
+      this.tooltipEl.setAttribute("aria-hidden", "true");
+    }
+    renderTooltipContent() {
+      if (!this.tooltipEl) return;
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+      const modKey = isMac ? "\u2318" : "Ctrl";
+      this.tooltipEl.innerHTML = `
+      <div class="orb-tooltip-row">
+        <span class="orb-tooltip-badge better">\u26A1 Click</span>
+        <span class="orb-tooltip-action">Better Prompt</span>
+      </div>
+      <div class="orb-tooltip-row">
+        <span class="orb-tooltip-badge expert">\u{1F9E0} Hold</span>
+        <span class="orb-tooltip-action">Expert Briefing</span>
+      </div>
+      <div class="orb-tooltip-shortcuts">
+        <kbd>${modKey}+Shift+B</kbd>
+        <span>\xB7</span>
+        <kbd>${modKey}+Shift+E</kbd>
+      </div>
+    `;
     }
     showHoldPill(text) {
       this.hideHoldPill();

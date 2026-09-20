@@ -65,9 +65,14 @@ export class InlineTrigger {
     this.shadow.appendChild(styleEl);
 
     // Create trigger button
+    const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+    const modKey = isMac ? '⌘' : 'Ctrl';
+
     this.triggerBtn = document.createElement('button');
     this.triggerBtn.className = 'rfz-pill';
-    this.triggerBtn.title = 'Refinzi: ⚡ Better (Ctrl+Shift+B) | 🧠 Expert (Ctrl+Shift+E)';
+    this.triggerBtn.title = `Refinzi: ⚡ Better (${modKey}+Shift+B) | 🧠 Expert (${modKey}+Shift+E)`;
+    this.triggerBtn.setAttribute('data-tooltip', `Refinzi: ⚡ Better (${modKey}+Shift+B) · 🧠 Expert (${modKey}+Shift+E)`);
+    this.triggerBtn.setAttribute('aria-label', `Refinzi prompt assistant: Click for Better (${modKey}+Shift+B), Hold for Expert (${modKey}+Shift+E)`);
     this.triggerBtn.innerHTML = '<span class="rfz-sparkle">✨</span> <span>Refinzi</span>';
     this.triggerBtn.addEventListener('click', (e) => {
       e.preventDefault();

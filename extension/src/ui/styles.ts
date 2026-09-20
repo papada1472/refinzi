@@ -171,30 +171,127 @@ export const REFINZI_CSS = `
 /* Tooltip */
 .orb-tooltip {
   position: absolute;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + 9px);
   right: 0;
   white-space: nowrap;
-  background: #0F1015;
-  color: #94A3B8;
+  background: rgba(14, 16, 22, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #E2E8F0;
   font-size: 11px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  line-height: 1.35;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
   pointer-events: none;
   opacity: 0;
-  transform: translateY(4px);
-  transition: opacity 0.15s ease, transform 0.15s ease;
-  z-index: 100;
+  visibility: hidden;
+  transform: translateY(4px) scale(0.98);
+  transition: opacity 0.16s cubic-bezier(0.16, 1, 0.3, 1), transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.16s;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .orb-tooltip strong {
   color: #FFD700;
 }
 
-.refinzi-orb-host:hover .orb-tooltip {
+.orb-tooltip.tooltip-bottom {
+  bottom: auto;
+  top: calc(100% + 9px);
+  transform: translateY(-4px) scale(0.98);
+}
+
+.orb-tooltip.tooltip-bottom.visible,
+:host(:hover) .orb-tooltip.tooltip-bottom,
+:host(:focus-within) .orb-tooltip.tooltip-bottom,
+.refinzi-orb:hover ~ .orb-tooltip.tooltip-bottom,
+.refinzi-orb:focus-visible ~ .orb-tooltip.tooltip-bottom {
+  transform: translateY(0) scale(1);
+}
+
+/* Tooltip Rows & Highlights */
+.orb-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.orb-tooltip-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 600;
+  font-size: 10.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.orb-tooltip-badge.better {
+  color: #FBBF24;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.orb-tooltip-badge.expert {
+  color: #34D399;
+  background: rgba(52, 211, 153, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.orb-tooltip-action {
+  color: #94A3B8;
+  font-size: 11px;
+}
+
+.orb-tooltip-shortcuts {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #64748B;
+  font-size: 10px;
+  padding-top: 3px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.orb-tooltip-shortcuts kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9.5px;
+  color: #CBD5E1;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+
+/* Tooltip visibility triggers: Shadow host hover/focus, orb element hover/focus, and explicit class */
+:host(:hover) .orb-tooltip,
+:host(:focus-within) .orb-tooltip,
+.refinzi-orb:hover ~ .orb-tooltip,
+.refinzi-orb:focus-visible ~ .orb-tooltip,
+.refinzi-orb-host:hover .orb-tooltip,
+.orb-tooltip.visible {
   opacity: 1;
-  transform: translateY(0);
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+/* Suppress tooltip during active interactions */
+:host(.is-holding) .orb-tooltip,
+:host(.is-dragging) .orb-tooltip,
+:host(.is-processing) .orb-tooltip,
+.refinzi-orb.holding ~ .orb-tooltip,
+.refinzi-orb.expert-ready ~ .orb-tooltip,
+.refinzi-orb.dragging ~ .orb-tooltip,
+.refinzi-orb.processing ~ .orb-tooltip,
+.orb-tooltip.suppressed {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 /* ==========================================================================
