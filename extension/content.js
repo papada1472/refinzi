@@ -3201,6 +3201,7 @@
       try {
         const settings = await getSettings();
         if (!settings.hasSeenOnboarding) {
+          await saveSettings({ hasSeenOnboarding: true });
           const modal = new _RefinziOnboardingModal();
           modal.show();
         }
@@ -3210,6 +3211,8 @@
     show() {
       if (this.isVisible || document.getElementById("refinzi-onboarding-root")) return;
       this.isVisible = true;
+      saveSettings({ hasSeenOnboarding: true }).catch(() => {
+      });
       this.container = document.createElement("div");
       this.container.id = "refinzi-onboarding-root";
       this.container.style.position = "fixed";
@@ -5627,9 +5630,6 @@ ${prompt}`;
           const orb = this.ensureOrb();
           orb.attach(surface.element);
           orb.show();
-          if (!settings.hasSeenOnboarding) {
-            RefinziOnboardingModal.checkAndShowFirstRun();
-          }
         },
         onSurfaceDeactivated: (surface) => {
           if (this.activeSurface === surface) {

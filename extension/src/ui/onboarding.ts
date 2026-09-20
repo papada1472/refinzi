@@ -23,6 +23,8 @@ export class RefinziOnboardingModal {
     try {
       const settings = await getSettings();
       if (!settings.hasSeenOnboarding) {
+        // Immediately persist hasSeenOnboarding so it never repeats across tabs or sessions
+        await saveSettings({ hasSeenOnboarding: true });
         const modal = new RefinziOnboardingModal();
         modal.show();
       }
@@ -34,6 +36,9 @@ export class RefinziOnboardingModal {
   show(): void {
     if (this.isVisible || document.getElementById('refinzi-onboarding-root')) return;
     this.isVisible = true;
+
+    // Persist immediately on display so it only ever appears once after fresh install
+    saveSettings({ hasSeenOnboarding: true }).catch(() => {});
 
     this.container = document.createElement('div');
     this.container.id = 'refinzi-onboarding-root';

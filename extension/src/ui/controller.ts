@@ -102,9 +102,6 @@ export class RefinziController {
         const orb = this.ensureOrb();
         orb.attach(surface.element);
         orb.show();
-        if (!settings.hasSeenOnboarding) {
-          RefinziOnboardingModal.checkAndShowFirstRun();
-        }
       },
       onSurfaceDeactivated: (surface: TextSurface) => {
         if (this.activeSurface === surface) {
