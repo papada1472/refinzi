@@ -1292,10 +1292,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     homeEngineBanner.querySelectorAll('.engine-free').forEach((node) => node.remove());
 
     const bundledKeyInUse =
-      !currentSettings?.apiKeys?.gemini ||
-      currentSettings.apiKeys.gemini === DEFAULT_GEMINI_API_KEY;
+      Boolean(DEFAULT_GEMINI_API_KEY) &&
+      (!currentSettings?.apiKeys?.gemini ||
+       currentSettings.apiKeys.gemini === DEFAULT_GEMINI_API_KEY);
 
-    // Free-tier accounting only applies to the bundled Gemini key.
+    // Free-tier accounting only applies to an active bundled Gemini key.
     if (currentSettings?.provider !== 'gemini' || !bundledKeyInUse) {
       if (btnQuickProvider) btnQuickProvider.textContent = 'Configure →';
       return;

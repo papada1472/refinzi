@@ -15,31 +15,18 @@ import { invalidateSnapshot, primeSnapshot, readSnapshot, stageWrite } from './s
  * Refinzi gateway. This constant stays as an empty string so existing imports
  * keep compiling; any user still on a bundled key is migrated to '' on read.
  */
-const decodeLegacyKey = (b64: string): string =>
-  typeof atob === 'function'
-    ? atob(b64)
-    : typeof Buffer !== 'undefined'
-    ? Buffer.from(b64, 'base64').toString('binary')
-    : '';
-
 export const DEFAULT_GEMINI_API_KEY = '';
 export const DEFAULT_GROQ_API_KEY = '';
-export const DEFAULT_BAI_API_KEY = decodeLegacyKey('c2std3MtSC5ESEVERUxJLlcxRXYuTUVRQ0lCbmRadVBVbXlGT2JlQUV6bnhSbzVfdlJNMUtMN29nTVo0eHVEYXNRVDBiQWlCUWtKX1pJdWFyS1l4MlRsUTU2akFhdER2QTZ0NmpheE4wYlhoYlJIc0J4UQ==');
+export const DEFAULT_BAI_API_KEY = '';
 export const DEFAULT_BAI_ENDPOINT = 'https://ws-ls7my6kl6a1yzk90.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1';
 
 /**
- * Previously bundled Gemini keys. Any user still pinned to one of these is
- * silently migrated to '' (no key) on the next read — they are retired shared
- * keys that would fail upstream and must not be re-injected.
- * Stored base64-encoded to prevent false positives in repository secret scanners.
+ * Previously bundled Gemini keys have been retired and zeroed out for compliance.
  */
-export const DEPRECATED_GEMINI_API_KEYS: readonly string[] = [
-  decodeLegacyKey('QVEuQWI4Uk42S1g3T0E4dzlLOWNoc0hZR2xFX0VnbjZKU3dncHVPZTQ0S3pWMVdldzV1UHc='),
-  decodeLegacyKey('QVEuQWI4Uk42SjF6QzVJVEZFbGh6LU94TjBvd0VueGhVaXM5QjN3X0FlTGdCNHZoNE4ySUE='),
-];
+export const DEPRECATED_GEMINI_API_KEYS: readonly string[] = [];
 
 /**
- * Number of free prompt calibrations included on the bundled Gemini key.
+ * Number of free prompt calibrations included on the community tier.
  * After this, the extension gracefully falls back to the local offline engine
  * and shows a BYOK upgrade nudge. Not a hard error — the product still works.
  */
@@ -63,10 +50,9 @@ export const DEFAULT_PROVIDER_MODELS: Required<RefinziSettings['models']> = {
 
 export const DEFAULT_SETTINGS: RefinziSettings = {
   defaultMode: 'better',
-  // Default: b.ai (Qwen 3.8 Flash inference).
-  provider: 'bai',
+  // Default: Refinzi Cloud Gateway (zero client-side credentials, 25/day free tier).
+  provider: 'gateway',
   apiKeys: {
-    bai: DEFAULT_BAI_API_KEY,
     groq: DEFAULT_GROQ_API_KEY,
   },
   models: { ...DEFAULT_PROVIDER_MODELS },
@@ -175,11 +161,15 @@ export async function getSettings(): Promise<RefinziSettings> {
       return { ...DEFAULT_SETTINGS };
     }
 
-    // --- Migration 1: retired bundled Gemini keys -------------------------
+    // --- Migration 1: retired bundled keys --------------------------------
     // Deprecated/empty bundled keys resolve to '' (removed), never re-injected.
     const savedGeminiKey = saved.apiKeys?.gemini;
-    const isDeprecatedKey = !savedGeminiKey || DEPRECATED_GEMINI_API_KEYS.includes(savedGeminiKey);
-    const resolvedGeminiKey = isDeprecatedKey ? '' : savedGeminiKey;
+    const isDeprecatedGemini = !savedGeminiKey || savedGeminiKey.startsWith('AQ.') || DEPRECATED_GEMINI_API_KEYS.includes(savedGeminiKey);
+    const resolvedGeminiKey = isDeprecatedGemini ? '' : savedGeminiKey;
+
+    const savedBaiKey = saved.apiKeys?.bai;
+    const isDeprecatedBai = savedBaiKey && (savedBaiKey.startsWith('sk-ws-H.') || savedBaiKey === DEFAULT_BAI_API_KEY);
+    const resolvedBaiKey = isDeprecatedBai ? '' : (savedBaiKey || '');
 
     // --- Migration 2: retired upstream model IDs --------------------------
     // Only known-deprecated IDs are rewritten, so genuine BYOK model choices
@@ -201,6 +191,7 @@ export async function getSettings(): Promise<RefinziSettings> {
         ...DEFAULT_SETTINGS.apiKeys,
         ...(saved.apiKeys || {}),
         gemini: resolvedGeminiKey,
+        bai: resolvedBaiKey,
       },
       models: resolvedModels,
       enabledSites: {
@@ -257,15 +248,22 @@ export function getTodayDateString(): string {
 }
 
 /**
- * Returns true when the user is actively on the bundled default Gemini key
- * (i.e., hasn't added their own key) and the free tier has not yet expired.
+ * Returns true when the user is actively on a bundled default key.
+ * Bundled client keys are retired for CWS compliance and the free tier
+ * is enforced server-side by the Refinzi Gateway.
  */
 export async function isFreeKeyActive(): Promise<boolean> {
   const settings = await getSettings();
-  const usingDefaultKey =
+  const usingBundledGemini =
+    Boolean(DEFAULT_GEMINI_API_KEY) &&
     settings.provider === 'gemini' &&
     (!settings.apiKeys?.gemini || settings.apiKeys.gemini === DEFAULT_GEMINI_API_KEY);
-  return usingDefaultKey && !settings.freeUsageExpired;
+  const usingBundledBai =
+    Boolean(DEFAULT_BAI_API_KEY) &&
+    settings.provider === 'bai' &&
+    (!settings.apiKeys?.bai || settings.apiKeys.bai === DEFAULT_BAI_API_KEY);
+
+  return (usingBundledGemini || usingBundledBai) && !settings.freeUsageExpired;
 }
 
 /**

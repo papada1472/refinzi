@@ -82,8 +82,8 @@ export class ProviderManager {
         return this.localProvider;
 
       default:
-        // Default to b.ai
-        return new BAIProvider(settings.apiKeys?.bai, settings.models?.bai || 'qwen3.8-flash');
+        // Default to Refinzi Cloud Gateway
+        return getGatewayProvider();
     }
   }
 

@@ -43,28 +43,27 @@ import { OpenRouterProvider } from '../src/providers/openrouter';
 import { GroqProvider } from '../src/providers/groq';
 import { BAIProvider } from '../src/providers/bai';
 
-/** The bundled key shipped before the current one (pulled from deprecated list). */
-const PREVIOUS_BUNDLED_KEY = DEPRECATED_GEMINI_API_KEYS[1];
+/** Sample legacy key prefix used to test migration on read */
+const PREVIOUS_BUNDLED_KEY = 'AQ.dummy-legacy-test-key-for-migration-testing';
 
 describe('Provider defaults, bundled key & settings migration', () => {
   let mockStorage: Record<string, any> = {};
 
   beforeEach(() => {
     mockStorage = {};
-    vi.restoreAllMocks();
-    // The storage backend is being replaced, so every cached snapshot must be
-    // dropped — otherwise a previous test's settings/history would be served
-    // from cache instead of this test's mock contents.
     __resetStorageLayerForTests();
+    vi.restoreAllMocks();
 
     vi.spyOn(BrowserAPI.storage.local, 'get').mockImplementation(async (keys: any) => {
-      if (!keys) return { ...mockStorage };
-      const keyList = Array.isArray(keys) ? keys : [keys];
-      const res: Record<string, any> = {};
-      for (const k of keyList) {
-        if (k in mockStorage) res[k] = mockStorage[k];
+      if (typeof keys === 'string') {
+        return { [keys]: mockStorage[keys] };
       }
-      return res;
+      if (Array.isArray(keys)) {
+        const out: Record<string, any> = {};
+        keys.forEach((k) => (out[k] = mockStorage[k]));
+        return out;
+      }
+      return { ...mockStorage };
     });
 
     vi.spyOn(BrowserAPI.storage.local, 'set').mockImplementation(async (items: any) => {
@@ -73,22 +72,16 @@ describe('Provider defaults, bundled key & settings migration', () => {
   });
 
   describe('1. Retired bundled key & default provider', () => {
-    it('ships no bundled key (retired to an empty string)', () => {
+    it('ships zero hardcoded API keys in source code for CWS compliance', () => {
       expect(DEFAULT_GEMINI_API_KEY).toBe('');
+      expect(DEFAULT_BAI_API_KEY).toBe('');
+      expect(DEPRECATED_GEMINI_API_KEYS).toHaveLength(0);
     });
 
-    it('lists both retired bundled keys as deprecated', () => {
-      expect(DEPRECATED_GEMINI_API_KEYS).toHaveLength(2);
-      expect(DEPRECATED_GEMINI_API_KEYS).toContain(PREVIOUS_BUNDLED_KEY);
-      expect(DEPRECATED_GEMINI_API_KEYS).toContain(DEPRECATED_GEMINI_API_KEYS[0]);
-      // The empty "no key" sentinel must not itself be flagged as deprecated.
-      expect(DEPRECATED_GEMINI_API_KEYS).not.toContain('');
-    });
-
-    it('defaults to bai with configured default key in fresh settings', () => {
-      expect(DEFAULT_SETTINGS.provider).toBe('bai');
+    it('defaults to gateway with zero client credentials in fresh settings', () => {
+      expect(DEFAULT_SETTINGS.provider).toBe('gateway');
       expect(DEFAULT_SETTINGS.apiKeys.gemini).toBeUndefined();
-      expect(DEFAULT_SETTINGS.apiKeys.bai).toBe(DEFAULT_BAI_API_KEY);
+      expect(DEFAULT_SETTINGS.apiKeys.bai).toBeUndefined();
     });
   });
 
@@ -123,10 +116,11 @@ describe('Provider defaults, bundled key & settings migration', () => {
 
   describe('3. Migration on read', () => {
     it('rewrites a saved retired bundled key to empty (never re-injects a key)', async () => {
-      mockStorage.refinzi_settings = { apiKeys: { gemini: PREVIOUS_BUNDLED_KEY } };
+      mockStorage.refinzi_settings = { apiKeys: { gemini: PREVIOUS_BUNDLED_KEY, bai: 'sk-ws-H.DHEDELI.legacy' } };
       __resetStorageLayerForTests();
       const settings = await getSettings();
       expect(settings.apiKeys.gemini).toBe('');
+      expect(settings.apiKeys.bai).toBe('');
     });
 
     it('rewrites every retired default model to the current default', async () => {

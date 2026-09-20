@@ -14,6 +14,7 @@
 
 import { REFINZI_CSS } from './styles';
 import { PromptMode } from '../types';
+import { escapeHTML } from '../utils/sanitize';
 
 export interface AmbientOrbCallbacks {
   onBetter: () => void;
@@ -472,7 +473,7 @@ export class AmbientOrb {
         ${checklistItems.map(item => `
           <div class="checklist-item">
             <span class="checklist-check">✓</span>
-            <span>${item}</span>
+            <span>${escapeHTML(item)}</span>
           </div>
         `).join('')}
       </div>
@@ -489,7 +490,7 @@ export class AmbientOrb {
     }
 
     const modeLabel = params.mode === 'better' ? '⚡ Better Calibrated' : '🧠 Expert Briefing Applied';
-    const domainLabel = params.domain ? `<span class="toast-domain-badge">${params.domain}</span>` : '';
+    const domainLabel = params.domain ? `<span class="toast-domain-badge">${escapeHTML(params.domain)}</span>` : '';
 
     this.undoToastEl.innerHTML = `
       <div class="validation-toast-header">
@@ -802,8 +803,8 @@ export class AmbientOrb {
     nudge.className = `byok-nudge-pill ${isError ? 'error-mode' : 'warning-mode'}`;
     nudge.innerHTML = `
       <span class="byok-nudge-icon">${icon}</span>
-      <span class="byok-nudge-text">${text}</span>
-      <button type="button" class="byok-nudge-cta" id="rfz-byok-settings-btn">${ctaLabel}</button>
+      <span class="byok-nudge-text">${escapeHTML(text)}</span>
+      <button type="button" class="byok-nudge-cta" id="rfz-byok-settings-btn">${escapeHTML(ctaLabel)}</button>
       <button type="button" class="byok-nudge-close" id="rfz-byok-close" title="Dismiss">✕</button>
     `;
 

@@ -34,7 +34,6 @@ export class GatewayProvider implements AIProvider {
           text,
           systemPrompt,
           model: this.model,
-          apiKey: this.apiKey,
         }),
         signal: options?.signal || controller.signal,
       });
