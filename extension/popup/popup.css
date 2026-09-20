@@ -1595,20 +1595,22 @@ input:checked + .slider:before {
 .refinzi-tooltip {
   position: fixed;
   z-index: 99999;
-  background: #1e1e24;
-  color: #e4e4e7;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: #141418;
+  color: #f4f4f5;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
-  padding: 6px 10px;
+  padding: 5px 9px;
   font-size: 10px;
+  font-weight: 500;
   line-height: 1.35;
   max-width: 240px;
+  width: max-content;
   pointer-events: none;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.4);
   opacity: 0;
   visibility: hidden;
-  transform: translateY(4px);
-  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+  transform: translateY(3px);
+  transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s;
 }
 
 .refinzi-tooltip.visible {

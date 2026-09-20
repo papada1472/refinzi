@@ -110,9 +110,15 @@ describe('Home Dashboard Redesign & PLG Activation', () => {
       expect(tooltip?.classList.contains('hidden')).toBe(true);
     });
 
-    it('has data-tooltip attributes on tooltip triggers alongside keyboard focusability', () => {
+    it('has data-tooltip attributes on all four metric card headers with keyboard focusability', () => {
+      const tooltipPrompts = document.getElementById('tooltip-prompts-enhanced');
       const tooltipTime = document.getElementById('tooltip-time-saved');
       const tooltipCost = document.getElementById('tooltip-cost-saved');
+      const tooltipUsage = document.getElementById('tooltip-usage-split');
+
+      expect(tooltipPrompts?.getAttribute('data-tooltip')).toContain('Total prompts enhanced');
+      expect(tooltipPrompts?.getAttribute('tabindex')).toBe('0');
+      expect(tooltipPrompts?.getAttribute('role')).toBe('button');
 
       expect(tooltipTime?.getAttribute('data-tooltip')).toContain('average time assumed');
       expect(tooltipTime?.getAttribute('tabindex')).toBe('0');
@@ -121,6 +127,40 @@ describe('Home Dashboard Redesign & PLG Activation', () => {
       expect(tooltipCost?.getAttribute('data-tooltip')).toContain('Estimated from AI usage');
       expect(tooltipCost?.getAttribute('tabindex')).toBe('0');
       expect(tooltipCost?.getAttribute('role')).toBe('button');
+
+      expect(tooltipUsage?.getAttribute('data-tooltip')).toContain('Distribution between Better');
+      expect(tooltipUsage?.getAttribute('tabindex')).toBe('0');
+      expect(tooltipUsage?.getAttribute('role')).toBe('button');
+    });
+
+    it('attaches hover tooltips to header status pill and active tab pill', () => {
+      const statusPill = document.getElementById('global-status-pill');
+      const contextPill = document.getElementById('tab-context-pill');
+
+      expect(statusPill?.getAttribute('data-tooltip')).toContain('Active AI engine');
+      expect(statusPill?.getAttribute('tabindex')).toBe('0');
+      expect(statusPill?.getAttribute('role')).toBe('button');
+
+      expect(contextPill?.getAttribute('data-tooltip')).toContain('Active tab detection');
+      expect(contextPill?.getAttribute('tabindex')).toBe('0');
+      expect(contextPill?.getAttribute('role')).toBe('button');
+    });
+
+    it('attaches hover tooltips to period toggle buttons and bottom nav items', () => {
+      const periodButtons = document.querySelectorAll('.period-btn');
+      periodButtons.forEach((btn) => {
+        expect(btn.getAttribute('data-tooltip')).toBeTruthy();
+      });
+
+      const navButtons = document.querySelectorAll('.nav-btn');
+      navButtons.forEach((btn) => {
+        expect(btn.getAttribute('data-tooltip')).toBeTruthy();
+      });
+
+      const betterPill = document.querySelector('.hero-mode-pill.better');
+      const expertPill = document.querySelector('.hero-mode-pill.expert');
+      expect(betterPill?.getAttribute('data-tooltip')).toContain('Better');
+      expect(expertPill?.getAttribute('data-tooltip')).toContain('Expert');
     });
 
     it('provides CSS rules for floating tooltip visibility and high-contrast styling', () => {

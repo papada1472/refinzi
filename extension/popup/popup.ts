@@ -1016,20 +1016,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       activeTrigger = el;
 
       const rect = el.getBoundingClientRect();
-      const tooltipWidth = 220;
+      const tooltipRect = globalTooltip.getBoundingClientRect();
+      const tooltipWidth = tooltipRect.width || 200;
+      const tooltipHeight = tooltipRect.height || 32;
+
       let left = rect.left + rect.width / 2 - tooltipWidth / 2;
-      if (left < 10) left = 10;
-      if (left + tooltipWidth > window.innerWidth - 10) {
-        left = window.innerWidth - tooltipWidth - 10;
+      if (left < 8) left = 8;
+      if (left + tooltipWidth > window.innerWidth - 8) {
+        left = window.innerWidth - tooltipWidth - 8;
       }
 
       let top = rect.bottom + 6;
-      if (top + 60 > window.innerHeight) {
-        top = Math.max(10, rect.top - 45);
+      if (top + tooltipHeight > window.innerHeight - 8) {
+        top = Math.max(8, rect.top - tooltipHeight - 6);
       }
 
-      globalTooltip.style.left = `${Math.max(8, left)}px`;
-      globalTooltip.style.top = `${Math.max(8, top)}px`;
+      globalTooltip.style.left = `${Math.round(left)}px`;
+      globalTooltip.style.top = `${Math.round(top)}px`;
     }
 
     function hideTooltip(): void {
