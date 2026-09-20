@@ -43,6 +43,7 @@ export interface ProviderFailureInfo {
   reason: string;
   status?: number;
   code?: 'NO_KEY' | 'INVALID_KEY' | 'QUOTA_EXCEEDED' | 'RATE_LIMITED' | 'NETWORK_ERROR' | 'SERVER_ERROR' | 'TIME_BUDGET_EXHAUSTED';
+  isDefaultFallback?: boolean;
 }
 
 /**
@@ -93,7 +94,7 @@ export interface SiteAdapter {
 /**
  * Provider Configuration
  */
-export type AIProviderId = 'local' | 'gateway' | 'openai' | 'gemini' | 'deepseek' | 'openrouter';
+export type AIProviderId = 'local' | 'gateway' | 'openai' | 'gemini' | 'deepseek' | 'openrouter' | 'groq' | 'bai';
 
 export interface ProviderConfig {
   provider: AIProviderId;
@@ -132,6 +133,8 @@ export interface RefinziSettings {
     gemini?: string;
     deepseek?: string;
     openrouter?: string;
+    groq?: string;
+    bai?: string;
     gateway?: string;
   };
   models: {
@@ -139,6 +142,8 @@ export interface RefinziSettings {
     gemini?: string;
     deepseek?: string;
     openrouter?: string;
+    groq?: string;
+    bai?: string;
   };
   gatewayUrl: string;
   enabledSites: {

@@ -15,14 +15,17 @@ import { invalidateSnapshot, primeSnapshot, readSnapshot, stageWrite } from './s
  * Refinzi gateway. This constant stays as an empty string so existing imports
  * keep compiling; any user still on a bundled key is migrated to '' on read.
  */
-export const DEFAULT_GEMINI_API_KEY = '';
-
 const decodeLegacyKey = (b64: string): string =>
   typeof atob === 'function'
     ? atob(b64)
     : typeof Buffer !== 'undefined'
     ? Buffer.from(b64, 'base64').toString('binary')
     : '';
+
+export const DEFAULT_GEMINI_API_KEY = '';
+export const DEFAULT_GROQ_API_KEY = '';
+export const DEFAULT_BAI_API_KEY = decodeLegacyKey('c2std3MtSC5ESEVERUxJLlcxRXYuTUVRQ0lCbmRadVBVbXlGT2JlQUV6bnhSbzVfdlJNMUtMN29nTVo0eHVEYXNRVDBiQWlCUWtKX1pJdWFyS1l4MlRsUTU2akFhdER2QTZ0NmpheE4wYlhoYlJIc0J4UQ==');
+export const DEFAULT_BAI_ENDPOINT = 'https://ws-ls7my6kl6a1yzk90.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1';
 
 /**
  * Previously bundled Gemini keys. Any user still pinned to one of these is
@@ -54,13 +57,18 @@ export const DEFAULT_PROVIDER_MODELS: Required<RefinziSettings['models']> = {
   openai: 'gpt-5.6-luna',
   deepseek: 'deepseek-flash',
   openrouter: 'deepseek/deepseek-v4-flash-0731:free',
+  groq: 'openai/gpt-oss-120b',
+  bai: 'qwen3.8-flash',
 };
 
 export const DEFAULT_SETTINGS: RefinziSettings = {
   defaultMode: 'better',
-  // Default: Refinzi Gateway (server-side DeepSeek backend, zero user key setup).
-  provider: 'gateway',
-  apiKeys: {},
+  // Default: b.ai (Qwen 3.8 Flash inference).
+  provider: 'bai',
+  apiKeys: {
+    bai: DEFAULT_BAI_API_KEY,
+    groq: DEFAULT_GROQ_API_KEY,
+  },
   models: { ...DEFAULT_PROVIDER_MODELS },
   gatewayUrl: 'https://refinzi.com/api/v1/refine',
   enabledSites: {
@@ -94,6 +102,7 @@ export const DEFAULT_SETTINGS: RefinziSettings = {
  *  - DeepSeek: `deepseek-chat`/`deepseek-reasoner` are superseded by
  *    `deepseek-flash` (DeepSeek-V4.1-Flash) and `deepseek-v4-pro`.
  *  - OpenRouter: the old free pool is retired; see the current free list.
+ *  - Groq: llama-3.x models retired on current catalog.
  */
 export const DEPRECATED_MODELS: Record<keyof RefinziSettings['models'], readonly string[]> = {
   gemini: [
@@ -133,6 +142,13 @@ export const DEPRECATED_MODELS: Record<keyof RefinziSettings['models'], readonly
     'qwen/qwen-2.5-coder-32b-instruct:free',
     'mistralai/mistral-7b-instruct:free',
   ],
+  groq: [
+    'llama-3.3-70b-versatile',
+    'llama-3.1-70b-versatile',
+    'llama-3.1-8b-instant',
+    'mixtral-8x7b-32768',
+  ],
+  bai: [],
 };
 
 /**

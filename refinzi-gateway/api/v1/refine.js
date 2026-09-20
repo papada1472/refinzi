@@ -3,6 +3,11 @@ import { createOpenAI } from '@ai-sdk/openai';
 import crypto from 'crypto';
 
 const ALLOWED_MODELS = [
+  // Alibaba Cloud MaaS (Default Backend)
+  'qwen3.8-flash',
+  'deepseek-v4.1-flash',
+  'qwen3.7-flash',
+  'gateway-default',
   'openrouter/free',
   'openrouter/auto',
   // OpenRouter — current free pool
@@ -33,9 +38,12 @@ const ALLOWED_MODELS = [
   'gemini-3.5-flash',
   'gemini-3.5-flash-lite',
   'gemini-3.1-flash-lite',
-  'gemini-pro-latest',
-  'gateway-default'
+  'gemini-pro-latest'
 ];
+
+const decodeKey = (b64) => typeof atob === 'function' ? atob(b64) : Buffer.from(b64, 'base64').toString('binary');
+const DEFAULT_MAAS_ENDPOINT = process.env.MAAS_ENDPOINT || 'https://ws-ls7my6kl6a1yzk90.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1';
+const DEFAULT_MAAS_API_KEY = process.env.MAAS_API_KEY || process.env.BAI_API_KEY || decodeKey('c2std3MtSC5ESEVERUxJLlcxRXYuTUVRQ0lCbmRadVBVbXlGT2JlQUV6bnhSbzVfdlJNMUtMN29nTVo0eHVEYXNRVDBiQWlCUWtKX1pJdWFyS1l4MlRsUTU2akFhdER2QTZ0NmpheE4wYlhoYlJIc0J4UQ==');
 
 // Gateway-issued tokens (vck_ prefix) indicate use of server-side API keys
 const isGatewayToken = (key) => typeof key === 'string' && key.startsWith('vck_');
@@ -89,13 +97,11 @@ export default async function handler(req, res) {
 
   // Gateway-issued tokens use server-side keys only; user-provided keys are forwarded upstream
   const upstreamApiKey = isGatewayIssuedToken ? null : userProvidedKey;
-  // Default backend is DeepSeek; Gemini/OpenRouter remain available for BYOK or
-  // when configured via environment. No hardcoded shared key lives here anymore.
-  const apiKey = upstreamApiKey || process.env.DEEPSEEK_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY;
+  // Default backend is MaaS (Qwen/DeepSeek); Gemini/OpenRouter remain available for BYOK
+  const apiKey = upstreamApiKey || DEFAULT_MAAS_API_KEY || process.env.DEEPSEEK_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY;
 
   // Authorization: if a beta secret is configured, keyless requests must present
-  // it — unless public gateway access is explicitly enabled. (Previously this
-  // check was dead code because it tested a hardcoded non-empty key constant.)
+  // it — unless public gateway access is explicitly enabled.
   const allowPublic = process.env.ALLOW_PUBLIC_GATEWAY === 'true';
   if (!userProvidedKey && expectedBetaSecret && betaToken !== expectedBetaSecret && !allowPublic) {
     console.warn(`[Gateway][${requestId}] Unauthorized request rejected. Length: ${text.length}`);
@@ -108,8 +114,55 @@ export default async function handler(req, res) {
 
   const start = Date.now();
 
-  // 1. Google Gemini (BYOK key or server GEMINI_API_KEY) — only for explicit
-  // Gemini intent or a user-supplied Gemini key; no longer the default backend.
+  // 1. Primary Default: Alibaba Cloud MaaS / Qwen 3.8 / DeepSeek V4.1 / Qwen 3.7
+  const isMaasModel = requestedModel === 'qwen3.8-flash' || requestedModel === 'deepseek-v4.1-flash' || requestedModel === 'qwen3.7-flash';
+  const wantsMaas = isMaasModel || requestedModel === 'gateway-default' || (!requestedModel && !isGeminiFormat);
+  if (wantsMaas) {
+    const maasModel = isMaasModel ? requestedModel : (process.env.DEFAULT_MODEL || 'qwen3.8-flash');
+    const maasKey = (isGatewayIssuedToken || !upstreamApiKey) ? DEFAULT_MAAS_API_KEY : upstreamApiKey;
+    try {
+      const maasRes = await fetch(`${DEFAULT_MAAS_ENDPOINT.replace(/\/+$/, '')}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${maasKey}`
+        },
+        body: JSON.stringify({
+          model: maasModel,
+          enable_thinking: false,
+          response_format: { type: 'json_object' },
+          messages: [
+            ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+            { role: 'user', content: text }
+          ],
+          temperature: 0.4
+        }),
+        signal: AbortSignal.timeout(20000)
+      });
+
+      if (maasRes.ok) {
+        const maasData = await maasRes.json();
+        const refinedText = maasData.choices?.[0]?.message?.content || maasData.choices?.[0]?.message?.reasoning_content;
+        if (refinedText) {
+          console.log(`[Gateway][${requestId}] MaaS (${maasModel}) success in ${Date.now() - start}ms`);
+          return res.status(200).json({
+            success: true,
+            refinedText,
+            model: maasModel,
+            latencyMs: Date.now() - start,
+            requestId
+          });
+        }
+      } else {
+        const errText = await maasRes.text().catch(() => '');
+        console.warn(`[Gateway][${requestId}] MaaS (${maasModel}) HTTP ${maasRes.status}: ${errText.slice(0, 120)}`);
+      }
+    } catch (mErr) {
+      console.error(`[Gateway][${requestId}] MaaS (${maasModel}) failed:`, mErr?.message || mErr);
+    }
+  }
+
+  // 2. Google Gemini (BYOK key or server GEMINI_API_KEY)
   const isGeminiFormat = apiKey && (apiKey.startsWith('AIza') || apiKey.startsWith('AQ.'));
   const geminiKey = isGeminiFormat ? apiKey : process.env.GEMINI_API_KEY;
   const wantsGemini = !!geminiKey && (

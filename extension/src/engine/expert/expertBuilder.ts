@@ -133,18 +133,35 @@ function buildEmailPrompt(model: ExpertTaskModel): string {
     ].join('\n');
   }
 
-  // General customer apology/communication
+  const isApology = lower.includes('apolog') || lower.includes('sorry') || lower.includes('issue') || lower.includes('mistake');
   const recipient = model.audience || 'customer';
+  const subject = model.specificSubject || model.rawInput;
+
+  if (isApology) {
+    return [
+      `Draft a professional apology email to a ${recipient.toLowerCase()} regarding: ${subject}.`,
+      ``,
+      `Structure the communication with:`,
+      `1. Tone & Calibration: Direct, respectful, accountable, and empathetic—avoid defensive phrasing or corporate jargon.`,
+      `2. Problem Acknowledgment: Clearly acknowledge the issue and validate the recipient's inconvenience.`,
+      `3. Transparent Explanation: Provide a brief explanation without unnecessary excuses.`,
+      `4. Concrete Resolution & Next Steps: Communicate the current status and immediate resolution where information is available.`,
+      ``,
+      `Do not invent reasons, dates, refunds, credits, or unrequested commitments not provided in the request.`
+    ].join('\n');
+  }
+
   return [
-    `Draft a professional apology email to a ${recipient.toLowerCase()} regarding: ${model.specificSubject || 'the reported issue'}.`,
+    `Draft a professional, high-impact email to a ${recipient.toLowerCase()} regarding: ${subject}.`,
     ``,
-    `Structure the communication with:`,
-    `1. Tone & Calibration: Direct, respectful, accountable, and empathetic—avoid defensive phrasing or corporate jargon.`,
-    `2. Problem Acknowledgment: Clearly acknowledge the issue and validate the recipient's inconvenience.`,
-    `3. Transparent Explanation: Provide a brief explanation without unnecessary excuses.`,
-    `4. Concrete Resolution & Next Steps: Communicate the current status and immediate resolution where information is available.`,
+    `Requirements:`,
+    `- Tone: Professional, clear, and low-friction—avoid corporate jargon or filler pleasantries.`,
+    `- Core Message: Deliver the primary message and context directly in the opening lines.`,
+    `- Call to Action (CTA): Provide a clear, singular next step.`,
+    `- Structure: Keep paragraphs concise and easy to skim on mobile devices.`,
+    `- Subject Lines: Include 2 distinct subject line options (one direct, one curiosity-led).`,
     ``,
-    `Do not invent reasons, dates, refunds, credits, or unrequested commitments not provided in the request.`
+    `Do not invent unstated commitments, dates, or terms not provided in the request.`
   ].join('\n');
 }
 

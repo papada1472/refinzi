@@ -1,35 +1,37 @@
 import handler from './api/v1/refine.js';
 
-// Mock request and response objects
-const mockReq = {
-  method: 'POST',
-  body: {
-    text: 'Refine this sentence to sound more professional.',
-    systemPrompt: 'You are a professional editor.',
-    model: 'gemini-2.5-flash'
-  }
-};
+function createMockRes(modelName) {
+  return {
+    status: (code) => ({
+      json: (data) => {
+        console.log(`[${modelName}] Status: ${code}`);
+        console.log(`[${modelName}] Model used:`, data.model);
+        console.log(`[${modelName}] Latency:`, data.latencyMs, 'ms');
+        console.log(`[${modelName}] Refined:`, typeof data.refinedText === 'string' ? data.refinedText.slice(0, 100) + '...' : data.refinedText);
+      },
+      end: () => console.log(`[${modelName}] Response ended`)
+    }),
+    setHeader: () => {}
+  };
+}
 
-const mockRes = {
-  status: (code) => {
-    console.log(`Response Status: ${code}`);
-    return {
-      json: (data) => console.log('Response JSON:', JSON.stringify(data, null, 2)),
-      end: () => console.log('Response Ended')
+async function testAll() {
+  const models = ['gateway-default', 'qwen3.8-flash', 'deepseek-v4.1-flash', 'qwen3.7-flash'];
+  for (const m of models) {
+    console.log(`\nTesting gateway handler with model: ${m}...`);
+    const req = {
+      method: 'POST',
+      headers: {
+        'x-beta-token': 'default'
+      },
+      body: {
+        text: 'Write a python script to monitor memory usage',
+        systemPrompt: 'You are an AI prompt calibration engine. Respond with a JSON object: {"prompt": "calibrated prompt"}',
+        model: m
+      }
     };
-  },
-  setHeader: (name, value) => {
-    // console.log(`Header Set: ${name} = ${value}`);
-  }
-};
-
-async function runTest() {
-  console.log('Running test for refine.js handler...');
-  try {
-    await handler(mockReq, mockRes);
-  } catch (error) {
-    console.error('Test failed with error:', error);
+    await handler(req, createMockRes(m));
   }
 }
 
-runTest();
+testAll();

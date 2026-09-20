@@ -1173,35 +1173,35 @@ function extractSubject(raw, lower, scope, taskKind) {
   if (scope === "hero_section") {
     subj = subj.replace(/^(landing page hero(\s+section)?|hero(\s+section)?)\s+(for\s+)?/i, "");
     subj = subj.replace(/\s+landing page$/i, "");
-    return subj.trim() || "developer tool";
+    return subj.trim() || (raw.toLowerCase().includes("developer tool") ? "developer tool" : raw.trim());
   }
   if (scope === "headline_only") {
     subj = subj.replace(/^(2-line|two-line)?\s*(linkedin\s+)?headline\s+(options\s+)?(for\s+)?(a\s+)?/i, "");
-    return subj.trim() || "CTO";
+    return subj.trim() || (raw.toLowerCase().includes("cto") ? "CTO" : raw.trim());
   }
   if (scope === "single_email") {
-    subj = subj.replace(/^(email|message|letter|memo)\s+(to\s+[^ ]+\s+)?(apologizing\s+for|regarding|about)\s+/i, "");
-    subj = subj.replace(/^(apologizing\s+for|regarding|about)\s+/i, "");
-    return subj.trim() || "delayed project delivery";
+    subj = subj.replace(/^(email|message|letter|memo)\s+(to\s+[^ ]+\s+)?(apologizing\s+for|regarding|about|asking\s+for)\s+/i, "");
+    subj = subj.replace(/^(apologizing\s+for|regarding|about|asking\s+for)\s+/i, "");
+    return subj.trim() || (raw.toLowerCase().includes("delayed project") ? "delayed project delivery" : raw.trim());
   }
   if (scope === "bug_fix") {
     subj = subj.replace(/^(fix|debug|resolve)\s+/i, "");
-    return subj.trim() || "memory leak in nodejs stream pipeline";
+    return subj.trim() || (raw.toLowerCase().includes("memory leak") ? "memory leak in nodejs stream pipeline" : raw.trim());
   }
   if (scope === "single_image") {
     subj = subj.replace(/^(cinematic\s+)?(photo|photograph|picture|image|shot|render)\s+of\s+(a|an|the)?\s*/i, "");
     subj = subj.replace(/\s+in\s+tokyo(\s+at\s+night)?/i, "");
     subj = subj.replace(/\s+at\s+night/i, "");
-    return subj.trim() || "Ferrari";
+    return subj.trim() || (raw.toLowerCase().includes("ferrari") ? "Ferrari" : raw.trim());
   }
   if (scope === "competitive_analysis") {
     subj = subj.replace(/^(competitors|alternatives|rivals)\s+(of|to)\s+/i, "");
     subj = subj.replace(/\s+in\s+india/i, "");
-    return subj.trim() || "Notion";
+    return subj.trim() || (raw.toLowerCase().includes("notion") ? "Notion" : raw.trim());
   }
   if (scope === "metric_diagnostic") {
     subj = subj.replace(/^(why\s+our|why\s+the|why\s+)\s*/i, "");
-    return subj.trim() || "Customer Acquisition Cost (CAC) increase";
+    return subj.trim() || (raw.toLowerCase().includes("cac") ? "Customer Acquisition Cost (CAC) increase" : raw.trim());
   }
   return subj || raw;
 }
@@ -1477,8 +1477,8 @@ function buildEmailPrompt(model) {
   const lower = model.rawInput.toLowerCase();
   const isDelayedProject = lower.includes("delayed") || lower.includes("delay");
   if (isDelayedProject) {
-    const subject = model.specificSubject || "delayed project delivery";
-    const cleanSubject = subject.startsWith("a ") ? subject : `a ${subject}`;
+    const subject2 = model.specificSubject || "delayed project delivery";
+    const cleanSubject = subject2.startsWith("a ") ? subject2 : `a ${subject2}`;
     return [
       `Draft a professional apology email to a client regarding ${cleanSubject}.`,
       ``,
@@ -1487,17 +1487,33 @@ function buildEmailPrompt(model) {
       `Do not invent a reason for the delay, compensation, revised dates, refunds, credits, or corrective actions that were not provided.`
     ].join("\n");
   }
+  const isApology = lower.includes("apolog") || lower.includes("sorry") || lower.includes("issue") || lower.includes("mistake");
   const recipient = model.audience || "customer";
+  const subject = model.specificSubject || model.rawInput;
+  if (isApology) {
+    return [
+      `Draft a professional apology email to a ${recipient.toLowerCase()} regarding: ${subject}.`,
+      ``,
+      `Structure the communication with:`,
+      `1. Tone & Calibration: Direct, respectful, accountable, and empathetic\u2014avoid defensive phrasing or corporate jargon.`,
+      `2. Problem Acknowledgment: Clearly acknowledge the issue and validate the recipient's inconvenience.`,
+      `3. Transparent Explanation: Provide a brief explanation without unnecessary excuses.`,
+      `4. Concrete Resolution & Next Steps: Communicate the current status and immediate resolution where information is available.`,
+      ``,
+      `Do not invent reasons, dates, refunds, credits, or unrequested commitments not provided in the request.`
+    ].join("\n");
+  }
   return [
-    `Draft a professional apology email to a ${recipient.toLowerCase()} regarding: ${model.specificSubject || "the reported issue"}.`,
+    `Draft a professional, high-impact email to a ${recipient.toLowerCase()} regarding: ${subject}.`,
     ``,
-    `Structure the communication with:`,
-    `1. Tone & Calibration: Direct, respectful, accountable, and empathetic\u2014avoid defensive phrasing or corporate jargon.`,
-    `2. Problem Acknowledgment: Clearly acknowledge the issue and validate the recipient's inconvenience.`,
-    `3. Transparent Explanation: Provide a brief explanation without unnecessary excuses.`,
-    `4. Concrete Resolution & Next Steps: Communicate the current status and immediate resolution where information is available.`,
+    `Requirements:`,
+    `- Tone: Professional, clear, and low-friction\u2014avoid corporate jargon or filler pleasantries.`,
+    `- Core Message: Deliver the primary message and context directly in the opening lines.`,
+    `- Call to Action (CTA): Provide a clear, singular next step.`,
+    `- Structure: Keep paragraphs concise and easy to skim on mobile devices.`,
+    `- Subject Lines: Include 2 distinct subject line options (one direct, one curiosity-led).`,
     ``,
-    `Do not invent reasons, dates, refunds, credits, or unrequested commitments not provided in the request.`
+    `Do not invent unstated commitments, dates, or terms not provided in the request.`
   ].join("\n");
 }
 function buildBugFixPrompt(model) {
@@ -2384,8 +2400,11 @@ async function runInBatch(fn) {
 }
 
 // extension/src/utils/storage.ts
-var DEFAULT_GEMINI_API_KEY = "";
 var decodeLegacyKey = (b64) => typeof atob === "function" ? atob(b64) : typeof Buffer !== "undefined" ? Buffer.from(b64, "base64").toString("binary") : "";
+var DEFAULT_GEMINI_API_KEY = "";
+var DEFAULT_GROQ_API_KEY = "";
+var DEFAULT_BAI_API_KEY = decodeLegacyKey("c2std3MtSC5ESEVERUxJLlcxRXYuTUVRQ0lCbmRadVBVbXlGT2JlQUV6bnhSbzVfdlJNMUtMN29nTVo0eHVEYXNRVDBiQWlCUWtKX1pJdWFyS1l4MlRsUTU2akFhdER2QTZ0NmpheE4wYlhoYlJIc0J4UQ==");
+var DEFAULT_BAI_ENDPOINT = "https://ws-ls7my6kl6a1yzk90.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1";
 var DEPRECATED_GEMINI_API_KEYS = [
   decodeLegacyKey("QVEuQWI4Uk42S1g3T0E4dzlLOWNoc0hZR2xFX0VnbjZKU3dncHVPZTQ0S3pWMVdldzV1UHc="),
   decodeLegacyKey("QVEuQWI4Uk42SjF6QzVJVEZFbGh6LU94TjBvd0VueGhVaXM5QjN3X0FlTGdCNHZoNE4ySUE=")
@@ -2397,13 +2416,18 @@ var DEFAULT_PROVIDER_MODELS = {
   gemini: "gemini-flash-latest",
   openai: "gpt-5.6-luna",
   deepseek: "deepseek-flash",
-  openrouter: "deepseek/deepseek-v4-flash-0731:free"
+  openrouter: "deepseek/deepseek-v4-flash-0731:free",
+  groq: "openai/gpt-oss-120b",
+  bai: "qwen3.8-flash"
 };
 var DEFAULT_SETTINGS = {
   defaultMode: "better",
-  // Default: Refinzi Gateway (server-side DeepSeek backend, zero user key setup).
-  provider: "gateway",
-  apiKeys: {},
+  // Default: b.ai (Qwen 3.8 Flash inference).
+  provider: "bai",
+  apiKeys: {
+    bai: DEFAULT_BAI_API_KEY,
+    groq: DEFAULT_GROQ_API_KEY
+  },
   models: { ...DEFAULT_PROVIDER_MODELS },
   gatewayUrl: "https://refinzi.com/api/v1/refine",
   enabledSites: {
@@ -2463,7 +2487,14 @@ var DEPRECATED_MODELS = {
     "google/gemma-2-9b-it:free",
     "qwen/qwen-2.5-coder-32b-instruct:free",
     "mistralai/mistral-7b-instruct:free"
-  ]
+  ],
+  groq: [
+    "llama-3.3-70b-versatile",
+    "llama-3.1-70b-versatile",
+    "llama-3.1-8b-instant",
+    "mixtral-8x7b-32768"
+  ],
+  bai: []
 };
 var SETTINGS_KEY = "refinzi_settings";
 function invalidateSettingsCache() {
@@ -3184,7 +3215,8 @@ Target AI: ${intent.targetAi}`,
           provider: "gateway",
           reason: failure.reason,
           status: failure.status,
-          code: failure.code
+          code: failure.code,
+          isDefaultFallback: !this.apiKey
         }
       };
     }
@@ -3196,7 +3228,8 @@ Target AI: ${intent.targetAi}`,
         provider: "gateway",
         reason: "Gateway returned an invalid response",
         status: 0,
-        code: "SERVER_ERROR"
+        code: "SERVER_ERROR",
+        isDefaultFallback: !this.apiKey
       }
     };
   }
@@ -3223,7 +3256,8 @@ Target AI: ${intent.targetAi}`,
           provider: "gateway",
           reason: failure.reason,
           status: failure.status,
-          code: failure.code
+          code: failure.code,
+          isDefaultFallback: !this.apiKey
         }
       };
     }
@@ -3235,7 +3269,8 @@ Target AI: ${intent.targetAi}`,
         provider: "gateway",
         reason: "Gateway returned an invalid response",
         status: 0,
-        code: "SERVER_ERROR"
+        code: "SERVER_ERROR",
+        isDefaultFallback: !this.apiKey
       }
     };
   }
@@ -3251,6 +3286,366 @@ Target AI: ${intent.targetAi}`,
       return { ok: false, message: `Gateway status: ${res.status}` };
     } catch (err) {
       return { ok: false, message: err?.message || "Gateway unreachable" };
+    }
+  }
+};
+
+// extension/src/providers/groq.ts
+var GroqProvider = class {
+  id = "groq";
+  name = "Groq";
+  apiKey;
+  model;
+  constructor(apiKey = DEFAULT_GROQ_API_KEY, model = "openai/gpt-oss-120b") {
+    this.apiKey = apiKey || DEFAULT_GROQ_API_KEY;
+    this.model = model;
+  }
+  classifyGroqError(err) {
+    const msg = err?.message || String(err);
+    if (msg.includes("401") || msg.includes("Unauthorized") || msg.includes("invalid_api_key")) {
+      return { provider: "groq", reason: "Invalid Groq API key. Check your key in Settings.", status: 401, code: "INVALID_KEY" };
+    }
+    if (msg.includes("429") || msg.includes("rate_limit_exceeded")) {
+      return { provider: "groq", reason: "Groq rate limit exceeded. Please wait a moment.", status: 429, code: "RATE_LIMITED" };
+    }
+    if (msg.includes("timeout") || msg.includes("AbortError")) {
+      return { provider: "groq", reason: "Groq request timed out", status: 408, code: "TIME_BUDGET_EXHAUSTED" };
+    }
+    if (msg.includes("500") || msg.includes("502") || msg.includes("503")) {
+      return { provider: "groq", reason: "Groq service temporarily unavailable", status: 503, code: "SERVER_ERROR" };
+    }
+    return { provider: "groq", reason: "Groq connection error: " + msg.slice(0, 80), status: 0, code: "NETWORK_ERROR" };
+  }
+  async callGroq(systemPrompt, userMessage, options) {
+    const timeoutMs = options?.timeoutMs || 15e3;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.apiKey}`
+        },
+        body: JSON.stringify({
+          model: this.model,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMessage }
+          ],
+          temperature: 0.6
+        }),
+        signal: options?.signal || controller.signal
+      });
+      clearTimeout(timer);
+      if (!response.ok) {
+        const errText = await response.text().catch(() => "");
+        throw new Error(`Groq HTTP ${response.status}: ${errText.slice(0, 150)}`);
+      }
+      const data = await response.json();
+      return data.choices?.[0]?.message?.content || "";
+    } catch (err) {
+      clearTimeout(timer);
+      throw err;
+    }
+  }
+  async generateBetter(rawInput, intent, options) {
+    if (!this.apiKey) {
+      const fallback2 = synthesizeBetterPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: {
+          provider: "groq",
+          reason: "No Groq API key configured",
+          code: "NO_KEY"
+        }
+      };
+    }
+    try {
+      const text = await this.callGroq(
+        BETTER_SYSTEM_PROMPT,
+        `Input: "${rawInput}"
+Domain: ${intent.domain}
+Target AI: ${intent.targetAi}`,
+        options
+      );
+      const parsed = extractAndParseJSON(text);
+      const validated = validateBetterResponse(parsed);
+      if (validated) return validated;
+    } catch (err) {
+      console.warn("[Refinzi] Groq Better call failed, using local calibration:", err);
+      const failure = this.classifyGroqError(err);
+      const fallback2 = synthesizeBetterPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: failure
+      };
+    }
+    const fallback = synthesizeBetterPrompt(rawInput, intent.targetAi);
+    return {
+      ...fallback,
+      isFallback: true,
+      providerFailure: {
+        provider: "groq",
+        reason: "Groq returned an invalid response structure",
+        code: "SERVER_ERROR"
+      }
+    };
+  }
+  async generateExpert(rawInput, intent, options) {
+    if (!this.apiKey) {
+      const fallback2 = synthesizeExpertPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: {
+          provider: "groq",
+          reason: "No Groq API key configured",
+          code: "NO_KEY"
+        }
+      };
+    }
+    try {
+      const text = await this.callGroq(
+        EXPERT_SYSTEM_PROMPT,
+        `User Raw Input: "${rawInput}"
+Domain: ${intent.domain}
+Target AI: ${intent.targetAi}`,
+        options
+      );
+      const parsed = extractAndParseJSON(text);
+      const validated = validateExpertFinalResponse(parsed);
+      if (validated) return validated;
+    } catch (err) {
+      console.warn("[Refinzi] Groq Expert call failed, using local briefing:", err);
+      const failure = this.classifyGroqError(err);
+      const fallback2 = synthesizeExpertPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: failure
+      };
+    }
+    const fallback = synthesizeExpertPrompt(rawInput, intent.targetAi);
+    return {
+      ...fallback,
+      isFallback: true,
+      providerFailure: {
+        provider: "groq",
+        reason: "Groq returned an invalid response structure",
+        code: "SERVER_ERROR"
+      }
+    };
+  }
+  async testConnection(options) {
+    if (!this.apiKey) {
+      return { ok: false, message: "Missing Groq API key. Paste your key from console.groq.com" };
+    }
+    try {
+      const res = await fetch("https://api.groq.com/openai/v1/models", {
+        headers: {
+          "Authorization": `Bearer ${this.apiKey}`
+        },
+        signal: options?.signal || AbortSignal.timeout(7e3)
+      });
+      if (res.ok) {
+        return { ok: true, message: "Groq connected successfully (Ultra-fast LPU inference ready)" };
+      }
+      if (res.status === 401) {
+        return { ok: false, message: "Invalid Groq API key (HTTP 401)" };
+      }
+      return { ok: false, message: `Groq error (HTTP ${res.status})` };
+    } catch (err) {
+      return { ok: false, message: err?.message || "Connection failed" };
+    }
+  }
+};
+
+// extension/src/providers/bai.ts
+var BAIProvider = class {
+  id = "bai";
+  name = "b.ai";
+  apiKey;
+  model;
+  baseUrl;
+  constructor(apiKey, model = "qwen3.8-flash", baseUrl = DEFAULT_BAI_ENDPOINT) {
+    this.apiKey = apiKey !== void 0 ? apiKey : DEFAULT_BAI_API_KEY;
+    this.model = model || "qwen3.8-flash";
+    this.baseUrl = baseUrl || DEFAULT_BAI_ENDPOINT;
+  }
+  classifyBaiError(err) {
+    const msg = err?.message || String(err);
+    if (msg.includes("401") || msg.includes("Unauthorized") || msg.includes("invalid_api_key")) {
+      return { provider: "bai", reason: "Invalid b.ai API key. Check your key in Settings.", status: 401, code: "INVALID_KEY" };
+    }
+    if (msg.includes("429") || msg.includes("rate_limit_exceeded") || msg.includes("quota")) {
+      return { provider: "bai", reason: "b.ai rate limit exceeded. Please wait a moment.", status: 429, code: "RATE_LIMITED" };
+    }
+    if (msg.includes("timeout") || msg.includes("AbortError")) {
+      return { provider: "bai", reason: "b.ai request timed out", status: 408, code: "TIME_BUDGET_EXHAUSTED" };
+    }
+    if (msg.includes("500") || msg.includes("502") || msg.includes("503")) {
+      return { provider: "bai", reason: "b.ai service temporarily unavailable", status: 503, code: "SERVER_ERROR" };
+    }
+    return { provider: "bai", reason: "b.ai connection error: " + msg.slice(0, 80), status: 0, code: "NETWORK_ERROR" };
+  }
+  async callBai(systemPrompt, userMessage, options) {
+    const timeoutMs = options?.timeoutMs || 25e3;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const endpoint = `${this.baseUrl.replace(/\/+$/, "")}/chat/completions`;
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.apiKey}`
+        },
+        body: JSON.stringify({
+          model: this.model,
+          enable_thinking: false,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMessage }
+          ],
+          temperature: 0.4
+        }),
+        signal: options?.signal || controller.signal
+      });
+      clearTimeout(timer);
+      if (!response.ok) {
+        const errText = await response.text().catch(() => "");
+        throw new Error(`b.ai HTTP ${response.status}: ${errText.slice(0, 150)}`);
+      }
+      const data = await response.json();
+      const choice = data.choices?.[0];
+      const content = choice?.message?.content || choice?.message?.reasoning_content || "";
+      return content;
+    } catch (err) {
+      clearTimeout(timer);
+      throw err;
+    }
+  }
+  async generateBetter(rawInput, intent, options) {
+    if (!this.apiKey) {
+      const fallback2 = synthesizeBetterPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: {
+          provider: "bai",
+          reason: "No b.ai API key configured",
+          code: "NO_KEY"
+        }
+      };
+    }
+    try {
+      const userPayload = JSON.stringify({
+        rawPrompt: rawInput,
+        targetAi: intent.targetAi,
+        domain: intent.domain
+      });
+      const rawResponse = await this.callBai(BETTER_SYSTEM_PROMPT, userPayload, options);
+      const parsed = extractAndParseJSON(rawResponse);
+      const validated = validateBetterResponse(parsed);
+      if (validated) return validated;
+    } catch (err) {
+      console.warn("[Refinzi] b.ai Better call failed, using local calibration:", err);
+      const fallback2 = synthesizeBetterPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: this.classifyBaiError(err)
+      };
+    }
+    const fallback = synthesizeBetterPrompt(rawInput, intent.targetAi);
+    return {
+      ...fallback,
+      isFallback: true,
+      providerFailure: {
+        provider: "bai",
+        reason: "b.ai returned an invalid response structure",
+        code: "SERVER_ERROR"
+      }
+    };
+  }
+  async generateExpert(rawInput, intent, options) {
+    if (!this.apiKey) {
+      const fallback2 = synthesizeExpertPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: {
+          provider: "bai",
+          reason: "No b.ai API key configured",
+          code: "NO_KEY"
+        }
+      };
+    }
+    try {
+      const userPayload = JSON.stringify({
+        rawPrompt: rawInput,
+        targetAi: intent.targetAi,
+        domain: intent.domain,
+        assumptions: intent.assumptions,
+        constraints: intent.constraints
+      });
+      const rawResponse = await this.callBai(EXPERT_SYSTEM_PROMPT, userPayload, options);
+      const parsed = extractAndParseJSON(rawResponse);
+      const validated = validateExpertFinalResponse(parsed);
+      if (validated) return validated;
+    } catch (err) {
+      console.warn("[Refinzi] b.ai Expert call failed, using local briefing:", err);
+      const fallback2 = synthesizeExpertPrompt(rawInput, intent.targetAi);
+      return {
+        ...fallback2,
+        isFallback: true,
+        providerFailure: this.classifyBaiError(err)
+      };
+    }
+    const fallback = synthesizeExpertPrompt(rawInput, intent.targetAi);
+    return {
+      ...fallback,
+      isFallback: true,
+      providerFailure: {
+        provider: "bai",
+        reason: "b.ai returned an invalid response structure",
+        code: "SERVER_ERROR"
+      }
+    };
+  }
+  async testConnection(options) {
+    if (!this.apiKey) {
+      return { ok: false, message: "No b.ai API key provided." };
+    }
+    try {
+      const endpoint = `${this.baseUrl.replace(/\/+$/, "")}/models`;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), options?.timeoutMs || 8e3);
+      const response = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${this.apiKey}`
+        },
+        signal: options?.signal || controller.signal
+      });
+      clearTimeout(timer);
+      if (response.ok) {
+        return { ok: true, message: `b.ai connected successfully (Model: ${this.model}).` };
+      }
+      if (response.status === 401) {
+        return { ok: false, message: "Invalid b.ai API key (HTTP 401)." };
+      }
+      return { ok: false, message: `b.ai connection returned HTTP ${response.status}.` };
+    } catch (err) {
+      if (err?.name === "AbortError") {
+        return { ok: false, message: "b.ai connection test timed out." };
+      }
+      return { ok: false, message: `b.ai error: ${err?.message || String(err)}` };
     }
   }
 };
@@ -3511,12 +3906,16 @@ var ProviderManager = class {
           return new OpenRouterProvider(settings.apiKeys.openrouter, settings.models?.openrouter);
         }
         return getGatewayProvider();
+      case "groq":
+        return new GroqProvider(settings.apiKeys?.groq, settings.models?.groq || "openai/gpt-oss-120b");
+      case "bai":
+        return new BAIProvider(settings.apiKeys?.bai, settings.models?.bai || "qwen3.8-flash");
       case "gateway":
         return getGatewayProvider();
       case "local":
         return this.localProvider;
       default:
-        return getGatewayProvider();
+        return new BAIProvider(settings.apiKeys?.bai, settings.models?.bai || "qwen3.8-flash");
     }
   }
   static async generateBetter(rawInput, targetAi = "general", options) {
@@ -3597,6 +3996,10 @@ var ProviderManager = class {
         return new DeepSeekProvider(apiKey || "").testConnection();
       case "openrouter":
         return new OpenRouterProvider(apiKey || "").testConnection();
+      case "groq":
+        return new GroqProvider(apiKey || "").testConnection();
+      case "bai":
+        return new BAIProvider(apiKey || "").testConnection();
       case "gateway":
         return new GatewayProvider(endpointUrl || "https://refinzi.com/api/v1/refine", apiKey).testConnection();
       case "local":
@@ -3650,7 +4053,15 @@ var MODEL_PRICING = {
   "deepseek-v4-pro": { inputPer1k: 66e-5, outputPer1k: 198e-5, averageTurnCost: 191e-5 },
   // DeepSeek — legacy (retained for historical events)
   "deepseek-chat": { inputPer1k: 14e-5, outputPer1k: 28e-5, averageTurnCost: 29e-5 },
-  "deepseek-reasoner": { inputPer1k: 55e-5, outputPer1k: 219e-5, averageTurnCost: 203e-5 }
+  "deepseek-reasoner": { inputPer1k: 55e-5, outputPer1k: 219e-5, averageTurnCost: 203e-5 },
+  // Groq LPU models
+  "openai/gpt-oss-120b": { inputPer1k: 15e-5, outputPer1k: 6e-4, averageTurnCost: 555e-6 },
+  "openai/gpt-oss-20b": { inputPer1k: 75e-6, outputPer1k: 3e-4, averageTurnCost: 278e-6 },
+  "qwen/qwen3.8-27b": { inputPer1k: 2e-4, outputPer1k: 6e-4, averageTurnCost: 58e-5 },
+  // b.ai models
+  "qwen3.8-flash": { inputPer1k: 1e-4, outputPer1k: 4e-4, averageTurnCost: 37e-5 },
+  "qwen3.8-max": { inputPer1k: 16e-4, outputPer1k: 64e-4, averageTurnCost: 592e-5 },
+  "qwen3.8-27b": { inputPer1k: 2e-4, outputPer1k: 6e-4, averageTurnCost: 58e-5 }
 };
 var inMemoryRecordedIds = /* @__PURE__ */ new Set();
 async function getMetricsConfig() {

@@ -84,8 +84,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const periodExpertCount = document.getElementById('period-expert-count') as HTMLSpanElement | null;
   const periodExpertPct = document.getElementById('period-expert-pct') as HTMLSpanElement | null;
 
-  // Elements: Recent List
+  // Elements: Recent List & PLG Nudges
   const homeRecentList = document.getElementById('home-recent-list') as HTMLDivElement | null;
+  const plgNudgeContainer = document.getElementById('plg-nudge-container') as HTMLDivElement | null;
 
   // Elements: History View
   const historySearch = document.getElementById('history-search') as HTMLInputElement | null;
@@ -214,6 +215,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         'Paste below (access DeepSeek V4 Flash, GLM 5.2, Gemma 4 and more).',
       ],
     },
+    groq: {
+      icon: '⚡',
+      name: 'Groq LPU Setup (Ultra-Fast ~300ms)',
+      url: 'https://console.groq.com/keys',
+      tier: 'Free Tier Available · Fastest Inference in AI',
+      defaultModel: DEFAULT_PROVIDER_MODELS.groq,
+      steps: [
+        'Open console.groq.com/keys and log in or create an account.',
+        'Click "Create API Key" and copy your gsk_... key.',
+        'Paste your key below and click "Verify" to activate Groq LPU speed.',
+      ],
+    },
+    bai: {
+      icon: '🌐',
+      name: 'Refinzi Cloud AI (Qwen 3.8 / DeepSeek V4.1)',
+      url: 'https://refinzi.com',
+      tier: 'Cloud AI · Qwen 3.8 Flash / DeepSeek V4.1 / Qwen 3.7',
+      defaultModel: DEFAULT_PROVIDER_MODELS.bai,
+      steps: [
+        'Connected automatically to high-speed Cloud AI inference.',
+        'Supports Qwen 3.8 Flash (Default), DeepSeek V4.1 Flash, and Qwen 3.7 Flash.',
+        'Paste your priority access key below and click "Verify" to test connection.',
+      ],
+    },
     gateway: {
       icon: '☁️',
       name: 'Refinzi Cloud Gateway (Free)',
@@ -228,9 +253,104 @@ document.addEventListener('DOMContentLoaded', async () => {
     },
   };
 
+  // Declared before initial load so initial renders (e.g. PLG nudges and default actions) can call it
+  function switchTab(tabId: string): void {
+    navButtons.forEach((btn) => {
+      if (btn.getAttribute('data-tab') === tabId) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    tabViews.forEach((view) => {
+      if (view.id === tabId) {
+        view.classList.add('active');
+      } else {
+        view.classList.remove('active');
+      }
+    });
+  }
+
+  interface PlgNudgeDef {
+    id: string;
+    pillar: 'awareness' | 'adoption' | 'advocacy' | 'innovation';
+    icon: string;
+    title: string;
+    desc: string;
+    ctaText?: string;
+    onCta?: () => void;
+    condition: (summary: RefinziMetricsSummary, settings: RefinziSettings) => boolean;
+  }
+
+  const PLG_NUDGES: PlgNudgeDef[] = [
+    {
+      id: 'nudge_first_use',
+      pillar: 'adoption',
+      icon: '🚀',
+      title: 'Ready for your first calibration?',
+      desc: 'Type a draft in ChatGPT, Claude, or Perplexity and click the golden Orb for instant polish.',
+      ctaText: 'Settings →',
+      onCta: () => switchTab('tab-settings'),
+      condition: (summary) => (summary.allTimeCount ?? summary.totalPromptsEnhanced) === 0,
+    },
+    {
+      id: 'nudge_expert_mode',
+      pillar: 'adoption',
+      icon: '🧠',
+      title: 'Try Expert mode (Hold 350ms)',
+      desc: 'Single click gives instant Better polish. Hold the Orb for 350ms to generate deep structured reasoning.',
+      condition: (summary) => summary.betterCount > 0 && summary.expertCount === 0,
+    },
+    {
+      id: 'nudge_milestone_5',
+      pillar: 'advocacy',
+      icon: '🏆',
+      title: 'Prompt master in the making!',
+      desc: 'You have enhanced 5+ prompts with Refinzi. Share Refinzi with a colleague to boost their workflow.',
+      ctaText: 'Copy Link',
+      onCta: () => {
+        navigator.clipboard?.writeText('https://refinzi.com');
+      },
+      condition: (summary) => (summary.allTimeCount ?? summary.totalPromptsEnhanced) >= 5,
+    },
+    {
+      id: 'nudge_awareness_provider',
+      pillar: 'awareness',
+      icon: '⚡',
+      title: 'Connect a direct AI provider',
+      desc: 'Add your own free Gemini Flash or DeepSeek API key for 0-latency priority throughput.',
+      ctaText: 'Connect Key →',
+      onCta: () => switchTab('tab-settings'),
+      condition: (_summary, settings) => settings.provider === 'gateway' && !settings.apiKeys?.gemini,
+    },
+    {
+      id: 'nudge_privacy_insight',
+      pillar: 'innovation',
+      icon: '🔒',
+      title: 'Privacy-First Architecture',
+      desc: 'Your prompts and API keys are stored strictly in local browser storage, never sent to external servers.',
+      condition: (summary) => (summary.allTimeCount ?? summary.totalPromptsEnhanced) >= 3,
+    },
+  ];
+
   // =========================================================================
-  // 1. INITIAL LOAD & STATE BINDING
+  // 1. INITIAL LOAD & STATE BINDING (WITH 0MS CACHE PERFORMANCE OPTIMIZATION)
   // =========================================================================
+  // Performance optimization: Render cached history & metrics immediately to eliminate layout shift
+  try {
+    const cached = await BrowserAPI.storage.local.get(['refinzi_history', 'refinzi_metrics_summary_cache']);
+    if (cached.refinzi_history && Array.isArray(cached.refinzi_history)) {
+      allHistory = cached.refinzi_history;
+      renderRecentList(allHistory);
+    }
+    if (cached.refinzi_metrics_summary_cache) {
+      updateDashboardUI(cached.refinzi_metrics_summary_cache);
+    }
+  } catch {
+    // Non-blocking cache hydration
+  }
+
   try {
     const [settingsRes, summaryRes, historyRes] = await Promise.allSettled([
       BrowserAPI.runtime.sendMessage({ type: 'REFINZI_GET_SETTINGS' }),
@@ -303,24 +423,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // =========================================================================
   // 2. TAB NAVIGATION
   // =========================================================================
-  function switchTab(tabId: string): void {
-    navButtons.forEach((btn) => {
-      if (btn.getAttribute('data-tab') === tabId) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-    });
-
-    tabViews.forEach((view) => {
-      if (view.id === tabId) {
-        view.classList.add('active');
-      } else {
-        view.classList.remove('active');
-      }
-    });
-  }
-
   navButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
       const tab = btn.getAttribute('data-tab');
@@ -401,6 +503,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       metricTimeSub.textContent = 'estimated';
     }
     if (tooltipTimeSaved && summary.estimatedTimeSavedTooltip) {
+      tooltipTimeSaved.setAttribute('data-tooltip', summary.estimatedTimeSavedTooltip);
       tooltipTimeSaved.title = summary.estimatedTimeSavedTooltip;
     }
 
@@ -412,6 +515,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       metricCostSub.textContent = summary.estimatedCostSavedSubtitle;
     }
     if (tooltipCostSaved && summary.estimatedCostSavedTooltip) {
+      tooltipCostSaved.setAttribute('data-tooltip', summary.estimatedCostSavedTooltip);
       tooltipCostSaved.title = summary.estimatedCostSavedTooltip;
     }
 
@@ -435,6 +539,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (periodBetterPct) periodBetterPct.textContent = `(${summary.betterPercentage}%)`;
     if (periodExpertCount) periodExpertCount.textContent = String(summary.expertCount);
     if (periodExpertPct) periodExpertPct.textContent = `(${summary.expertPercentage}%)`;
+
+    // 6. Progressive PLG Nudges
+    renderPlgNudges(summary, currentSettings);
+
+    // 7. Persist cached summary snapshot for 0ms initial render
+    BrowserAPI.storage.local.set({ refinzi_metrics_summary_cache: summary }).catch(() => {});
   }
 
   // =========================================================================
@@ -1149,6 +1259,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           ? 'Google Gemini Flash (bundled key)'
           : 'Google Gemini 3.8 Flash (BYOK)';
       }
+    } else if (provider === 'bai') {
+      const activeModel = currentSettings?.models?.bai || 'Qwen 3.8 Flash';
+      if (globalStatusText) globalStatusText.textContent = `${activeModel} Ready`;
+      if (engineName) engineName.textContent = `Cloud AI (${activeModel})`;
+    } else if (provider === 'groq') {
+      if (globalStatusText) globalStatusText.textContent = 'Groq Ready';
+      if (engineName) engineName.textContent = 'Groq LPU (~300ms)';
     } else {
       const name = capitalize(provider);
       const hasKey = Boolean(currentSettings?.apiKeys?.[provider as keyof typeof currentSettings.apiKeys]);
@@ -1232,4 +1349,100 @@ document.addEventListener('DOMContentLoaded', async () => {
     div.textContent = text;
     return div.innerHTML;
   }
+
+  function renderPlgNudges(summary: RefinziMetricsSummary, settings: RefinziSettings): void {
+    if (!plgNudgeContainer) return;
+    plgNudgeContainer.innerHTML = '';
+
+    const activeNudge = PLG_NUDGES.find((n) => n.condition(summary, settings));
+    if (!activeNudge) {
+      plgNudgeContainer.style.display = 'none';
+      return;
+    }
+
+    plgNudgeContainer.style.display = 'block';
+    const card = document.createElement('div');
+    card.className = `plg-nudge-card nudge-${activeNudge.pillar}`;
+    card.innerHTML = `
+      <div class="plg-nudge-body">
+        <span class="plg-nudge-icon">${activeNudge.icon}</span>
+        <div class="plg-nudge-text">
+          <span class="plg-nudge-title">${escapeHtml(activeNudge.title)}</span>
+          <span class="plg-nudge-desc">${escapeHtml(activeNudge.desc)}</span>
+        </div>
+      </div>
+      ${activeNudge.ctaText ? `<button type="button" class="plg-nudge-cta">${escapeHtml(activeNudge.ctaText)}</button>` : ''}
+    `;
+
+    if (activeNudge.onCta) {
+      const btn = card.querySelector<HTMLButtonElement>('.plg-nudge-cta');
+      btn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        activeNudge.onCta?.();
+      });
+    }
+
+    plgNudgeContainer.appendChild(card);
+  }
+
+  function initAccessibleTooltips(): void {
+    const tooltipEl = document.getElementById('refinzi-global-tooltip');
+    if (!tooltipEl) return;
+
+    let activeTarget: HTMLElement | null = null;
+
+    function showTooltip(target: HTMLElement, text: string) {
+      activeTarget = target;
+      tooltipEl!.textContent = text;
+      tooltipEl!.classList.remove('hidden');
+      tooltipEl!.classList.add('visible');
+
+      const rect = target.getBoundingClientRect();
+      const tooltipRect = tooltipEl!.getBoundingClientRect();
+
+      let top = rect.top - tooltipRect.height - 8;
+      let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+
+      if (top < 8) {
+        top = rect.bottom + 8;
+      }
+      if (left < 10) left = 10;
+      if (left + tooltipRect.width > window.innerWidth - 10) {
+        left = window.innerWidth - tooltipRect.width - 10;
+      }
+
+      tooltipEl!.style.top = `${Math.round(top)}px`;
+      tooltipEl!.style.left = `${Math.round(left)}px`;
+    }
+
+    function hideTooltip() {
+      activeTarget = null;
+      tooltipEl!.classList.remove('visible');
+    }
+
+    document.addEventListener('mouseover', (e) => {
+      const target = (e.target as HTMLElement).closest<HTMLElement>('[data-tooltip]');
+      if (!target) return;
+      const text = target.getAttribute('data-tooltip');
+      if (text && text.trim()) {
+        showTooltip(target, text.trim());
+      }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+      const target = (e.target as HTMLElement).closest<HTMLElement>('[data-tooltip]');
+      if (target && target === activeTarget) {
+        hideTooltip();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') hideTooltip();
+    });
+
+    window.addEventListener('scroll', hideTooltip, { passive: true });
+  }
+
+  // Initialize accessible floating tooltips
+  initAccessibleTooltips();
 });

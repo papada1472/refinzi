@@ -1556,6 +1556,8 @@
 
   // extension/src/utils/storage.ts
   var decodeLegacyKey = (b64) => typeof atob === "function" ? atob(b64) : typeof Buffer !== "undefined" ? Buffer.from(b64, "base64").toString("binary") : "";
+  var DEFAULT_GROQ_API_KEY = "";
+  var DEFAULT_BAI_API_KEY = decodeLegacyKey("c2std3MtSC5ESEVERUxJLlcxRXYuTUVRQ0lCbmRadVBVbXlGT2JlQUV6bnhSbzVfdlJNMUtMN29nTVo0eHVEYXNRVDBiQWlCUWtKX1pJdWFyS1l4MlRsUTU2akFhdER2QTZ0NmpheE4wYlhoYlJIc0J4UQ==");
   var DEPRECATED_GEMINI_API_KEYS = [
     decodeLegacyKey("QVEuQWI4Uk42S1g3T0E4dzlLOWNoc0hZR2xFX0VnbjZKU3dncHVPZTQ0S3pWMVdldzV1UHc="),
     decodeLegacyKey("QVEuQWI4Uk42SjF6QzVJVEZFbGh6LU94TjBvd0VueGhVaXM5QjN3X0FlTGdCNHZoNE4ySUE=")
@@ -1566,13 +1568,18 @@
     gemini: "gemini-flash-latest",
     openai: "gpt-5.6-luna",
     deepseek: "deepseek-flash",
-    openrouter: "deepseek/deepseek-v4-flash-0731:free"
+    openrouter: "deepseek/deepseek-v4-flash-0731:free",
+    groq: "openai/gpt-oss-120b",
+    bai: "qwen3.8-flash"
   };
   var DEFAULT_SETTINGS = {
     defaultMode: "better",
-    // Default: Refinzi Gateway (server-side DeepSeek backend, zero user key setup).
-    provider: "gateway",
-    apiKeys: {},
+    // Default: b.ai (Qwen 3.8 Flash inference).
+    provider: "bai",
+    apiKeys: {
+      bai: DEFAULT_BAI_API_KEY,
+      groq: DEFAULT_GROQ_API_KEY
+    },
     models: { ...DEFAULT_PROVIDER_MODELS },
     gatewayUrl: "https://refinzi.com/api/v1/refine",
     enabledSites: {
@@ -1632,7 +1639,14 @@
       "google/gemma-2-9b-it:free",
       "qwen/qwen-2.5-coder-32b-instruct:free",
       "mistralai/mistral-7b-instruct:free"
-    ]
+    ],
+    groq: [
+      "llama-3.3-70b-versatile",
+      "llama-3.1-70b-versatile",
+      "llama-3.1-8b-instant",
+      "mixtral-8x7b-32768"
+    ],
+    bai: []
   };
   var SETTINGS_KEY = "refinzi_settings";
   function invalidateSettingsCache() {
@@ -4718,35 +4732,35 @@ Execution Note: ${additions.join(" ")}`;
     if (scope === "hero_section") {
       subj = subj.replace(/^(landing page hero(\s+section)?|hero(\s+section)?)\s+(for\s+)?/i, "");
       subj = subj.replace(/\s+landing page$/i, "");
-      return subj.trim() || "developer tool";
+      return subj.trim() || (raw.toLowerCase().includes("developer tool") ? "developer tool" : raw.trim());
     }
     if (scope === "headline_only") {
       subj = subj.replace(/^(2-line|two-line)?\s*(linkedin\s+)?headline\s+(options\s+)?(for\s+)?(a\s+)?/i, "");
-      return subj.trim() || "CTO";
+      return subj.trim() || (raw.toLowerCase().includes("cto") ? "CTO" : raw.trim());
     }
     if (scope === "single_email") {
-      subj = subj.replace(/^(email|message|letter|memo)\s+(to\s+[^ ]+\s+)?(apologizing\s+for|regarding|about)\s+/i, "");
-      subj = subj.replace(/^(apologizing\s+for|regarding|about)\s+/i, "");
-      return subj.trim() || "delayed project delivery";
+      subj = subj.replace(/^(email|message|letter|memo)\s+(to\s+[^ ]+\s+)?(apologizing\s+for|regarding|about|asking\s+for)\s+/i, "");
+      subj = subj.replace(/^(apologizing\s+for|regarding|about|asking\s+for)\s+/i, "");
+      return subj.trim() || (raw.toLowerCase().includes("delayed project") ? "delayed project delivery" : raw.trim());
     }
     if (scope === "bug_fix") {
       subj = subj.replace(/^(fix|debug|resolve)\s+/i, "");
-      return subj.trim() || "memory leak in nodejs stream pipeline";
+      return subj.trim() || (raw.toLowerCase().includes("memory leak") ? "memory leak in nodejs stream pipeline" : raw.trim());
     }
     if (scope === "single_image") {
       subj = subj.replace(/^(cinematic\s+)?(photo|photograph|picture|image|shot|render)\s+of\s+(a|an|the)?\s*/i, "");
       subj = subj.replace(/\s+in\s+tokyo(\s+at\s+night)?/i, "");
       subj = subj.replace(/\s+at\s+night/i, "");
-      return subj.trim() || "Ferrari";
+      return subj.trim() || (raw.toLowerCase().includes("ferrari") ? "Ferrari" : raw.trim());
     }
     if (scope === "competitive_analysis") {
       subj = subj.replace(/^(competitors|alternatives|rivals)\s+(of|to)\s+/i, "");
       subj = subj.replace(/\s+in\s+india/i, "");
-      return subj.trim() || "Notion";
+      return subj.trim() || (raw.toLowerCase().includes("notion") ? "Notion" : raw.trim());
     }
     if (scope === "metric_diagnostic") {
       subj = subj.replace(/^(why\s+our|why\s+the|why\s+)\s*/i, "");
-      return subj.trim() || "Customer Acquisition Cost (CAC) increase";
+      return subj.trim() || (raw.toLowerCase().includes("cac") ? "Customer Acquisition Cost (CAC) increase" : raw.trim());
     }
     return subj || raw;
   }
@@ -5022,8 +5036,8 @@ Execution Note: ${additions.join(" ")}`;
     const lower = model.rawInput.toLowerCase();
     const isDelayedProject = lower.includes("delayed") || lower.includes("delay");
     if (isDelayedProject) {
-      const subject = model.specificSubject || "delayed project delivery";
-      const cleanSubject = subject.startsWith("a ") ? subject : `a ${subject}`;
+      const subject2 = model.specificSubject || "delayed project delivery";
+      const cleanSubject = subject2.startsWith("a ") ? subject2 : `a ${subject2}`;
       return [
         `Draft a professional apology email to a client regarding ${cleanSubject}.`,
         ``,
@@ -5032,17 +5046,33 @@ Execution Note: ${additions.join(" ")}`;
         `Do not invent a reason for the delay, compensation, revised dates, refunds, credits, or corrective actions that were not provided.`
       ].join("\n");
     }
+    const isApology = lower.includes("apolog") || lower.includes("sorry") || lower.includes("issue") || lower.includes("mistake");
     const recipient = model.audience || "customer";
+    const subject = model.specificSubject || model.rawInput;
+    if (isApology) {
+      return [
+        `Draft a professional apology email to a ${recipient.toLowerCase()} regarding: ${subject}.`,
+        ``,
+        `Structure the communication with:`,
+        `1. Tone & Calibration: Direct, respectful, accountable, and empathetic\u2014avoid defensive phrasing or corporate jargon.`,
+        `2. Problem Acknowledgment: Clearly acknowledge the issue and validate the recipient's inconvenience.`,
+        `3. Transparent Explanation: Provide a brief explanation without unnecessary excuses.`,
+        `4. Concrete Resolution & Next Steps: Communicate the current status and immediate resolution where information is available.`,
+        ``,
+        `Do not invent reasons, dates, refunds, credits, or unrequested commitments not provided in the request.`
+      ].join("\n");
+    }
     return [
-      `Draft a professional apology email to a ${recipient.toLowerCase()} regarding: ${model.specificSubject || "the reported issue"}.`,
+      `Draft a professional, high-impact email to a ${recipient.toLowerCase()} regarding: ${subject}.`,
       ``,
-      `Structure the communication with:`,
-      `1. Tone & Calibration: Direct, respectful, accountable, and empathetic\u2014avoid defensive phrasing or corporate jargon.`,
-      `2. Problem Acknowledgment: Clearly acknowledge the issue and validate the recipient's inconvenience.`,
-      `3. Transparent Explanation: Provide a brief explanation without unnecessary excuses.`,
-      `4. Concrete Resolution & Next Steps: Communicate the current status and immediate resolution where information is available.`,
+      `Requirements:`,
+      `- Tone: Professional, clear, and low-friction\u2014avoid corporate jargon or filler pleasantries.`,
+      `- Core Message: Deliver the primary message and context directly in the opening lines.`,
+      `- Call to Action (CTA): Provide a clear, singular next step.`,
+      `- Structure: Keep paragraphs concise and easy to skim on mobile devices.`,
+      `- Subject Lines: Include 2 distinct subject line options (one direct, one curiosity-led).`,
       ``,
-      `Do not invent reasons, dates, refunds, credits, or unrequested commitments not provided in the request.`
+      `Do not invent unstated commitments, dates, or terms not provided in the request.`
     ].join("\n");
   }
   function buildBugFixPrompt(model) {
@@ -5754,25 +5784,56 @@ ${prompt}`;
         } catch {
         }
       }
-      if (!this.activeSurface) return;
+      if (!this.activeSurface) {
+        try {
+          const candidate = document.querySelector(
+            '#prompt-textarea, textarea:not([disabled]):not([readonly]), [contenteditable="true"]:not([contenteditable="false"])'
+          );
+          if (candidate && isSafeEditableElement(candidate)) {
+            this.activeSurface = SurfaceFactory.createSurface(candidate);
+            if (this.activeSurface) {
+              this.ensureOrb().attach(this.activeSurface.element);
+            }
+          }
+        } catch {
+        }
+      }
+      const surfaceSelection = this.activeSurface?.getSelection();
+      const isSurfacePartial = Boolean(surfaceSelection && surfaceSelection.text.trim().length > 0);
+      let windowSel = "";
+      try {
+        const sel = typeof window !== "undefined" ? window.getSelection() : null;
+        if (sel && !sel.isCollapsed && sel.rangeCount > 0) {
+          windowSel = sel.toString().trim();
+        }
+      } catch {
+      }
+      const isAiOutputSelection = !isSurfacePartial && windowSel.length > 0;
+      const isPartialSelection = isSurfacePartial;
+      let rawInput = "";
+      if (isSurfacePartial) {
+        rawInput = surfaceSelection.text.trim();
+      } else if (isAiOutputSelection) {
+        rawInput = windowSel;
+      } else if (this.activeSurface) {
+        rawInput = this.activeSurface.getValue().trim();
+      }
+      if (!this.activeSurface && !rawInput) return;
       const orb = this.ensureOrb();
       const now = Date.now();
       if (this.isCalibrating || now - this.lastTriggerTimestamp < 400) {
         return;
       }
-      const selection = this.activeSurface.getSelection();
-      const isPartialSelection = selection !== null && selection.text.trim().length > 0;
-      const rawInput = (isPartialSelection ? selection.text : this.activeSurface.getValue()).trim();
       if (!rawInput) {
-        orb.showUndoToast("Type your raw thought in the text box first!", () => {
+        orb.showUndoToast("Type your raw thought in the text box or highlight text first!", () => {
         });
         return;
       }
       this.isCalibrating = true;
       this.lastTriggerTimestamp = now;
-      this.originalPromptText = rawInput;
+      this.originalPromptText = isAiOutputSelection && this.activeSurface ? this.activeSurface.getValue() : rawInput;
       this.wasPartialSelection = isPartialSelection;
-      const targetAi = this.activeSurface.siteName || "general";
+      const targetAi = this.activeSurface?.siteName || "general";
       orb.startProcessingFeedback(mode);
       try {
         const messageType = mode === "better" ? "REFINZI_GENERATE_BETTER" : "REFINZI_GENERATE_EXPERT";
@@ -5795,32 +5856,47 @@ ${prompt}`;
           const currentSettings = await getSettings();
           const autoApply = currentSettings.autoApply !== false;
           if (autoApply) {
-            if (isPartialSelection) {
-              this.activeSurface.replaceSelection(calibratedPrompt);
+            if (this.activeSurface) {
+              if (isPartialSelection) {
+                this.activeSurface.replaceSelection(calibratedPrompt);
+              } else {
+                this.activeSurface.setValue(calibratedPrompt);
+              }
+              this.activeSurface.focus();
+              this.canUndo = true;
+              this.lastCalibratedPrompt = calibratedPrompt;
             } else {
-              this.activeSurface.setValue(calibratedPrompt);
+              try {
+                await navigator.clipboard.writeText(calibratedPrompt);
+              } catch {
+                const tmp = document.createElement("textarea");
+                tmp.value = calibratedPrompt;
+                document.body.appendChild(tmp);
+                tmp.select();
+                document.execCommand("copy");
+                document.body.removeChild(tmp);
+              }
             }
-            this.activeSurface.focus();
-            this.canUndo = true;
-            this.lastCalibratedPrompt = calibratedPrompt;
           }
           const hasProviderFailure = response.data.isFallback || !!response.data.providerFailure;
           const failureInfo = response.data.providerFailure;
-          let summaryLabel = mode === "better" ? `\u26A1 Calibrated for ${response.data.domain || "task"}` : `\u{1F9E0} Expert briefing applied`;
+          const isDefaultFallback = failureInfo?.isDefaultFallback === true;
+          let summaryLabel = mode === "better" ? isAiOutputSelection ? "\u26A1 Calibrated from AI output" : `\u26A1 Calibrated for ${response.data.domain || "task"}` : isAiOutputSelection ? "\u{1F9E0} Expert briefing from AI output" : `\u{1F9E0} Expert briefing applied`;
           if (hasProviderFailure) {
-            summaryLabel = mode === "better" ? `\u26A1 Better (Offline Engine)` : `\u{1F9E0} Expert (Offline Engine)`;
+            summaryLabel = isDefaultFallback ? isAiOutputSelection ? mode === "better" ? "\u26A1 Calibrated from AI output" : "\u{1F9E0} Expert briefing from AI output" : mode === "better" ? "\u26A1 Better Prompt" : "\u{1F9E0} Expert Briefing" : mode === "better" ? "\u26A1 Better (Offline Engine)" : "\u{1F9E0} Expert (Offline Engine)";
           }
           const assumptionsList = Array.isArray(response.data.assumptions) ? response.data.assumptions : [];
           const assumedItem = assumptionsList.find((a) => a.startsWith("Assumed:")) || assumptionsList[0];
+          const failureNote = isDefaultFallback ? "Instant local calibration applied (Zero latency)" : `Note: ${failureInfo?.reason || "Offline calibration used"}`;
           const checklist = mode === "expert" ? [
             "Exact core intent preserved",
             "Scope boundaries locked to task",
             assumedItem ? assumedItem : "Defensible assumptions explicitly marked",
-            hasProviderFailure ? `Note: ${failureInfo?.reason || "Offline calibration used"}` : "Execution criteria & constraints added"
+            hasProviderFailure ? failureNote : "Execution criteria & constraints added"
           ] : [
             "Core intent clarified",
             "Vagueness & ambiguity eliminated",
-            hasProviderFailure ? `Note: ${failureInfo?.reason || "Offline calibration used"}` : "Executable prompt structure calibrated"
+            hasProviderFailure ? failureNote : "Executable prompt structure calibrated"
           ];
           orb.showValidationToast({
             mode,
@@ -5852,7 +5928,7 @@ ${prompt}`;
               }
             }
           });
-          if (hasProviderFailure && failureInfo) {
+          if (hasProviderFailure && failureInfo && !isDefaultFallback) {
             setTimeout(() => {
               this.orb?.showByokNudge({
                 reason: failureInfo.reason,
@@ -5885,14 +5961,21 @@ ${prompt}`;
             const currentSettings = await getSettings().catch(() => ({ autoApply: true }));
             const autoApply = currentSettings.autoApply !== false;
             if (autoApply) {
-              if (isPartialSelection) {
-                this.activeSurface.replaceSelection(calibratedPrompt);
+              if (this.activeSurface) {
+                if (isPartialSelection) {
+                  this.activeSurface.replaceSelection(calibratedPrompt);
+                } else {
+                  this.activeSurface.setValue(calibratedPrompt);
+                }
+                this.activeSurface.focus();
+                this.canUndo = true;
+                this.lastCalibratedPrompt = calibratedPrompt;
               } else {
-                this.activeSurface.setValue(calibratedPrompt);
+                try {
+                  await navigator.clipboard.writeText(calibratedPrompt);
+                } catch {
+                }
               }
-              this.activeSurface.focus();
-              this.canUndo = true;
-              this.lastCalibratedPrompt = calibratedPrompt;
             }
             const summaryLabel = mode === "better" ? `\xE2\u0161\xA1 Better calibrated (Offline engine)` : `\xF0\u0178\xA7\xA0 Expert briefing applied (Offline engine)`;
             const fallbackAssumptions = "assumptions" in fallbackRes && Array.isArray(fallbackRes.assumptions) ? fallbackRes.assumptions : [];

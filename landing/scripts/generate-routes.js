@@ -201,33 +201,33 @@ if (fs.existsSync(indexPath)) {
     }
 
     let customHtml = baseHtml
-      .replace(/<title>.*?<\/title>/, `<title>${meta.title}</title>`)
+      .replace(/<title>[\s\S]*?<\/title>/i, `<title>${meta.title}</title>`)
       .replace(
-        /<meta\s+name="description"\s+content=".*?"\s*\/>/,
+        /<meta\s+[^>]*?name=["']description["'][^>]*?>/i,
         `<meta name="description" content="${meta.description}" />`
       )
       .replace(
-        /<meta\s+property="og:title"\s+content=".*?"\s*\/>/,
+        /<meta\s+[^>]*?property=["']og:title["'][^>]*?>/i,
         `<meta property="og:title" content="${meta.title}" />`
       )
       .replace(
-        /<meta\s+property="og:description"\s+content=".*?"\s*\/>/,
+        /<meta\s+[^>]*?property=["']og:description["'][^>]*?>/i,
         `<meta property="og:description" content="${meta.description}" />`
       )
       .replace(
-        /<meta\s+name="twitter:title"\s+content=".*?"\s*\/>/,
+        /<meta\s+[^>]*?name=["']twitter:title["'][^>]*?>/i,
         `<meta name="twitter:title" content="${meta.title}" />`
       )
       .replace(
-        /<meta\s+name="twitter:description"\s+content=".*?"\s*\/>/,
+        /<meta\s+[^>]*?name=["']twitter:description["'][^>]*?>/i,
         `<meta name="twitter:description" content="${meta.description}" />`
       )
       .replace(
-        /<meta\s+property="og:url"\s+content=".*?"\s*\/>/,
+        /<meta\s+[^>]*?property=["']og:url["'][^>]*?>/i,
         `<meta property="og:url" content="${meta.canonical}" />`
       )
       .replace(
-        /<link\s+rel="canonical"\s+href=".*?"\s*\/>/,
+        /<link\s+[^>]*?rel=["']canonical["'][^>]*?>/i,
         `<link rel="canonical" href="${meta.canonical}" />`
       );
 

@@ -8,6 +8,8 @@ import { GeminiProvider } from './gemini';
 import { DeepSeekProvider } from './deepseek';
 import { OpenRouterProvider } from './openrouter';
 import { GatewayProvider } from './gateway';
+import { GroqProvider } from './groq';
+import { BAIProvider } from './bai';
 import { BetterPromptResponse, ExpertFinalResponse, SemanticIntent, AIProviderId } from '../types';
 import { getSettings } from '../utils/storage';
 import { extractSemanticIntent } from '../engine/intent';
@@ -66,6 +68,12 @@ export class ProviderManager {
         }
         return getGatewayProvider();
 
+      case 'groq':
+        return new GroqProvider(settings.apiKeys?.groq, settings.models?.groq || 'openai/gpt-oss-120b');
+
+      case 'bai':
+        return new BAIProvider(settings.apiKeys?.bai, settings.models?.bai || 'qwen3.8-flash');
+
       case 'gateway':
         return getGatewayProvider();
 
@@ -74,8 +82,8 @@ export class ProviderManager {
         return this.localProvider;
 
       default:
-        // Unknown provider → default to the gateway
-        return getGatewayProvider();
+        // Default to b.ai
+        return new BAIProvider(settings.apiKeys?.bai, settings.models?.bai || 'qwen3.8-flash');
     }
   }
 
@@ -179,6 +187,10 @@ export class ProviderManager {
         return new DeepSeekProvider(apiKey || '').testConnection();
       case 'openrouter':
         return new OpenRouterProvider(apiKey || '').testConnection();
+      case 'groq':
+        return new GroqProvider(apiKey || '').testConnection();
+      case 'bai':
+        return new BAIProvider(apiKey || '').testConnection();
       case 'gateway':
         return new GatewayProvider(endpointUrl || 'https://refinzi.com/api/v1/refine', apiKey).testConnection();
       case 'local':

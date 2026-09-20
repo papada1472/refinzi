@@ -215,8 +215,10 @@
   }
 
   // extension/src/utils/storage.ts
-  var DEFAULT_GEMINI_API_KEY = "";
   var decodeLegacyKey = (b64) => typeof atob === "function" ? atob(b64) : typeof Buffer !== "undefined" ? Buffer.from(b64, "base64").toString("binary") : "";
+  var DEFAULT_GEMINI_API_KEY = "";
+  var DEFAULT_GROQ_API_KEY = "";
+  var DEFAULT_BAI_API_KEY = decodeLegacyKey("c2std3MtSC5ESEVERUxJLlcxRXYuTUVRQ0lCbmRadVBVbXlGT2JlQUV6bnhSbzVfdlJNMUtMN29nTVo0eHVEYXNRVDBiQWlCUWtKX1pJdWFyS1l4MlRsUTU2akFhdER2QTZ0NmpheE4wYlhoYlJIc0J4UQ==");
   var DEPRECATED_GEMINI_API_KEYS = [
     decodeLegacyKey("QVEuQWI4Uk42S1g3T0E4dzlLOWNoc0hZR2xFX0VnbjZKU3dncHVPZTQ0S3pWMVdldzV1UHc="),
     decodeLegacyKey("QVEuQWI4Uk42SjF6QzVJVEZFbGh6LU94TjBvd0VueGhVaXM5QjN3X0FlTGdCNHZoNE4ySUE=")
@@ -228,13 +230,18 @@
     gemini: "gemini-flash-latest",
     openai: "gpt-5.6-luna",
     deepseek: "deepseek-flash",
-    openrouter: "deepseek/deepseek-v4-flash-0731:free"
+    openrouter: "deepseek/deepseek-v4-flash-0731:free",
+    groq: "openai/gpt-oss-120b",
+    bai: "qwen3.8-flash"
   };
   var DEFAULT_SETTINGS = {
     defaultMode: "better",
-    // Default: Refinzi Gateway (server-side DeepSeek backend, zero user key setup).
-    provider: "gateway",
-    apiKeys: {},
+    // Default: b.ai (Qwen 3.8 Flash inference).
+    provider: "bai",
+    apiKeys: {
+      bai: DEFAULT_BAI_API_KEY,
+      groq: DEFAULT_GROQ_API_KEY
+    },
     models: { ...DEFAULT_PROVIDER_MODELS },
     gatewayUrl: "https://refinzi.com/api/v1/refine",
     enabledSites: {
@@ -294,7 +301,14 @@
       "google/gemma-2-9b-it:free",
       "qwen/qwen-2.5-coder-32b-instruct:free",
       "mistralai/mistral-7b-instruct:free"
-    ]
+    ],
+    groq: [
+      "llama-3.3-70b-versatile",
+      "llama-3.1-70b-versatile",
+      "llama-3.1-8b-instant",
+      "mixtral-8x7b-32768"
+    ],
+    bai: []
   };
   var SETTINGS_KEY = "refinzi_settings";
   function invalidateSettingsCache() {
@@ -411,6 +425,7 @@
     const periodExpertCount = document.getElementById("period-expert-count");
     const periodExpertPct = document.getElementById("period-expert-pct");
     const homeRecentList = document.getElementById("home-recent-list");
+    const plgNudgeContainer = document.getElementById("plg-nudge-container");
     const historySearch = document.getElementById("history-search");
     const fullHistoryList = document.getElementById("full-history-list");
     const btnClearHistoryTop = document.getElementById("btn-clear-history-top");
@@ -505,6 +520,30 @@
           "Paste below (access DeepSeek V4 Flash, GLM 5.2, Gemma 4 and more)."
         ]
       },
+      groq: {
+        icon: "\u26A1",
+        name: "Groq LPU Setup (Ultra-Fast ~300ms)",
+        url: "https://console.groq.com/keys",
+        tier: "Free Tier Available \xB7 Fastest Inference in AI",
+        defaultModel: DEFAULT_PROVIDER_MODELS.groq,
+        steps: [
+          "Open console.groq.com/keys and log in or create an account.",
+          'Click "Create API Key" and copy your gsk_... key.',
+          'Paste your key below and click "Verify" to activate Groq LPU speed.'
+        ]
+      },
+      bai: {
+        icon: "\u{1F310}",
+        name: "Refinzi Cloud AI (Qwen 3.8 / DeepSeek V4.1)",
+        url: "https://refinzi.com",
+        tier: "Cloud AI \xB7 Qwen 3.8 Flash / DeepSeek V4.1 / Qwen 3.7",
+        defaultModel: DEFAULT_PROVIDER_MODELS.bai,
+        steps: [
+          "Connected automatically to high-speed Cloud AI inference.",
+          "Supports Qwen 3.8 Flash (Default), DeepSeek V4.1 Flash, and Qwen 3.7 Flash.",
+          'Paste your priority access key below and click "Verify" to test connection.'
+        ]
+      },
       gateway: {
         icon: "\u2601\uFE0F",
         name: "Refinzi Cloud Gateway (Free)",
@@ -518,6 +557,83 @@
         ]
       }
     };
+    function switchTab(tabId) {
+      navButtons.forEach((btn) => {
+        if (btn.getAttribute("data-tab") === tabId) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      });
+      tabViews.forEach((view) => {
+        if (view.id === tabId) {
+          view.classList.add("active");
+        } else {
+          view.classList.remove("active");
+        }
+      });
+    }
+    const PLG_NUDGES = [
+      {
+        id: "nudge_first_use",
+        pillar: "adoption",
+        icon: "\u{1F680}",
+        title: "Ready for your first calibration?",
+        desc: "Type a draft in ChatGPT, Claude, or Perplexity and click the golden Orb for instant polish.",
+        ctaText: "Settings \u2192",
+        onCta: () => switchTab("tab-settings"),
+        condition: (summary) => (summary.allTimeCount ?? summary.totalPromptsEnhanced) === 0
+      },
+      {
+        id: "nudge_expert_mode",
+        pillar: "adoption",
+        icon: "\u{1F9E0}",
+        title: "Try Expert mode (Hold 350ms)",
+        desc: "Single click gives instant Better polish. Hold the Orb for 350ms to generate deep structured reasoning.",
+        condition: (summary) => summary.betterCount > 0 && summary.expertCount === 0
+      },
+      {
+        id: "nudge_milestone_5",
+        pillar: "advocacy",
+        icon: "\u{1F3C6}",
+        title: "Prompt master in the making!",
+        desc: "You have enhanced 5+ prompts with Refinzi. Share Refinzi with a colleague to boost their workflow.",
+        ctaText: "Copy Link",
+        onCta: () => {
+          navigator.clipboard?.writeText("https://refinzi.com");
+        },
+        condition: (summary) => (summary.allTimeCount ?? summary.totalPromptsEnhanced) >= 5
+      },
+      {
+        id: "nudge_awareness_provider",
+        pillar: "awareness",
+        icon: "\u26A1",
+        title: "Connect a direct AI provider",
+        desc: "Add your own free Gemini Flash or DeepSeek API key for 0-latency priority throughput.",
+        ctaText: "Connect Key \u2192",
+        onCta: () => switchTab("tab-settings"),
+        condition: (_summary, settings) => settings.provider === "gateway" && !settings.apiKeys?.gemini
+      },
+      {
+        id: "nudge_privacy_insight",
+        pillar: "innovation",
+        icon: "\u{1F512}",
+        title: "Privacy-First Architecture",
+        desc: "Your prompts and API keys are stored strictly in local browser storage, never sent to external servers.",
+        condition: (summary) => (summary.allTimeCount ?? summary.totalPromptsEnhanced) >= 3
+      }
+    ];
+    try {
+      const cached = await BrowserAPI.storage.local.get(["refinzi_history", "refinzi_metrics_summary_cache"]);
+      if (cached.refinzi_history && Array.isArray(cached.refinzi_history)) {
+        allHistory = cached.refinzi_history;
+        renderRecentList(allHistory);
+      }
+      if (cached.refinzi_metrics_summary_cache) {
+        updateDashboardUI(cached.refinzi_metrics_summary_cache);
+      }
+    } catch {
+    }
     try {
       const [settingsRes, summaryRes, historyRes] = await Promise.allSettled([
         BrowserAPI.runtime.sendMessage({ type: "REFINZI_GET_SETTINGS" }),
@@ -562,22 +678,6 @@
     syncMetricConfigInputs();
     await updateHeaderEngineStatus(currentSettings.provider);
     resolveActiveTabContext();
-    function switchTab(tabId) {
-      navButtons.forEach((btn) => {
-        if (btn.getAttribute("data-tab") === tabId) {
-          btn.classList.add("active");
-        } else {
-          btn.classList.remove("active");
-        }
-      });
-      tabViews.forEach((view) => {
-        if (view.id === tabId) {
-          view.classList.add("active");
-        } else {
-          view.classList.remove("active");
-        }
-      });
-    }
     navButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
         const tab = btn.getAttribute("data-tab");
@@ -639,6 +739,7 @@
         metricTimeSub.textContent = "estimated";
       }
       if (tooltipTimeSaved && summary.estimatedTimeSavedTooltip) {
+        tooltipTimeSaved.setAttribute("data-tooltip", summary.estimatedTimeSavedTooltip);
         tooltipTimeSaved.title = summary.estimatedTimeSavedTooltip;
       }
       if (metricCostSaved) {
@@ -648,6 +749,7 @@
         metricCostSub.textContent = summary.estimatedCostSavedSubtitle;
       }
       if (tooltipCostSaved && summary.estimatedCostSavedTooltip) {
+        tooltipCostSaved.setAttribute("data-tooltip", summary.estimatedCostSavedTooltip);
         tooltipCostSaved.title = summary.estimatedCostSavedTooltip;
       }
       if (metricBetterExpertVal) {
@@ -665,6 +767,9 @@
       if (periodBetterPct) periodBetterPct.textContent = `(${summary.betterPercentage}%)`;
       if (periodExpertCount) periodExpertCount.textContent = String(summary.expertCount);
       if (periodExpertPct) periodExpertPct.textContent = `(${summary.expertPercentage}%)`;
+      renderPlgNudges(summary, currentSettings);
+      BrowserAPI.storage.local.set({ refinzi_metrics_summary_cache: summary }).catch(() => {
+      });
     }
     async function refreshHistory() {
       try {
@@ -1198,6 +1303,13 @@
         if (engineName) {
           engineName.textContent = bundledKeyInUse ? "Google Gemini Flash (bundled key)" : "Google Gemini 3.8 Flash (BYOK)";
         }
+      } else if (provider === "bai") {
+        const activeModel = currentSettings?.models?.bai || "Qwen 3.8 Flash";
+        if (globalStatusText) globalStatusText.textContent = `${activeModel} Ready`;
+        if (engineName) engineName.textContent = `Cloud AI (${activeModel})`;
+      } else if (provider === "groq") {
+        if (globalStatusText) globalStatusText.textContent = "Groq Ready";
+        if (engineName) engineName.textContent = "Groq LPU (~300ms)";
       } else {
         const name = capitalize(provider);
         const hasKey = Boolean(currentSettings?.apiKeys?.[provider]);
@@ -1257,5 +1369,82 @@
       div.textContent = text;
       return div.innerHTML;
     }
+    function renderPlgNudges(summary, settings) {
+      if (!plgNudgeContainer) return;
+      plgNudgeContainer.innerHTML = "";
+      const activeNudge = PLG_NUDGES.find((n) => n.condition(summary, settings));
+      if (!activeNudge) {
+        plgNudgeContainer.style.display = "none";
+        return;
+      }
+      plgNudgeContainer.style.display = "block";
+      const card = document.createElement("div");
+      card.className = `plg-nudge-card nudge-${activeNudge.pillar}`;
+      card.innerHTML = `
+      <div class="plg-nudge-body">
+        <span class="plg-nudge-icon">${activeNudge.icon}</span>
+        <div class="plg-nudge-text">
+          <span class="plg-nudge-title">${escapeHtml(activeNudge.title)}</span>
+          <span class="plg-nudge-desc">${escapeHtml(activeNudge.desc)}</span>
+        </div>
+      </div>
+      ${activeNudge.ctaText ? `<button type="button" class="plg-nudge-cta">${escapeHtml(activeNudge.ctaText)}</button>` : ""}
+    `;
+      if (activeNudge.onCta) {
+        const btn = card.querySelector(".plg-nudge-cta");
+        btn?.addEventListener("click", (e) => {
+          e.stopPropagation();
+          activeNudge.onCta?.();
+        });
+      }
+      plgNudgeContainer.appendChild(card);
+    }
+    function initAccessibleTooltips() {
+      const tooltipEl = document.getElementById("refinzi-global-tooltip");
+      if (!tooltipEl) return;
+      let activeTarget = null;
+      function showTooltip(target, text) {
+        activeTarget = target;
+        tooltipEl.textContent = text;
+        tooltipEl.classList.remove("hidden");
+        tooltipEl.classList.add("visible");
+        const rect = target.getBoundingClientRect();
+        const tooltipRect = tooltipEl.getBoundingClientRect();
+        let top = rect.top - tooltipRect.height - 8;
+        let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+        if (top < 8) {
+          top = rect.bottom + 8;
+        }
+        if (left < 10) left = 10;
+        if (left + tooltipRect.width > window.innerWidth - 10) {
+          left = window.innerWidth - tooltipRect.width - 10;
+        }
+        tooltipEl.style.top = `${Math.round(top)}px`;
+        tooltipEl.style.left = `${Math.round(left)}px`;
+      }
+      function hideTooltip() {
+        activeTarget = null;
+        tooltipEl.classList.remove("visible");
+      }
+      document.addEventListener("mouseover", (e) => {
+        const target = e.target.closest("[data-tooltip]");
+        if (!target) return;
+        const text = target.getAttribute("data-tooltip");
+        if (text && text.trim()) {
+          showTooltip(target, text.trim());
+        }
+      });
+      document.addEventListener("mouseout", (e) => {
+        const target = e.target.closest("[data-tooltip]");
+        if (target && target === activeTarget) {
+          hideTooltip();
+        }
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") hideTooltip();
+      });
+      window.addEventListener("scroll", hideTooltip, { passive: true });
+    }
+    initAccessibleTooltips();
   });
 })();

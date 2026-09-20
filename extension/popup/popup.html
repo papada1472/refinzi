@@ -49,10 +49,7 @@
           <div class="dash-card" id="card-prompts-enhanced">
             <div class="dash-card-header">
               <span class="dash-card-label">PROMPTS ENHANCED</span>
-              <!-- SVG: sparkle/star icon -->
-              <svg class="card-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M8 2v2M8 12v2M2 8h2M12 8h2M4.22 4.22l1.42 1.42M10.36 10.36l1.42 1.42M10.36 4.22 8.94 5.64M4.22 10.36l1.42 1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
+              <span class="stat-mini-icon" data-tooltip="Total prompts enhanced with Better or Expert mode">✨</span>
             </div>
             <div class="dash-card-body">
               <div class="dash-card-val" id="metric-total-prompts">0</div>
@@ -66,40 +63,33 @@
             </div>
           </div>
 
-          <!-- Metric 2: Time Saved -->
+          <!-- Metric 2: Estimated Time Saved -->
           <div class="dash-card" id="card-time-saved">
             <div class="dash-card-header">
-              <span class="dash-card-label">TIME SAVED</span>
-              <!-- SVG: clock icon -->
-              <svg class="card-icon info-tooltip-trigger" id="tooltip-time-saved"
+              <span class="dash-card-label">EST. TIME SAVED</span>
+              <span class="info-tooltip-trigger" id="tooltip-time-saved"
+                   tabindex="0" role="button" aria-label="How is time saved calculated?"
                    title="Calculated from your configured minutes per prompt (default 4 min) — average time assumed for manually refining a prompt."
-                   viewBox="0 0 16 16" fill="none" aria-label="How is this calculated?">
-                <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
-                <path d="M8 5v3.5l2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
+                   data-tooltip="Calculated from your configured minutes per prompt (default 4 min) — average time assumed for manually refining a prompt.">⏱️</span>
             </div>
             <div class="dash-card-body">
               <div class="dash-card-val" id="metric-time-saved">~0m</div>
-              <div class="dash-card-sub text-emerald" id="metric-time-sub">est. saved</div>
+              <div class="dash-card-sub text-emerald" id="metric-time-sub">estimated</div>
             </div>
           </div>
 
-          <!-- Metric 3: Cost Saved -->
+          <!-- Metric 3: Estimated Cost Saved -->
           <div class="dash-card" id="card-cost-saved">
             <div class="dash-card-header">
-              <span class="dash-card-label">COST SAVED</span>
-              <!-- SVG: coin / dollar-circle icon -->
-              <svg class="card-icon info-tooltip-trigger" id="tooltip-cost-saved"
+              <span class="dash-card-label">EST. COST SAVED</span>
+              <span class="info-tooltip-trigger" id="tooltip-cost-saved"
+                   tabindex="0" role="button" aria-label="How is cost saved calculated?"
                    title="Calculated from your configured value per hour (default $50/hr). Estimated from AI usage/iteration costs available to Refinzi."
-                   viewBox="0 0 16 16" fill="none" aria-label="How is this calculated?">
-                <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
-                <path d="M8 5.5v1M8 9.5v1M6.5 7a1.5 1.5 0 0 1 3 0c0 .83-.67 1.5-1.5 1.5S6.5 9.33 6.5 10a1.5 1.5 0 0 0 3 0" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
-              </svg>
+                   data-tooltip="Calculated from your configured value per hour (default $50/hr). Estimated from AI usage/iteration costs available to Refinzi.">💡</span>
             </div>
-
             <div class="dash-card-body">
               <div class="dash-card-val" id="metric-cost-saved">—</div>
-              <div class="dash-card-sub text-muted" id="metric-cost-sub">Cost estimate unavailable</div>
+              <div class="dash-card-sub text-muted" id="metric-cost-sub">estimated</div>
             </div>
           </div>
 
@@ -107,14 +97,7 @@
           <div class="dash-card" id="card-usage-split">
             <div class="dash-card-header">
               <span class="dash-card-label">BETTER / EXPERT</span>
-              <!-- SVG: bolt (Better) + brain outline (Expert) dual glyph -->
-              <svg class="card-icon" viewBox="0 0 20 16" fill="none" aria-hidden="true">
-                <!-- bolt -->
-                <path d="M6 2 3 9h4l-1 5 5-7H7l2-5z" stroke="#ffd700" stroke-width="1.3" stroke-linejoin="round" fill="rgba(255,215,0,0.08)"/>
-                <!-- brain outline -->
-                <path d="M13 4c1.1 0 2 .9 2 2 .55 0 1 .45 1 1s-.45 1-1 1v1c0 1.1-.9 2-2 2h-1V4h1z" stroke="#a78bfa" stroke-width="1.2" stroke-linejoin="round" fill="rgba(167,139,250,0.08)"/>
-                <path d="M13 4c-1.1 0-1 1-1 2" stroke="#a78bfa" stroke-width="1.2" stroke-linecap="round"/>
-              </svg>
+              <span class="stat-mini-icon" data-tooltip="Better mode vs Expert mode usage split">⚡ 🧠</span>
             </div>
             <div class="dash-card-body">
               <div class="dash-card-val" id="metric-better-expert-val">0 / 0</div>
@@ -130,14 +113,18 @@
 
         <!-- Period Activity Breakdown Bar -->
         <div class="period-activity-bar">
-          <div class="activity-pill better-pill">
+          <div class="activity-pill better-pill" tabindex="0" role="button"
+               data-tooltip="Total Better mode calibrations in this time range"
+               title="Total Better mode calibrations in this time range">
             <span class="activity-dot better"></span>
             <span class="activity-name">Better</span>
             <span class="activity-num" id="period-better-count">0</span>
             <span class="activity-pct text-muted" id="period-better-pct">(0%)</span>
           </div>
           <div class="activity-divider">/</div>
-          <div class="activity-pill expert-pill">
+          <div class="activity-pill expert-pill" tabindex="0" role="button"
+               data-tooltip="Total Expert mode calibrations in this time range"
+               title="Total Expert mode calibrations in this time range">
             <span class="activity-dot expert"></span>
             <span class="activity-name">Expert</span>
             <span class="activity-num" id="period-expert-count">0</span>
@@ -167,6 +154,9 @@
           </div>
           <button type="button" class="coach-dismiss" id="btn-dismiss-coach" aria-label="Dismiss tip">✕</button>
         </div>
+
+        <!-- Progressive PLG Nudge Container -->
+        <div id="plg-nudge-container" class="plg-nudge-container" aria-live="polite"></div>
 
         <!-- Recent Activity Section -->
         <div class="content-group">
@@ -243,7 +233,9 @@
           <div class="setting-row">
             <label class="setting-label" for="setting-provider">Default Engine</label>
             <select id="setting-provider" class="select-field">
-              <option value="gateway" selected>Refinzi Cloud Gateway (Cloud Server — Default)</option>
+              <option value="bai" selected>🌐 Refinzi Cloud AI (Qwen 3.8 / DeepSeek V4.1 — Default)</option>
+              <option value="groq">⚡ Groq LPU (Ultra-Fast ~300ms)</option>
+              <option value="gateway">Refinzi Cloud Gateway (Cloud Server)</option>
               <option value="gemini">Google Gemini (Gemini 3.8 Flash — BYOK)</option>
               <option value="openai">OpenAI (GPT-5.6 Luna / Terra — BYOK)</option>
               <option value="deepseek">DeepSeek (V4.1 Flash / V4 Pro — BYOK)</option>
@@ -285,8 +277,16 @@
 
           <div class="setting-row" id="setting-model-row">
             <label class="setting-label" for="setting-model">Model</label>
-            <input type="text" id="setting-model" class="text-field" list="model-presets" placeholder="gemini-flash-latest">
+            <input type="text" id="setting-model" class="text-field" list="model-presets" placeholder="qwen3.8-flash">
             <datalist id="model-presets">
+              <option value="qwen3.8-flash">Qwen 3.8 Flash (Default Cloud AI — Fastest)</option>
+              <option value="deepseek-v4.1-flash">DeepSeek V4.1 Flash (Cloud AI — Code &amp; Structure)</option>
+              <option value="qwen3.7-flash">Qwen 3.7 Flash (Cloud AI — Low Latency)</option>
+              <option value="gpt-6-astra">GPT-6 Astra on b.ai</option>
+              <option value="claude-opus-5">Claude Opus 5 on b.ai</option>
+              <option value="openai/gpt-oss-120b">GPT-OSS 120B on Groq (Ultra-Fast)</option>
+              <option value="openai/gpt-oss-20b">GPT-OSS 20B on Groq</option>
+              <option value="qwen/qwen3.8-27b">Qwen 3.8 27B on Groq</option>
               <option value="gemini-flash-latest">Gemini Flash Latest (Always newest Flash — Recommended)</option>
               <option value="gemini-3.8-flash">Gemini 3.8 Flash</option>
               <option value="gemini-3.7-flash">Gemini 3.7 Flash</option>
@@ -302,7 +302,6 @@
               <option value="deepseek/deepseek-v4-flash-0731:free">DeepSeek V4 Flash (Free)</option>
               <option value="z-ai/glm-5.2:free">GLM 5.2 (Free)</option>
               <option value="google/gemma-4-31b-it:free">Gemma 4 31B (Free)</option>
-              <option value="qwen/qwen3.8-27b:free">Qwen 3.8 27B (Free)</option>
             </datalist>
           </div>
         </div>
@@ -417,20 +416,23 @@
 
     <!-- Bottom Navigation Bar -->
     <nav class="bottom-nav">
-      <button type="button" class="nav-btn active" data-tab="tab-home">
+      <button type="button" class="nav-btn active" data-tab="tab-home" data-tooltip="Dashboard: metrics & calibrations">
         <span class="nav-icon">🏠</span>
         <span class="nav-label">Home</span>
       </button>
-      <button type="button" class="nav-btn" data-tab="tab-history">
+      <button type="button" class="nav-btn" data-tab="tab-history" data-tooltip="History: search, filter & copy past calibrations">
         <span class="nav-icon">🕒</span>
         <span class="nav-label">History</span>
       </button>
-      <button type="button" class="nav-btn" data-tab="tab-settings">
+      <button type="button" class="nav-btn" data-tab="tab-settings" data-tooltip="Settings: AI provider, API keys & preferences">
         <span class="nav-icon">⚙️</span>
         <span class="nav-label">Settings</span>
       </button>
     </nav>
   </div>
+
+  <!-- Global Accessible Floating Tooltip -->
+  <div id="refinzi-global-tooltip" class="refinzi-tooltip hidden" role="tooltip" aria-hidden="true"></div>
 
   <script src="popup.js" type="module"></script>
 </body>

@@ -15,6 +15,8 @@ import { BrowserAPI } from '../src/browser/api';
 import { __resetStorageLayerForTests } from '../src/utils/storage-batch';
 import {
   DEFAULT_GEMINI_API_KEY,
+  DEFAULT_GROQ_API_KEY,
+  DEFAULT_BAI_API_KEY,
   DEPRECATED_GEMINI_API_KEYS,
   DEPRECATED_MODELS,
   DEFAULT_SETTINGS,
@@ -38,6 +40,8 @@ import { GeminiProvider } from '../src/providers/gemini';
 import { OpenAIProvider } from '../src/providers/openai';
 import { DeepSeekProvider } from '../src/providers/deepseek';
 import { OpenRouterProvider } from '../src/providers/openrouter';
+import { GroqProvider } from '../src/providers/groq';
+import { BAIProvider } from '../src/providers/bai';
 
 /** The bundled key shipped before the current one (pulled from deprecated list). */
 const PREVIOUS_BUNDLED_KEY = DEPRECATED_GEMINI_API_KEYS[1];
@@ -81,10 +85,10 @@ describe('Provider defaults, bundled key & settings migration', () => {
       expect(DEPRECATED_GEMINI_API_KEYS).not.toContain('');
     });
 
-    it('defaults to the gateway with NO bundled API key in fresh settings', () => {
-      expect(DEFAULT_SETTINGS.provider).toBe('gateway');
+    it('defaults to bai with configured default key in fresh settings', () => {
+      expect(DEFAULT_SETTINGS.provider).toBe('bai');
       expect(DEFAULT_SETTINGS.apiKeys.gemini).toBeUndefined();
-      expect(Object.keys(DEFAULT_SETTINGS.apiKeys)).toHaveLength(0);
+      expect(DEFAULT_SETTINGS.apiKeys.bai).toBe(DEFAULT_BAI_API_KEY);
     });
   });
 
@@ -94,6 +98,8 @@ describe('Provider defaults, bundled key & settings migration', () => {
       expect(DEFAULT_SETTINGS.models.openai).toBe('gpt-5.6-luna');
       expect(DEFAULT_SETTINGS.models.deepseek).toBe('deepseek-flash');
       expect(DEFAULT_SETTINGS.models.openrouter).toBe('deepseek/deepseek-v4-flash-0731:free');
+      expect(DEFAULT_SETTINGS.models.groq).toBe('openai/gpt-oss-120b');
+      expect(DEFAULT_SETTINGS.models.bai).toBe('qwen3.8-flash');
     });
 
     it('never ships a retired model as a default', () => {
@@ -201,6 +207,8 @@ describe('Provider defaults, bundled key & settings migration', () => {
       expect((new OpenRouterProvider('sk-or-test') as any).model).toBe(
         DEFAULT_SETTINGS.models.openrouter
       );
+      expect((new GroqProvider('gsk-test') as any).model).toBe(DEFAULT_SETTINGS.models.groq);
+      expect((new BAIProvider('sk-test') as any).model).toBe(DEFAULT_SETTINGS.models.bai);
     });
   });
 
@@ -209,6 +217,8 @@ describe('Provider defaults, bundled key & settings migration', () => {
       expect(MODEL_PRICING[DEFAULT_SETTINGS.models.gemini]).toBeDefined();
       expect(MODEL_PRICING[DEFAULT_SETTINGS.models.openai]).toBeDefined();
       expect(MODEL_PRICING[DEFAULT_SETTINGS.models.deepseek]).toBeDefined();
+      expect(MODEL_PRICING[DEFAULT_SETTINGS.models.groq]).toBeDefined();
+      expect(MODEL_PRICING[DEFAULT_SETTINGS.models.bai]).toBeDefined();
     });
 
     it('derives averageTurnCost as 0.5*input + 0.8*output per 1k tokens', () => {

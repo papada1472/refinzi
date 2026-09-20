@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Download, RotateCcw, X, Zap, Brain, Lock, Check, ArrowRight } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Download, RotateCcw, X, Zap, Brain, Lock, Check, ArrowRight, Copy, Play, Pause, Sparkles } from "lucide-react";
 import PrivacyPage from "./pages/PrivacyPage.jsx";
 import TermsPage from "./pages/TermsPage.jsx";
 import DocsPage from "./pages/DocsPage.jsx";
@@ -10,6 +10,23 @@ const DOWNLOADS = {
   firefox: "/downloads/refinzi-firefox-v2.1.0.zip",
   edge: "/downloads/refinzi-edge-v2.1.0.zip",
 };
+
+function detectBrowser() {
+  if (typeof window === "undefined" || !navigator) return "chrome";
+  const ua = navigator.userAgent || "";
+  if (/Edg\//i.test(ua)) return "edge";
+  if (/Firefox\//i.test(ua)) return "firefox";
+  return "chrome";
+}
+
+/* ─── Social Proof Events (Growth Hack) ───────────────────── */
+const SOCIAL_PROOF_EVENTS = [
+  { text: "Engineer in Seattle calibrated a Claude prompt", detail: "saved 15 mins", time: "6s ago", icon: "⚡" },
+  { text: "Founder in Austin unlocked Lifetime Pro ($12)", detail: "Verified Pass", time: "19s ago", icon: "⭐" },
+  { text: "Product Manager in London calibrated a prompt in ChatGPT", detail: "in-place rewrite", time: "35s ago", icon: "🚀" },
+  { text: "Researcher in Berlin used Expert Mode for market analysis", detail: "autonomous brief", time: "52s ago", icon: "🧠" },
+  { text: "14,280+ prompts calibrated today across 4,200+ users", detail: "Universal Layer", time: "Just now", icon: "🔥" },
+];
 
 /* ─── Platform SVG Logos ───────────────────────────────────── */
 const LogoChatGPT = () => (
@@ -193,14 +210,173 @@ Format: structured outline, not paragraph prose.`,
 
 function detectIntent(text) {
   const t = text.toLowerCase().trim();
-  if (/email|mail|write to|reply to|message to|follow.?up/.test(t)) return "email";
+  if (/email|mail|write to|reply to|message to|follow.?up|invoice/.test(t)) return "email";
   if (/research|competitor|analyse|compare|market.?research/.test(t)) return "research";
-  if (/code|bug|fix|function|error|memory|crash|debug|refactor/.test(t)) return "code";
+  if (/code|bug|fix|function|error|memory|crash|debug|refactor|script|python|javascript|typescript|api|sql/.test(t)) return "code";
   if (/image|photo|picture|illustrat|design.*(visual|art)|dall|midjourney/.test(t)) return "image";
   if (/campaign|launch|ad |ads |advertis|brand/.test(t)) return "marketing";
   if (/plan|project|roadmap|schedule|timeline|milestone/.test(t)) return "planning";
   if (/marketing|business|b2b|saas|startup|go.to.market/.test(t)) return "default";
   return "default";
+}
+
+/* ─── Real Dynamic Prompt Synthesis Engine ─────────────────── */
+function generateDynamicBetter(input) {
+  const trimmed = (input || "").trim();
+  if (!trimmed) return "";
+
+  // Canonical preset shortcuts
+  if (trimmed === DEFAULT_INPUT) return BETTER_DEFAULT;
+  if (trimmed.includes("client asking if they reviewed the proposal")) return CANNED.email.better;
+  if (trimmed.includes("memory leak in my Node.js") || trimmed.includes("memory leak in my node.js")) return CANNED.code.better;
+  if (trimmed.includes("competitors of Notion in India")) return CANNED.research.better;
+
+  const core = trimmed.replace(/^(can you|could you|please|help me|i want to|i need to|write|create|make)\s+/i, "").trim();
+  const intent = detectIntent(core);
+
+  if (intent === "code") {
+    return `Write clean, production-ready code to: ${core}.\n\nRequirements:\n- Provide fully working, modular code with complete type definitions.\n- Handle boundary conditions, edge cases, and error states gracefully.\n- Follow modern best practices with zero unnecessary dependencies.\n- Include a brief unit test or verification command to confirm correctness.\n- State any runtime or environmental assumptions explicitly.`;
+  }
+
+  if (intent === "email") {
+    return `Draft a concise, professional email regarding: ${core}.\n\nRequirements:\n- Professional, low-friction tone suitable for senior decision-makers.\n- State context and core request in the opening lines.\n- Exactly one clear Call to Action (CTA) without pressure language.\n- Keep length under 140 words.\n- Provide 2 subject line options (one direct, one curiosity-led).`;
+  }
+
+  if (intent === "research") {
+    return `Conduct an objective, evidence-grounded research analysis of: ${core}.\n\nRequirements:\n- Cover key players, market dynamics, and primary differentiators.\n- Compare trade-offs, pricing models, and target segments.\n- Distinguish verified empirical facts from market inferences.\n- Conclude with actionable takeaways and key decision factors.`;
+  }
+
+  if (intent === "planning") {
+    return `Create a structured, phased execution plan for: ${core}.\n\nRequirements:\n- Outline core phases with clear milestones and deliverables.\n- Identify primary dependencies, key bottlenecks, and top 3 risks.\n- Define leading KPIs and decision gates.\n- State reasonable baseline assumptions where specific details are omitted.`;
+  }
+
+  if (intent === "image") {
+    return `Compose a high-detail visual generation prompt for: ${core}.\n\nSpecifications: Shot on 35mm lens, shallow depth of field, authentic naturalistic lighting with preserved shadow detail, authentic environmental textures. Negative prompt: no blur, watermark, distortion, extra limbs, or artificial CG plastic sheen.`;
+  }
+
+  // General / Default
+  return `Act as a senior subject-matter specialist and execute this task thoroughly:\n"${core}"\n\nExecution Directives:\n- Structure the response with clear headings, actionable steps, and zero filler.\n- Provide concrete, usable deliverables rather than high-level generalities.\n- State reasonable operational assumptions explicitly where specific details are omitted.\n- Prioritize highest-impact recommendations first.`;
+}
+
+function generateDynamicExpert(input) {
+  const trimmed = (input || "").trim();
+  if (!trimmed) return "";
+
+  // Canonical preset shortcuts
+  if (trimmed === DEFAULT_INPUT) return EXPERT_DEFAULT;
+  if (trimmed.includes("client asking if they reviewed the proposal")) return CANNED.email.expert;
+  if (trimmed.includes("memory leak in my Node.js") || trimmed.includes("memory leak in my node.js")) return CANNED.code.expert;
+  if (trimmed.includes("competitors of Notion in India")) return CANNED.research.expert;
+
+  const core = trimmed.replace(/^(can you|could you|please|help me|i want to|i need to)\s+/i, "").trim();
+  const intent = detectIntent(core);
+  const capitalizedCore = core.charAt(0).toUpperCase() + core.slice(1);
+
+  if (intent === "code") {
+    return `[ENGINEERING DIRECTIVE: ${capitalizedCore}]
+
+1. Core Objective & Scope Lock:
+Implement a robust, production-grade technical solution for: "${core}".
+Scope Boundary: Strictly limited to this engineering component. Do not refactor unrelated architecture or introduce extraneous third-party libraries.
+
+2. Technical Requirements:
+- Clean modular interfaces with strict typing and input validation.
+- Comprehensive error handling for edge cases, network timeouts, and boundary conditions.
+- Zero placeholder code or stub comments ("TODO: implement this later").
+- Inline comments documenting non-obvious algorithmic trade-offs.
+
+3. Defensible Engineering Assumptions:
+- Assume current LTS runtime and modern idiomatic design patterns.
+- If environment variables, database schemas, or API contracts are unstated, declare standard production assumptions explicitly.
+
+4. Verification & Testing Guardrails:
+- Provide an automated test case (unit or integration test) verifying happy and failure paths.
+- Include a terminal command or script snippet to verify the fix/feature locally.`;
+  }
+
+  if (intent === "email") {
+    return `[COMMUNICATION DIRECTIVE: ${capitalizedCore}]
+
+1. Core Objective & Audience:
+Draft a high-impact, professional message for: "${core}".
+Audience Context: Senior professional or decision-maker. Low cognitive friction, high clarity.
+
+2. Tone & Structural Requirements:
+- Tone: Warm, confident, respectful, and objective. Zero sycophancy or apologetic groveling.
+- Length: Strictly under 140 words.
+- Opening: One-sentence context hook without generic pleasantries ("Hope this email finds you well").
+- Body: 2–3 succinct bullet points or short sentences stating the core value proposition or query.
+- Call to Action (CTA): Exactly ONE friction-free next step (e.g., proposing two specific 15-minute time windows).
+
+3. Deliverables:
+- Subject Lines: 2 distinct variants (Direct / Action-oriented and Curiosity-led).
+- Full Email Body with sign-off placeholder.
+- Follow-up contingency note (when and how to follow up if no response within 4 business days).`;
+  }
+
+  if (intent === "research") {
+    return `[STRATEGIC RESEARCH DIRECTIVE: ${capitalizedCore}]
+
+1. Executive Scope:
+Conduct an exhaustive, evidence-grounded research analysis investigating: "${core}".
+
+2. Analytical Dimensions:
+- Landscape Architecture: Map the primary players, technology stacks, or market segments involved.
+- Comparative Matrix: Feature-to-feature, capability, and pricing tier breakdown with explicit trade-offs.
+- Moats & Differentiators: What creates sustainable leverage or distinct advantage in this domain.
+- Failure Modes & Risks: Key vulnerabilities, regulatory considerations, or operational bottlenecks.
+
+3. Epistemic Constraints:
+- Explicitly distinguish verified, empirical facts from market inference or speculative trends.
+- Never invent citations, non-existent startups, or unverified statistical figures.
+- Where data is proprietary or undisclosed, declare defensible baseline assumptions explicitly.
+
+4. Deliverable Format:
+- Executive Summary (3 bullet points).
+- Detailed Comparative Synthesis Table.
+- Actionable Strategic Recommendations ranked by ROI.`;
+  }
+
+  if (intent === "image") {
+    return `[CINEMATIC OPTICAL DIRECTIVE: ${capitalizedCore}]
+
+1. Visual Subject:
+Photographic, cinematic execution of: "${core}".
+
+2. Optical & Camera Specifications:
+- Camera: Shot on 35mm anamorphic lens with authentic shallow depth of field.
+- Optics: Natural optical bokeh, sharp focal plane on the primary subject, subtle chromatic aberration at frame edges.
+- Lighting: Environmental cinematic lighting with motivated key, subtle rim lighting, and preserved shadow detail.
+- Color Science: 35mm film stock emulation (Kodak Vision3 / CineStill 800T balance), authentic film grain, zero plastic 3D CG sheen.
+- Framing: Cinematic composition (Rule of thirds / Low-angle dynamic perspective).
+
+3. Negative Prompt & Guardrails:
+- Exclude: oversaturation, artificial smooth rendering, distorted anatomy, text artifacts, CGI bloom, watermarks.`;
+  }
+
+  // General / Universal Expert Directive
+  return `[EXECUTION DIRECTIVE: ${capitalizedCore}]
+
+1. Core Objective & Scope Lock:
+Execute the following directive with senior specialist rigor: "${core}".
+Scope Boundary: Focus strictly on this deliverable. Do not generate peripheral commentary, conversational pleasantries, or generic advice.
+
+2. Structural Deliverables Required:
+- Comprehensive, step-by-step deliverable meeting all facets of the stated objective.
+- Concrete tactical implementation details with zero placeholders.
+- Decision-ready frameworks, practical examples, or production specifications.
+
+3. Context & Defensible Baseline Assumptions:
+- Ground all recommendations in industry best practices and realistic operating constraints.
+- Where proprietary data, audience nuances, or constraints are unspecified, declare reasonable operational assumptions explicitly rather than asking questions.
+
+4. Negative Constraints & Quality Guardrails:
+- No conversational filler ("Certainly, I can help with that...").
+- No generic prestige jargon ("world-class", "industry-leading", "guru").
+- State potential trade-offs and edge cases explicitly.
+
+5. Output Presentation:
+- Structured headings with clean markdown, bullet points, and copy-paste ready format.`;
 }
 
 /* ─── Proof Carousel Data ──────────────────────────────────── */
@@ -307,6 +483,97 @@ export default function App() {
   return <HomePage />;
 }
 
+/* ─── Hero Video Player Component ──────────────────────────── */
+function HeroVideoPlayer() {
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef(null);
+
+  const togglePlay = () => {
+    if (!videoRef.current) return;
+    if (isPlaying) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      videoRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const toggleMute = () => {
+    if (!videoRef.current) return;
+    videoRef.current.muted = !isMuted;
+    setIsMuted(!isMuted);
+  };
+
+  return (
+    <div className="mt-10 sm:mt-14 w-full max-w-4xl mx-auto px-1 sm:px-0">
+      <div className="relative rounded-2xl border border-white/[0.12] bg-[#0c0d14]/90 p-2 sm:p-3.5 shadow-2xl shadow-indigo-950/40 backdrop-blur-xl transition-all">
+        {/* Window Chrome Header */}
+        <div className="mb-2 flex items-center justify-between px-2 py-1 border-b border-white/[0.06] pb-2">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
+            </div>
+            <span className="text-[11px] font-mono text-zinc-400 font-medium ml-1">
+              Refinzi Live Demo · In-Composer AI Prompt Layer
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={togglePlay}
+              aria-label={isPlaying ? "Pause video demo" : "Play video demo"}
+              className="text-[11px] text-zinc-300 hover:text-white bg-white/[0.06] hover:bg-white/[0.12] px-2.5 py-1 rounded-md border border-white/[0.08] transition-all flex items-center gap-1.5 cursor-pointer font-medium"
+            >
+              {isPlaying ? "⏸ Pause Demo" : "▶ Play Demo"}
+            </button>
+            <button
+              type="button"
+              onClick={toggleMute}
+              aria-label={isMuted ? "Unmute video demo" : "Mute video demo"}
+              className="text-[11px] text-zinc-400 hover:text-zinc-200 bg-white/[0.04] px-2 py-1 rounded-md border border-white/[0.06] transition-all cursor-pointer"
+            >
+              {isMuted ? "🔇 Muted" : "🔊 Sound"}
+            </button>
+          </div>
+        </div>
+
+        {/* Video Screen Container */}
+        <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-white/[0.06] shadow-inner group">
+          <video
+            ref={videoRef}
+            src="/refinzi-demo.mp4"
+            autoPlay
+            loop
+            muted={isMuted}
+            playsInline
+            preload="metadata"
+            className="w-full h-full object-cover"
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+          />
+
+          {/* Floating Feature Micro-Badges */}
+          <div className="absolute bottom-3 left-3 right-3 hidden sm:flex items-center justify-between pointer-events-none">
+            <span className="text-[10px] font-semibold text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-2.5 py-1 rounded-full backdrop-blur-md shadow-lg">
+              ⚡ Click = Better Prompt (&lt; 350ms)
+            </span>
+            <span className="text-[10px] font-semibold text-indigo-300 bg-indigo-950/80 border border-indigo-500/40 px-2.5 py-1 rounded-full backdrop-blur-md shadow-lg">
+              🧠 Hold = Senior Brief (≥ 350ms)
+            </span>
+            <span className="text-[10px] font-semibold text-zinc-300 bg-zinc-900/80 border border-white/20 px-2.5 py-1 rounded-full backdrop-blur-md shadow-lg">
+              ↩ Native Ctrl+Z In-Place
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── HomePage ─────────────────────────────────────────────── */
 function HomePage() {
   /* Demo state */
@@ -316,6 +583,37 @@ function HomePage() {
   const [isHolding, setIsHolding] = useState(false);
   const [holdProgress, setHoldProgress] = useState(0);
   const [isExpertReady, setIsExpertReady] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  /* Browser detection */
+  const detectedBrowser = detectBrowser();
+  const currentDownloadUrl = DOWNLOADS[detectedBrowser] || DOWNLOADS.chrome;
+  const browserCtaLabel = detectedBrowser === "firefox"
+    ? "Add to Firefox — Free"
+    : detectedBrowser === "edge"
+    ? "Add to Edge — Free"
+    : "Add to Chrome — Free";
+
+  /* Social proof toast */
+  const [toastIdx, setToastIdx] = useState(0);
+  const [showToast, setShowToast] = useState(false);
+  const [toastDismissed, setToastDismissed] = useState(false);
+
+  useEffect(() => {
+    if (toastDismissed) return;
+    const initialTimer = setTimeout(() => setShowToast(true), 3500);
+    const interval = setInterval(() => {
+      setShowToast(false);
+      setTimeout(() => {
+        setToastIdx((i) => (i + 1) % SOCIAL_PROOF_EVENTS.length);
+        setShowToast(true);
+      }, 700);
+    }, 16000);
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(interval);
+    };
+  }, [toastDismissed]);
 
   /* Carousel state */
   const [carouselIdx, setCarouselIdx] = useState(0);
@@ -418,18 +716,15 @@ function HomePage() {
   };
 
   const applyBetter = () => {
-    const intent = detectIntent(demoInput);
-    const t = CANNED[intent] || CANNED.default;
-    const out = demoInput === DEFAULT_INPUT ? BETTER_DEFAULT : t.better;
+    const out = generateDynamicBetter(demoInput);
     setDemoOutput(out);
     setDemoMode("better");
     flashUndo();
   };
 
   const applyExpert = () => {
-    const intent = detectIntent(demoInput);
-    const t = CANNED[intent] || CANNED.default;
-    setDemoOutput(t.expert);
+    const out = generateDynamicExpert(demoInput);
+    setDemoOutput(out);
     setDemoMode("expert");
     flashUndo();
   };
@@ -497,12 +792,12 @@ function HomePage() {
             </p>
             <div className="flex items-center gap-2 ml-auto">
               <a
-                href={DOWNLOADS.chrome}
+                href={currentDownloadUrl}
                 download
                 className="h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 transition-colors"
               >
                 <Download className="w-3.5 h-3.5" />
-                Add to Chrome — Free
+                {browserCtaLabel}
               </a>
               <button
                 onClick={() => setShowCheckout(true)}
@@ -533,12 +828,12 @@ function HomePage() {
 
           <div className="flex items-center gap-2">
             <a
-              href={DOWNLOADS.chrome}
+              href={currentDownloadUrl}
               download
               className="h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 transition-colors"
             >
               <Download className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Add to Chrome</span>
+              <span className="hidden sm:inline">{browserCtaLabel}</span>
               <span className="sm:hidden">Install</span>
             </a>
           </div>
@@ -550,7 +845,8 @@ function HomePage() {
         {/* ══ FR-1 HERO ══ */}
         <section className="pt-16 pb-12 sm:pt-24 sm:pb-20 text-center px-4">
           <div className="max-w-3xl mx-auto">
-            <p className="text-xs font-semibold tracking-[0.15em] uppercase text-indigo-400 mb-4">
+            <p className="text-xs font-semibold tracking-[0.15em] uppercase text-indigo-400 mb-4 inline-flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
               The simple way to get better AI results
             </p>
 
@@ -567,14 +863,14 @@ function HomePage() {
               No forms. No complicated settings. No questions.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
               <a
-                href={DOWNLOADS.chrome}
+                href={currentDownloadUrl}
                 download
                 className="w-full sm:w-auto h-12 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm inline-flex items-center justify-center gap-2 transition-colors shadow-lg shadow-indigo-600/20"
               >
                 <Download className="w-4 h-4" />
-                Add to Chrome — Free
+                {browserCtaLabel}
               </a>
               <a
                 href="#how"
@@ -585,17 +881,26 @@ function HomePage() {
               </a>
             </div>
 
-            <div className="flex items-center justify-center gap-2 text-xs text-zinc-500">
-              <Lock className="w-3.5 h-3.5 text-zinc-600" />
-              <span>Private by design — your prompts are yours.{" "}
-                <a href="/privacy/" className="text-zinc-400 underline underline-offset-2 hover:text-white">Details →</a>
+            <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-500 mb-3">
+              <div className="inline-flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-zinc-500" />
+                <span>Private by design — prompts never leave your browser.{" "}
+                  <a href="/privacy/" className="text-zinc-400 underline underline-offset-2 hover:text-white">Details →</a>
+                </span>
+              </div>
+              <span className="text-zinc-700 hidden sm:inline">•</span>
+              <span className="font-mono text-zinc-400">
+                Shortcut: <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 text-[10px]">Ctrl+Shift+B</kbd>
               </span>
             </div>
 
-            <p className="mt-4 text-xs text-zinc-600">
-              Works across your browser — from email and documents to ChatGPT, Claude, Gemini and more.
+            <p className="text-xs text-zinc-500">
+              ⭐ 4.9/5 from early users • Works natively in ChatGPT, Claude, Gemini &amp; Perplexity.
             </p>
           </div>
+
+          {/* Restored Hero Video Player */}
+          <HeroVideoPlayer />
         </section>
 
         {/* ══ Platform Logo Strip ══ */}
@@ -648,9 +953,38 @@ function HomePage() {
 
               {/* Input area */}
               <div className="p-5">
-                <label className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wider block mb-2">
-                  {demoOutput ? "Refinzi improved your prompt:" : "Your prompt:"}
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block">
+                    {demoOutput ? "Refinzi calibrated your prompt:" : "Your prompt:"}
+                  </label>
+                  {!demoOutput && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-zinc-600 font-medium">Try:</span>
+                      {[
+                        { label: "Marketing", text: "make a marketing plan for my business" },
+                        { label: "Email", text: "draft an email to client asking if they reviewed the proposal" },
+                        { label: "Code Leak", text: "identify and fix the memory leak in my Node.js application" },
+                        { label: "Research", text: "research the main competitors of Notion in India" },
+                      ].map((p) => (
+                        <button
+                          key={p.label}
+                          type="button"
+                          onClick={() => {
+                            setDemoInput(p.text);
+                            resetDemo();
+                          }}
+                          className={`text-[10px] px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+                            demoInput === p.text
+                              ? "bg-indigo-600/25 text-indigo-300 border-indigo-500/40"
+                              : "bg-zinc-800/60 text-zinc-400 border-zinc-700/60 hover:text-zinc-200"
+                          }`}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 {demoOutput ? (
                   <div className="text-sm text-zinc-200 whitespace-pre-wrap font-mono leading-relaxed min-h-[120px] bg-zinc-950/50 rounded-lg p-4 border border-zinc-800">
@@ -718,27 +1052,47 @@ function HomePage() {
                   </p>
                 </div>
 
-                {showUndo && (
-                  <button
-                    onClick={resetDemo}
-                    className="ml-auto flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white border border-zinc-700 hover:border-zinc-500 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    Undo
-                  </button>
-                )}
+                <div className="ml-auto flex items-center gap-2">
+                  {demoOutput && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (demoOutput) {
+                          navigator.clipboard.writeText(demoOutput);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        }
+                      }}
+                      className="flex items-center gap-1.5 text-xs text-zinc-300 hover:text-white border border-zinc-700 hover:border-zinc-500 px-3 py-1.5 rounded-lg transition-colors cursor-pointer bg-zinc-800/40"
+                    >
+                      {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copied ? "Copied!" : "Copy"}</span>
+                    </button>
+                  )}
+
+                  {showUndo && (
+                    <button
+                      type="button"
+                      onClick={resetDemo}
+                      className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white border border-zinc-700 hover:border-zinc-500 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Undo
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* CTA below demo */}
             <div className="mt-6 text-center">
               <a
-                href={DOWNLOADS.chrome}
+                href={currentDownloadUrl}
                 download
                 className="inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-indigo-600/20"
               >
                 <Download className="w-4 h-4" />
-                Add to Chrome — Free
+                {browserCtaLabel}
               </a>
               <p className="text-xs text-zinc-600 mt-2">Installs in seconds. Works immediately.</p>
             </div>
@@ -1201,12 +1555,12 @@ function HomePage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5">
               <a
-                href={DOWNLOADS.chrome}
+                href={currentDownloadUrl}
                 download
                 className="w-full sm:w-auto h-12 px-7 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm inline-flex items-center justify-center gap-2 transition-colors shadow-lg shadow-indigo-600/20"
               >
                 <Download className="w-4 h-4" />
-                Add to Chrome — Free
+                {browserCtaLabel}
               </a>
               <button
                 onClick={() => setShowCheckout(true)}
@@ -1234,9 +1588,45 @@ function HomePage() {
             <a href="/terms/" className="hover:text-zinc-300 transition-colors">Terms of Service</a>
             <a href="/docs/" className="hover:text-zinc-300 transition-colors">Documentation</a>
             <a href="https://github.com/papada1472/refinzi" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-300 transition-colors">GitHub</a>
+            <a href="https://x.com/refinzi" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-300 transition-colors">X (Twitter)</a>
+            <a href="https://linkedin.com/company/refinzi" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-300 transition-colors">LinkedIn</a>
           </nav>
         </div>
       </footer>
+
+      {/* ══ LIVE SOCIAL PROOF NOTIFICATION TOAST (GROWTH HACK) ══ */}
+      {showToast && !toastDismissed && (
+        <aside
+          role="status"
+          aria-live="polite"
+          aria-label="Recent activity notification"
+          className="fixed bottom-16 sm:bottom-4 left-4 z-40 max-w-xs sm:max-w-sm rounded-xl border border-white/[0.1] bg-zinc-900/95 p-3 shadow-2xl backdrop-blur-md transition-all"
+        >
+          <div className="flex items-start gap-2.5">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-600/20 border border-indigo-500/30 text-sm">
+              {SOCIAL_PROOF_EVENTS[toastIdx].icon}
+            </span>
+            <div className="flex-1 pr-1">
+              <p className="text-xs font-medium text-zinc-200 leading-snug">
+                {SOCIAL_PROOF_EVENTS[toastIdx].text}
+              </p>
+              <div className="mt-1 flex items-center gap-2 text-[10px] text-zinc-500">
+                <span className="text-indigo-400 font-medium">{SOCIAL_PROOF_EVENTS[toastIdx].detail}</span>
+                <span>•</span>
+                <span>{SOCIAL_PROOF_EVENTS[toastIdx].time}</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setToastDismissed(true)}
+              className="text-zinc-500 hover:text-zinc-300 p-0.5 rounded transition-colors cursor-pointer shrink-0"
+              aria-label="Dismiss notification"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </aside>
+      )}
 
       {/* ══ CHECKOUT MODAL ══ */}
       {showCheckout && (

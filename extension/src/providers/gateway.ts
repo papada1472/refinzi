@@ -97,6 +97,7 @@ export class GatewayProvider implements AIProvider {
           reason: failure.reason,
           status: failure.status,
           code: failure.code,
+          isDefaultFallback: !this.apiKey,
         },
       };
     }
@@ -110,6 +111,7 @@ export class GatewayProvider implements AIProvider {
         reason: 'Gateway returned an invalid response',
         status: 0,
         code: 'SERVER_ERROR',
+        isDefaultFallback: !this.apiKey,
       },
     };
   }
@@ -140,6 +142,7 @@ export class GatewayProvider implements AIProvider {
           reason: failure.reason,
           status: failure.status,
           code: failure.code,
+          isDefaultFallback: !this.apiKey,
         },
       };
     }
@@ -153,6 +156,7 @@ export class GatewayProvider implements AIProvider {
         reason: 'Gateway returned an invalid response',
         status: 0,
         code: 'SERVER_ERROR',
+        isDefaultFallback: !this.apiKey,
       },
     };
   }

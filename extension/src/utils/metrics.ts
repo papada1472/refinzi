@@ -84,6 +84,14 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   // DeepSeek — legacy (retained for historical events)
   'deepseek-chat': { inputPer1k: 0.00014, outputPer1k: 0.00028, averageTurnCost: 0.00029 },
   'deepseek-reasoner': { inputPer1k: 0.00055, outputPer1k: 0.00219, averageTurnCost: 0.00203 },
+  // Groq LPU models
+  'openai/gpt-oss-120b': { inputPer1k: 0.00015, outputPer1k: 0.0006, averageTurnCost: 0.000555 },
+  'openai/gpt-oss-20b': { inputPer1k: 0.000075, outputPer1k: 0.0003, averageTurnCost: 0.000278 },
+  'qwen/qwen3.8-27b': { inputPer1k: 0.0002, outputPer1k: 0.0006, averageTurnCost: 0.00058 },
+  // b.ai models
+  'qwen3.8-flash': { inputPer1k: 0.0001, outputPer1k: 0.0004, averageTurnCost: 0.00037 },
+  'qwen3.8-max': { inputPer1k: 0.0016, outputPer1k: 0.0064, averageTurnCost: 0.00592 },
+  'qwen3.8-27b': { inputPer1k: 0.0002, outputPer1k: 0.0006, averageTurnCost: 0.00058 },
 };
 
 /**

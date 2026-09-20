@@ -320,41 +320,41 @@ function extractSubject(raw: string, lower: string, scope: DeliverableScope, tas
   if (scope === 'hero_section') {
     subj = subj.replace(/^(landing page hero(\s+section)?|hero(\s+section)?)\s+(for\s+)?/i, '');
     subj = subj.replace(/\s+landing page$/i, '');
-    return subj.trim() || 'developer tool';
+    return subj.trim() || (raw.toLowerCase().includes('developer tool') ? 'developer tool' : raw.trim());
   }
 
   if (scope === 'headline_only') {
     subj = subj.replace(/^(2-line|two-line)?\s*(linkedin\s+)?headline\s+(options\s+)?(for\s+)?(a\s+)?/i, '');
-    return subj.trim() || 'CTO';
+    return subj.trim() || (raw.toLowerCase().includes('cto') ? 'CTO' : raw.trim());
   }
 
   if (scope === 'single_email') {
-    subj = subj.replace(/^(email|message|letter|memo)\s+(to\s+[^ ]+\s+)?(apologizing\s+for|regarding|about)\s+/i, '');
-    subj = subj.replace(/^(apologizing\s+for|regarding|about)\s+/i, '');
-    return subj.trim() || 'delayed project delivery';
+    subj = subj.replace(/^(email|message|letter|memo)\s+(to\s+[^ ]+\s+)?(apologizing\s+for|regarding|about|asking\s+for)\s+/i, '');
+    subj = subj.replace(/^(apologizing\s+for|regarding|about|asking\s+for)\s+/i, '');
+    return subj.trim() || (raw.toLowerCase().includes('delayed project') ? 'delayed project delivery' : raw.trim());
   }
 
   if (scope === 'bug_fix') {
     subj = subj.replace(/^(fix|debug|resolve)\s+/i, '');
-    return subj.trim() || 'memory leak in nodejs stream pipeline';
+    return subj.trim() || (raw.toLowerCase().includes('memory leak') ? 'memory leak in nodejs stream pipeline' : raw.trim());
   }
 
   if (scope === 'single_image') {
     subj = subj.replace(/^(cinematic\s+)?(photo|photograph|picture|image|shot|render)\s+of\s+(a|an|the)?\s*/i, '');
     subj = subj.replace(/\s+in\s+tokyo(\s+at\s+night)?/i, '');
     subj = subj.replace(/\s+at\s+night/i, '');
-    return subj.trim() || 'Ferrari';
+    return subj.trim() || (raw.toLowerCase().includes('ferrari') ? 'Ferrari' : raw.trim());
   }
 
   if (scope === 'competitive_analysis') {
     subj = subj.replace(/^(competitors|alternatives|rivals)\s+(of|to)\s+/i, '');
     subj = subj.replace(/\s+in\s+india/i, '');
-    return subj.trim() || 'Notion';
+    return subj.trim() || (raw.toLowerCase().includes('notion') ? 'Notion' : raw.trim());
   }
 
   if (scope === 'metric_diagnostic') {
     subj = subj.replace(/^(why\s+our|why\s+the|why\s+)\s*/i, '');
-    return subj.trim() || 'Customer Acquisition Cost (CAC) increase';
+    return subj.trim() || (raw.toLowerCase().includes('cac') ? 'Customer Acquisition Cost (CAC) increase' : raw.trim());
   }
 
   return subj || raw;

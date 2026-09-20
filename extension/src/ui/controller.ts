@@ -253,10 +253,53 @@ export class RefinziController {
       }
     }
 
-    // The Orb is created lazily; a trigger means the user wants it, so ensure
-    // it exists here rather than bailing (the old `|| !this.orb` guard silently
-    // dropped shortcuts fired before any surface had activated).
-    if (!this.activeSurface) return;
+    // 4. Fallback: discover any visible safe editable textarea or rich editor across ANY website
+    if (!this.activeSurface) {
+      try {
+        const candidate = document.querySelector<HTMLElement>(
+          '#prompt-textarea, textarea:not([disabled]):not([readonly]), [contenteditable="true"]:not([contenteditable="false"])'
+        );
+        if (candidate && isSafeEditableElement(candidate)) {
+          this.activeSurface = SurfaceFactory.createSurface(candidate);
+          if (this.activeSurface) {
+            this.ensureOrb().attach(this.activeSurface.element);
+          }
+        }
+      } catch {
+        // Ignore
+      }
+    }
+
+    // Check for partial text selection within active surface
+    const surfaceSelection = this.activeSurface?.getSelection();
+    const isSurfacePartial = Boolean(surfaceSelection && surfaceSelection.text.trim().length > 0);
+
+    // Check for window selection anywhere on the page (e.g. user selected text from an AI output message)
+    let windowSel = '';
+    try {
+      const sel = typeof window !== 'undefined' ? window.getSelection() : null;
+      if (sel && !sel.isCollapsed && sel.rangeCount > 0) {
+        windowSel = sel.toString().trim();
+      }
+    } catch {
+      // Ignore
+    }
+
+    const isAiOutputSelection = !isSurfacePartial && windowSel.length > 0;
+    const isPartialSelection = isSurfacePartial;
+
+    let rawInput = '';
+    if (isSurfacePartial) {
+      rawInput = surfaceSelection!.text.trim();
+    } else if (isAiOutputSelection) {
+      rawInput = windowSel;
+    } else if (this.activeSurface) {
+      rawInput = this.activeSurface.getValue().trim();
+    }
+
+    // If no surface exists and no text is selected on the page, we cannot proceed
+    if (!this.activeSurface && !rawInput) return;
+
     const orb = this.ensureOrb();
 
     // Concurrency Lock & Debounce guard to prevent duplicate generation
@@ -265,13 +308,8 @@ export class RefinziController {
       return;
     }
 
-    // Check for partial text selection
-    const selection = this.activeSurface.getSelection();
-    const isPartialSelection = selection !== null && selection.text.trim().length > 0;
-    const rawInput = (isPartialSelection ? selection!.text : this.activeSurface.getValue()).trim();
-
     if (!rawInput) {
-      orb.showUndoToast('Type your raw thought in the text box first!', () => {});
+      orb.showUndoToast('Type your raw thought in the text box or highlight text first!', () => {});
       return;
     }
 
@@ -279,9 +317,9 @@ export class RefinziController {
     this.lastTriggerTimestamp = now;
 
     // Preserve the original uncalibrated text for instant Undo
-    this.originalPromptText = rawInput;
+    this.originalPromptText = isAiOutputSelection && this.activeSurface ? this.activeSurface.getValue() : rawInput;
     this.wasPartialSelection = isPartialSelection;
-    const targetAi = this.activeSurface.siteName || 'general';
+    const targetAi = this.activeSurface?.siteName || 'general';
 
     // FEATURE 2: Trigger Processing Feedback Animation
     orb.startProcessingFeedback(mode);
@@ -313,45 +351,66 @@ export class RefinziController {
         const autoApply = currentSettings.autoApply !== false;
 
         if (autoApply) {
-          // AUTOMATICALLY REPLACE in-place
-          if (isPartialSelection) {
-            this.activeSurface.replaceSelection(calibratedPrompt);
+          if (this.activeSurface) {
+            // AUTOMATICALLY REPLACE in-place
+            if (isPartialSelection) {
+              this.activeSurface.replaceSelection(calibratedPrompt);
+            } else {
+              this.activeSurface.setValue(calibratedPrompt);
+            }
+            this.activeSurface.focus();
+            this.canUndo = true;
+            this.lastCalibratedPrompt = calibratedPrompt;
           } else {
-            this.activeSurface.setValue(calibratedPrompt);
+            // Page has no editable surface: copy to clipboard
+            try {
+              await navigator.clipboard.writeText(calibratedPrompt);
+            } catch {
+              const tmp = document.createElement('textarea');
+              tmp.value = calibratedPrompt;
+              document.body.appendChild(tmp);
+              tmp.select();
+              document.execCommand('copy');
+              document.body.removeChild(tmp);
+            }
           }
-          this.activeSurface.focus();
-          this.canUndo = true;
-          this.lastCalibratedPrompt = calibratedPrompt;
         }
 
         const hasProviderFailure = response.data.isFallback || !!response.data.providerFailure;
         const failureInfo = response.data.providerFailure;
+        const isDefaultFallback = failureInfo?.isDefaultFallback === true;
 
         // FEATURE 3: Floating Validation Checklist Toast
         let summaryLabel = mode === 'better'
-          ? `⚡ Calibrated for ${response.data.domain || 'task'}`
-          : `🧠 Expert briefing applied`;
+          ? (isAiOutputSelection ? '⚡ Calibrated from AI output' : `⚡ Calibrated for ${response.data.domain || 'task'}`)
+          : (isAiOutputSelection ? '🧠 Expert briefing from AI output' : `🧠 Expert briefing applied`);
 
         if (hasProviderFailure) {
-          summaryLabel = mode === 'better'
-            ? `⚡ Better (Offline Engine)`
-            : `🧠 Expert (Offline Engine)`;
+          summaryLabel = isDefaultFallback
+            ? (isAiOutputSelection
+                ? (mode === 'better' ? '⚡ Calibrated from AI output' : '🧠 Expert briefing from AI output')
+                : (mode === 'better' ? '⚡ Better Prompt' : '🧠 Expert Briefing'))
+            : (mode === 'better' ? '⚡ Better (Offline Engine)' : '🧠 Expert (Offline Engine)');
         }
 
         const assumptionsList = Array.isArray(response.data.assumptions) ? response.data.assumptions : [];
         const assumedItem = assumptionsList.find((a: string) => a.startsWith('Assumed:')) || assumptionsList[0];
+
+        const failureNote = isDefaultFallback
+          ? 'Instant local calibration applied (Zero latency)'
+          : `Note: ${failureInfo?.reason || 'Offline calibration used'}`;
 
         const checklist = mode === 'expert'
           ? [
               'Exact core intent preserved',
               'Scope boundaries locked to task',
               assumedItem ? assumedItem : 'Defensible assumptions explicitly marked',
-              hasProviderFailure ? `Note: ${failureInfo?.reason || 'Offline calibration used'}` : 'Execution criteria & constraints added',
+              hasProviderFailure ? failureNote : 'Execution criteria & constraints added',
             ]
           : [
               'Core intent clarified',
               'Vagueness & ambiguity eliminated',
-              hasProviderFailure ? `Note: ${failureInfo?.reason || 'Offline calibration used'}` : 'Executable prompt structure calibrated',
+              hasProviderFailure ? failureNote : 'Executable prompt structure calibrated',
             ];
 
         orb.showValidationToast({
@@ -385,8 +444,8 @@ export class RefinziController {
           },
         });
 
-        // Show BYOK failure nudge if the AI provider failed, or gentle nudge if free tier
-        if (hasProviderFailure && failureInfo) {
+        // Show BYOK failure nudge only if a user-configured AI provider failed (NOT default unconfigured install)
+        if (hasProviderFailure && failureInfo && !isDefaultFallback) {
           setTimeout(() => {
             this.orb?.showByokNudge({
               reason: failureInfo.reason,
@@ -440,14 +499,22 @@ export class RefinziController {
           const autoApply = currentSettings.autoApply !== false;
 
           if (autoApply) {
-            if (isPartialSelection) {
-              this.activeSurface.replaceSelection(calibratedPrompt);
+            if (this.activeSurface) {
+              if (isPartialSelection) {
+                this.activeSurface.replaceSelection(calibratedPrompt);
+              } else {
+                this.activeSurface.setValue(calibratedPrompt);
+              }
+              this.activeSurface.focus();
+              this.canUndo = true;
+              this.lastCalibratedPrompt = calibratedPrompt;
             } else {
-              this.activeSurface.setValue(calibratedPrompt);
+              try {
+                await navigator.clipboard.writeText(calibratedPrompt);
+              } catch {
+                // Ignore
+              }
             }
-            this.activeSurface.focus();
-            this.canUndo = true;
-            this.lastCalibratedPrompt = calibratedPrompt;
           }
 
           const summaryLabel = mode === 'better'

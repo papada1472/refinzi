@@ -196,4 +196,77 @@ describe('Refinzi Controller — Grammarly-Style In-Place Calibration', () => {
     expect(textarea.value.length).toBeGreaterThan(50);
     expect(textarea.value).not.toBe('cool sports car in desert sunset');
   });
+
+  it('detects and calibrates text selected from an AI output on the page into the composer', async () => {
+    // Simulate an AI response block on the page
+    const aiOutputDiv = document.createElement('div');
+    aiOutputDiv.className = 'markdown prose';
+    aiOutputDiv.textContent = 'Here is the generated marketing campaign analysis for Q3.';
+    document.body.appendChild(aiOutputDiv);
+
+    // Empty composer awaiting next prompt
+    textarea.value = '';
+
+    // Mock window.getSelection() selecting text from the AI output
+    const mockSelection = {
+      isCollapsed: false,
+      rangeCount: 1,
+      toString: () => 'Here is the generated marketing campaign analysis for Q3.',
+    };
+    vi.spyOn(window, 'getSelection').mockReturnValue(mockSelection as any);
+
+    await controller.init();
+
+    const host = document.querySelector('[data-refinzi-orb-host="true"]');
+    const orbEl = host?.shadowRoot?.querySelector('.refinzi-orb') as HTMLElement;
+
+    orbEl.dispatchEvent(createPointerEvent('pointerdown', { button: 0, bubbles: true }));
+    orbEl.dispatchEvent(createPointerEvent('pointerup', { button: 0, bubbles: true }));
+
+    await new Promise((r) => setTimeout(r, 60));
+
+    // Verifies the composer now contains the calibrated prompt derived from the AI output!
+    expect(textarea.value).toContain('Ultra-wide low-angle');
+  });
+
+  it('presents clean instant calibration without scary error alerts on default install fallback', async () => {
+    await controller.init();
+
+    // Simulate default unconfigured gateway fallback
+    vi.spyOn(BrowserAPI.runtime, 'sendMessage').mockResolvedValueOnce({
+      success: true,
+      data: {
+        mode: 'better',
+        prompt: 'Calibrated instruction ready for AI',
+        domain: 'general',
+        shortReason: 'Instant local calibration applied',
+        isFallback: true,
+        providerFailure: {
+          provider: 'gateway',
+          reason: 'Gateway server temporarily unavailable',
+          status: 503,
+          code: 'SERVER_ERROR',
+          isDefaultFallback: true,
+        },
+      },
+    });
+
+    const host = document.querySelector('[data-refinzi-orb-host="true"]');
+    const orbEl = host?.shadowRoot?.querySelector('.refinzi-orb') as HTMLElement;
+
+    orbEl.dispatchEvent(createPointerEvent('pointerdown', { button: 0, bubbles: true }));
+    orbEl.dispatchEvent(createPointerEvent('pointerup', { button: 0, bubbles: true }));
+    await new Promise((r) => setTimeout(r, 60));
+
+    expect(textarea.value).toBe('Calibrated instruction ready for AI');
+
+    // Verify no scary error banner was shown
+    const shadow = host?.shadowRoot;
+    const toast = shadow?.querySelector('.validation-toast');
+    expect(toast).toBeTruthy();
+    const toastText = toast?.textContent || '';
+    expect(toastText).not.toContain('Gateway server temporarily unavailable');
+    expect(toastText).toContain('Instant local calibration applied');
+  });
 });
+
