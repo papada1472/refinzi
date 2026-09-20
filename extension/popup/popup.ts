@@ -84,8 +84,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const periodExpertCount = document.getElementById('period-expert-count') as HTMLSpanElement | null;
   const periodExpertPct = document.getElementById('period-expert-pct') as HTMLSpanElement | null;
 
-  // Elements: Recent List
+  // Elements: Recent List & Activation Hero
   const homeRecentList = document.getElementById('home-recent-list') as HTMLDivElement | null;
+  const heroActivationTitle = document.getElementById('hero-activation-title') as HTMLSpanElement | null;
+  const heroSiteBadge = document.getElementById('hero-site-badge') as HTMLSpanElement | null;
+  const plgNudgeContainer = document.getElementById('plg-nudge-container') as HTMLDivElement | null;
 
   // Elements: History View
   const historySearch = document.getElementById('history-search') as HTMLInputElement | null;
@@ -228,6 +231,87 @@ document.addEventListener('DOMContentLoaded', async () => {
     },
   };
 
+  // Declared before initial load so initial renders (e.g. PLG nudges and default actions) can call it
+  function switchTab(tabId: string): void {
+    navButtons.forEach((btn) => {
+      if (btn.getAttribute('data-tab') === tabId) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    tabViews.forEach((view) => {
+      if (view.id === tabId) {
+        view.classList.add('active');
+      } else {
+        view.classList.remove('active');
+      }
+    });
+  }
+
+  interface PlgNudgeDef {
+    id: string;
+    pillar: 'awareness' | 'adoption' | 'advocacy' | 'innovation';
+    icon: string;
+    title: string;
+    desc: string;
+    ctaText?: string;
+    onCta?: () => void;
+    condition: (summary: RefinziMetricsSummary, settings: RefinziSettings) => boolean;
+  }
+
+  const PLG_NUDGES: PlgNudgeDef[] = [
+    {
+      id: 'nudge_first_use',
+      pillar: 'adoption',
+      icon: '🚀',
+      title: 'Ready for your first calibration?',
+      desc: 'Type a draft in ChatGPT, Claude, or Perplexity and click the golden Orb for instant polish.',
+      ctaText: 'Settings →',
+      onCta: () => switchTab('tab-settings'),
+      condition: (summary) => (summary.allTimeCount ?? summary.totalPromptsEnhanced) === 0,
+    },
+    {
+      id: 'nudge_expert_mode',
+      pillar: 'adoption',
+      icon: '🧠',
+      title: 'Try Expert mode (Hold 350ms)',
+      desc: 'Single click gives instant Better polish. Hold the Orb for 350ms to generate deep structured reasoning.',
+      condition: (summary) => summary.betterCount > 0 && summary.expertCount === 0,
+    },
+    {
+      id: 'nudge_milestone_5',
+      pillar: 'advocacy',
+      icon: '🏆',
+      title: 'Prompt master in the making!',
+      desc: 'You have enhanced 5+ prompts with Refinzi. Share Refinzi with a colleague to boost their workflow.',
+      ctaText: 'Copy Link',
+      onCta: () => {
+        navigator.clipboard?.writeText('https://refinzi.com');
+      },
+      condition: (summary) => (summary.allTimeCount ?? summary.totalPromptsEnhanced) >= 5,
+    },
+    {
+      id: 'nudge_awareness_provider',
+      pillar: 'awareness',
+      icon: '⚡',
+      title: 'Connect a direct AI provider',
+      desc: 'Add your own free Gemini Flash or DeepSeek API key for 0-latency priority throughput.',
+      ctaText: 'Connect Key →',
+      onCta: () => switchTab('tab-settings'),
+      condition: (_summary, settings) => settings.provider === 'gateway' && !settings.apiKeys?.gemini,
+    },
+    {
+      id: 'nudge_privacy_insight',
+      pillar: 'innovation',
+      icon: '🔒',
+      title: 'Privacy-First Architecture',
+      desc: 'Your prompts and API keys are stored strictly in local browser storage, never sent to external servers.',
+      condition: (summary) => (summary.allTimeCount ?? summary.totalPromptsEnhanced) >= 3,
+    },
+  ];
+
   // =========================================================================
   // 1. INITIAL LOAD & STATE BINDING
   // =========================================================================
@@ -300,27 +384,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Resolve and display active tab context (async, non-blocking)
   resolveActiveTabContext();
 
+  // Initialize accessible floating tooltips
+  initAccessibleTooltips();
+
   // =========================================================================
   // 2. TAB NAVIGATION
   // =========================================================================
-  function switchTab(tabId: string): void {
-    navButtons.forEach((btn) => {
-      if (btn.getAttribute('data-tab') === tabId) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-    });
-
-    tabViews.forEach((view) => {
-      if (view.id === tabId) {
-        view.classList.add('active');
-      } else {
-        view.classList.remove('active');
-      }
-    });
-  }
-
   navButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
       const tab = btn.getAttribute('data-tab');
@@ -402,6 +471,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if (tooltipTimeSaved && summary.estimatedTimeSavedTooltip) {
       tooltipTimeSaved.title = summary.estimatedTimeSavedTooltip;
+      tooltipTimeSaved.setAttribute('data-tooltip', summary.estimatedTimeSavedTooltip);
     }
 
     // 3. Est. Cost Saved
@@ -413,6 +483,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if (tooltipCostSaved && summary.estimatedCostSavedTooltip) {
       tooltipCostSaved.title = summary.estimatedCostSavedTooltip;
+      tooltipCostSaved.setAttribute('data-tooltip', summary.estimatedCostSavedTooltip);
     }
 
     // 4. Better / Expert Usage Split
@@ -435,6 +506,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (periodBetterPct) periodBetterPct.textContent = `(${summary.betterPercentage}%)`;
     if (periodExpertCount) periodExpertCount.textContent = String(summary.expertCount);
     if (periodExpertPct) periodExpertPct.textContent = `(${summary.expertPercentage}%)`;
+
+    // 6. Progressive PLG Nudges
+    renderPlgNudges(summary, currentSettings);
   }
 
   // =========================================================================
@@ -915,6 +989,143 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // =========================================================================
+  // 7b. ACCESSIBLE FLOATING TOOLTIPS & PLG NUDGES
+  // =========================================================================
+
+  function initAccessibleTooltips(): void {
+    const globalTooltip = document.getElementById('refinzi-global-tooltip');
+    if (!globalTooltip) return;
+
+    let activeTrigger: HTMLElement | null = null;
+
+    function showTooltip(el: HTMLElement): void {
+      if (!globalTooltip) return;
+      const text = el.getAttribute('data-tooltip') || el.getAttribute('title');
+      if (!text) return;
+
+      // Stash title temporarily so browser's unstyled default tooltip does not flash
+      if (el.hasAttribute('title')) {
+        el.setAttribute('data-stored-title', el.getAttribute('title') || '');
+        el.removeAttribute('title');
+      }
+
+      globalTooltip.textContent = text;
+      globalTooltip.classList.remove('hidden');
+      globalTooltip.classList.add('visible');
+      globalTooltip.setAttribute('aria-hidden', 'false');
+      activeTrigger = el;
+
+      const rect = el.getBoundingClientRect();
+      const tooltipWidth = 220;
+      let left = rect.left + rect.width / 2 - tooltipWidth / 2;
+      if (left < 10) left = 10;
+      if (left + tooltipWidth > window.innerWidth - 10) {
+        left = window.innerWidth - tooltipWidth - 10;
+      }
+
+      let top = rect.bottom + 6;
+      if (top + 60 > window.innerHeight) {
+        top = Math.max(10, rect.top - 45);
+      }
+
+      globalTooltip.style.left = `${Math.max(8, left)}px`;
+      globalTooltip.style.top = `${Math.max(8, top)}px`;
+    }
+
+    function hideTooltip(): void {
+      if (!globalTooltip) return;
+      globalTooltip.classList.remove('visible');
+      globalTooltip.classList.add('hidden');
+      globalTooltip.setAttribute('aria-hidden', 'true');
+      if (activeTrigger && activeTrigger.hasAttribute('data-stored-title')) {
+        activeTrigger.setAttribute('title', activeTrigger.getAttribute('data-stored-title') || '');
+        activeTrigger.removeAttribute('data-stored-title');
+      }
+      activeTrigger = null;
+    }
+
+    // Event delegation for hover & focus
+    document.addEventListener('mouseover', (e) => {
+      const target = (e.target as HTMLElement)?.closest('[data-tooltip], .info-tooltip-trigger') as HTMLElement | null;
+      if (target) showTooltip(target);
+    });
+
+    document.addEventListener('mouseout', (e) => {
+      const target = (e.target as HTMLElement)?.closest('[data-tooltip], .info-tooltip-trigger') as HTMLElement | null;
+      if (target) hideTooltip();
+    });
+
+    document.addEventListener('focusin', (e) => {
+      const target = (e.target as HTMLElement)?.closest('[data-tooltip], .info-tooltip-trigger') as HTMLElement | null;
+      if (target) showTooltip(target);
+    });
+
+    document.addEventListener('focusout', (e) => {
+      const target = (e.target as HTMLElement)?.closest('[data-tooltip], .info-tooltip-trigger') as HTMLElement | null;
+      if (target) hideTooltip();
+    });
+
+    // Escape key dismisses tooltip immediately
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        hideTooltip();
+      }
+    });
+  }
+
+  async function renderPlgNudges(summary: RefinziMetricsSummary, settings: RefinziSettings): Promise<void> {
+    if (!plgNudgeContainer) return;
+
+    let dismissed: string[] = [];
+    try {
+      const stored = await BrowserAPI.storage.local.get(['refinzi_dismissed_nudges']);
+      dismissed = Array.isArray(stored?.refinzi_dismissed_nudges) ? stored.refinzi_dismissed_nudges : [];
+    } catch {
+      dismissed = [];
+    }
+
+    const activeNudge = PLG_NUDGES.find(
+      (nudge) => !dismissed.includes(nudge.id) && nudge.condition(summary, settings)
+    );
+
+    if (!activeNudge) {
+      plgNudgeContainer.innerHTML = '';
+      plgNudgeContainer.classList.add('hidden');
+      return;
+    }
+
+    plgNudgeContainer.classList.remove('hidden');
+    plgNudgeContainer.innerHTML = `
+      <div class="plg-nudge-card nudge-${activeNudge.pillar}" id="${activeNudge.id}" role="note" aria-live="polite">
+        <div class="plg-nudge-body">
+          <span class="plg-nudge-icon" aria-hidden="true">${activeNudge.icon}</span>
+          <div class="plg-nudge-text">
+            <span class="plg-nudge-title">${escapeHtml(activeNudge.title)}</span>
+            <span class="plg-nudge-desc">${escapeHtml(activeNudge.desc)}</span>
+          </div>
+        </div>
+        ${activeNudge.ctaText ? `<button type="button" class="plg-nudge-cta" id="btn-nudge-cta">${escapeHtml(activeNudge.ctaText)}</button>` : ''}
+        <button type="button" class="plg-nudge-dismiss" id="btn-dismiss-nudge" aria-label="Dismiss tip">✕</button>
+      </div>
+    `;
+
+    if (activeNudge.ctaText && activeNudge.onCta) {
+      document.getElementById('btn-nudge-cta')?.addEventListener('click', activeNudge.onCta);
+    }
+
+    document.getElementById('btn-dismiss-nudge')?.addEventListener('click', async () => {
+      dismissed.push(activeNudge.id);
+      try {
+        await BrowserAPI.storage.local.set({ refinzi_dismissed_nudges: dismissed });
+      } catch {
+        // storage fallback
+      }
+      plgNudgeContainer.innerHTML = '';
+      plgNudgeContainer.classList.add('hidden');
+    });
+  }
+
+  // =========================================================================
   // 8. UI HELPERS & GUIDEBOOK
   // =========================================================================
 
@@ -1003,14 +1214,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  /** Applies a named state class + text label to the tab context pill. */
+  /** Applies a named state class + text label to the tab context pill and activation hero. */
   function setTabContextState(
     state: 'active' | 'universal' | 'restricted' | 'detecting',
     label: string
   ): void {
-    if (!tabContextPill || !tabContextText) return;
-    tabContextPill.className = `tab-context-pill state-${state}`;
-    tabContextText.textContent = label;
+    if (tabContextPill && tabContextText) {
+      tabContextPill.className = `tab-context-pill state-${state}`;
+      tabContextText.textContent = label;
+    }
+
+    if (heroActivationTitle && heroSiteBadge) {
+      if (state === 'active') {
+        const siteName = label.replace(/^Active on /, '');
+        heroActivationTitle.textContent = `Ready to enhance in ${siteName}`;
+        heroSiteBadge.textContent = siteName;
+      } else if (state === 'universal') {
+        heroActivationTitle.textContent = 'Universal prompt layer ready';
+        heroSiteBadge.textContent = 'Universal';
+      } else {
+        heroActivationTitle.textContent = 'Ready to enhance your next prompt';
+        heroSiteBadge.textContent = 'Universal';
+      }
+    }
   }
 
   /**
