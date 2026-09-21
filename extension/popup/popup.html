@@ -178,8 +178,15 @@
            TAB 2: HISTORY
            ========================================== -->
       <section class="tab-view" id="tab-history">
+        <!-- History Controls with Search Icon Wrapper -->
         <div class="history-controls">
-          <input type="text" id="history-search" class="search-input" placeholder="Search past prompts…">
+          <div class="search-input-wrapper">
+            <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="9" cy="9" r="6"></circle>
+              <line x1="13.5" y1="13.5" x2="17.5" y2="17.5"></line>
+            </svg>
+            <input type="text" id="history-search" class="search-input" placeholder="Search past prompts…">
+          </div>
           <button type="button" class="btn-subtle-danger" id="btn-clear-history-top" title="Clear History">Clear</button>
         </div>
 
@@ -270,6 +277,7 @@
             <label class="setting-label" for="setting-api-key">API Key</label>
             <div class="input-with-action">
               <input type="password" id="setting-api-key" class="text-field" placeholder="Optional: Paste priority access key…">
+              <button type="button" class="btn-toggle-eye" id="btn-toggle-api-key" title="Show/hide key" aria-label="Show or hide API key">👁️</button>
               <button type="button" class="btn-field-action" id="btn-test-provider">Verify</button>
             </div>
             <span class="field-feedback" id="provider-test-feedback"></span>
@@ -392,24 +400,57 @@
           </div>
         </div>
 
-        <!-- Advanced Group -->
-        <div class="settings-card">
-          <div class="settings-card-title">About Refinzi</div>
-          <div class="about-info">
-            <div class="about-row">
-              <span>Version</span>
-              <span class="badge">v2.1.0</span>
+        <!-- Extension Updates Card -->
+        <div class="settings-card updates-card" id="settings-updates-card">
+          <div class="settings-card-title">Extension Updates</div>
+          
+          <div class="update-card-content">
+            <div class="update-header-row">
+              <div class="update-version-stack">
+                <span class="update-version-label">Installed Version</span>
+                <span class="update-version-number" id="update-version-number">v2.1.0</span>
+              </div>
+              <div class="update-status-indicator" id="update-status-indicator">
+                <span class="update-status-dot up-to-date" id="update-status-dot"></span>
+                <span class="update-status-text" id="update-status-text">Up to date</span>
+              </div>
             </div>
-            <div class="about-row">
-              <span>Supported Sites</span>
-              <span>ChatGPT, Claude, Gemini, Perplexity</span>
+
+            <div class="update-actions-group">
+              <button type="button" class="btn-check-update" id="btn-check-update">
+                <span class="update-icon" id="update-icon">🔄</span>
+                <span id="update-btn-label">Check for Updates</span>
+              </button>
+              <button type="button" class="btn-subtle" id="btn-manage-extensions" title="Manage extension or reload in developer mode">
+                <span>⚙️ Manage</span>
+              </button>
             </div>
-            <div class="about-row">
-              <span>Security</span>
-              <span>Isolated Background Service Worker</span>
+
+            <div class="update-info-notice" id="update-info-notice">
+              <span class="notice-icon">✨</span>
+              <span class="notice-text" id="update-notice-text">Zero friction: auto-updates install smoothly without resetting your settings.</span>
             </div>
-            <p class="about-tagline">"Better prompts in one click. Expert prompts when it matters."</p>
           </div>
+
+          <div class="about-shortcuts-guide">
+            <span class="shortcut-pill" id="shortcut-better-pill" title="Press Ctrl+Shift+B in any prompt input to trigger Better calibration"><kbd>Ctrl+Shift+B</kbd> Better Mode</span>
+            <span class="shortcut-sep">·</span>
+            <span class="shortcut-pill" id="shortcut-expert-pill" title="Press Ctrl+Shift+E in any prompt input to trigger Expert calibration"><kbd>Ctrl+Shift+E</kbd> Expert Mode</span>
+          </div>
+
+          <div class="about-links-row">
+            <a href="https://refinzi.com" target="_blank" rel="noopener noreferrer" class="about-link-pill">
+              <span>🌐 refinzi.com</span>
+            </a>
+            <a href="https://refinzi.com/docs" target="_blank" rel="noopener noreferrer" class="about-link-pill">
+              <span>📖 Docs</span>
+            </a>
+            <a href="https://github.com/papada1472/refinzi" target="_blank" rel="noopener noreferrer" class="about-link-pill">
+              <span>⭐ GitHub</span>
+            </a>
+          </div>
+
+          <p class="about-tagline">"Better prompts in one click. Expert prompts when it matters."</p>
         </div>
       </section>
     </main>

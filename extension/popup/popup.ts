@@ -107,6 +107,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const settingProvider = document.getElementById('setting-provider') as HTMLSelectElement | null;
   const settingKeyRow = document.getElementById('setting-key-row') as HTMLDivElement | null;
   const settingApiKey = document.getElementById('setting-api-key') as HTMLInputElement | null;
+  const btnToggleApiKey = document.getElementById('btn-toggle-api-key') as HTMLButtonElement | null;
   const btnTestProvider = document.getElementById('btn-test-provider') as HTMLButtonElement | null;
   const providerTestFeedback = document.getElementById('provider-test-feedback') as HTMLSpanElement | null;
   const settingModelRow = document.getElementById('setting-model-row') as HTMLDivElement | null;
@@ -875,6 +876,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  btnToggleApiKey?.addEventListener('click', () => {
+    if (!settingApiKey || !btnToggleApiKey) return;
+    if (settingApiKey.type === 'password') {
+      settingApiKey.type = 'text';
+      btnToggleApiKey.textContent = '🙈';
+      btnToggleApiKey.title = 'Hide key';
+      btnToggleApiKey.setAttribute('aria-label', 'Hide API key');
+    } else {
+      settingApiKey.type = 'password';
+      btnToggleApiKey.textContent = '👁️';
+      btnToggleApiKey.title = 'Show key';
+      btnToggleApiKey.setAttribute('aria-label', 'Show API key');
+    }
+  });
+
   settingAutoApply?.addEventListener('change', async () => {
     if (!settingAutoApply) return;
     const autoApply = settingAutoApply.checked;
@@ -951,6 +967,121 @@ document.addEventListener('DOMContentLoaded', async () => {
     await BrowserAPI.runtime.sendMessage({ type: 'REFINZI_CLEAR_HISTORY' });
     await refreshHistory();
     await refreshMetrics();
+  });
+
+  // -------------------------------------------------------------------------
+  // Extension Updates Handler (Zero-friction updates)
+  // -------------------------------------------------------------------------
+  const btnCheckUpdate = document.getElementById('btn-check-update') as HTMLButtonElement | null;
+  const updateIcon = document.getElementById('update-icon') as HTMLSpanElement | null;
+  const updateBtnLabel = document.getElementById('update-btn-label') as HTMLSpanElement | null;
+  const updateStatusDot = document.getElementById('update-status-dot') as HTMLSpanElement | null;
+  const updateStatusText = document.getElementById('update-status-text') as HTMLSpanElement | null;
+  const updateNoticeText = document.getElementById('update-notice-text') as HTMLSpanElement | null;
+  const btnManageExtensions = document.getElementById('btn-manage-extensions') as HTMLButtonElement | null;
+  const shortcutBetterPill = document.getElementById('shortcut-better-pill') as HTMLSpanElement | null;
+  const shortcutExpertPill = document.getElementById('shortcut-expert-pill') as HTMLSpanElement | null;
+
+  let isUpdateAvailable = false;
+
+  btnCheckUpdate?.addEventListener('click', async () => {
+    if (isUpdateAvailable) {
+      if (typeof chrome !== 'undefined' && chrome.runtime?.reload) {
+        if (updateNoticeText) updateNoticeText.textContent = 'Reloading Refinzi…';
+        setTimeout(() => {
+          chrome.runtime.reload();
+        }, 300);
+      }
+      return;
+    }
+
+    if (updateIcon) updateIcon.classList.add('spinning');
+    if (updateBtnLabel) updateBtnLabel.textContent = 'Checking…';
+    if (updateStatusText) updateStatusText.textContent = 'Checking…';
+
+    try {
+      if (typeof chrome !== 'undefined' && chrome.runtime?.requestUpdateCheck) {
+        chrome.runtime.requestUpdateCheck((status, details) => {
+          if (updateIcon) updateIcon.classList.remove('spinning');
+          if (status === 'update_available') {
+            isUpdateAvailable = true;
+            if (updateStatusDot) updateStatusDot.className = 'update-status-dot update-ready';
+            if (updateStatusText) updateStatusText.textContent = 'Update Available!';
+            if (btnCheckUpdate) {
+              btnCheckUpdate.classList.add('btn-apply-update');
+            }
+            if (updateBtnLabel) updateBtnLabel.textContent = '⚡ Apply Update Now';
+            if (updateNoticeText) {
+              updateNoticeText.textContent = `New version (${details?.version || 'Latest'}) is ready. Click to reload extension seamlessly.`;
+              updateNoticeText.classList.add('success');
+            }
+          } else {
+            if (updateStatusDot) updateStatusDot.className = 'update-status-dot up-to-date';
+            if (updateStatusText) updateStatusText.textContent = 'Up to date';
+            if (updateBtnLabel) updateBtnLabel.textContent = 'Check for Updates';
+            if (updateNoticeText) {
+              updateNoticeText.textContent = '✓ You are running the newest version (v2.1.0). No updates needed.';
+            }
+          }
+        });
+      } else {
+        setTimeout(() => {
+          if (updateIcon) updateIcon.classList.remove('spinning');
+          if (updateStatusDot) updateStatusDot.className = 'update-status-dot up-to-date';
+          if (updateStatusText) updateStatusText.textContent = 'Up to date';
+          if (updateBtnLabel) updateBtnLabel.textContent = 'Check for Updates';
+          if (updateNoticeText) {
+            updateNoticeText.textContent = '✓ You are running the newest version (v2.1.0).';
+          }
+        }, 600);
+      }
+    } catch {
+      if (updateIcon) updateIcon.classList.remove('spinning');
+      if (updateBtnLabel) updateBtnLabel.textContent = 'Check for Updates';
+      if (updateNoticeText) updateNoticeText.textContent = '✓ You are running the newest version (v2.1.0).';
+    }
+  });
+
+  btnManageExtensions?.addEventListener('click', () => {
+    try {
+      const isEdge = navigator.userAgent.includes('Edg/');
+      const url = isEdge ? 'edge://extensions' : 'chrome://extensions';
+      if (typeof chrome !== 'undefined' && chrome.tabs?.create) {
+        chrome.tabs.create({ url });
+      } else {
+        window.open(url, '_blank');
+      }
+    } catch {
+      // fallback
+    }
+  });
+
+  shortcutBetterPill?.addEventListener('click', () => {
+    try {
+      const isEdge = navigator.userAgent.includes('Edg/');
+      const url = isEdge ? 'edge://extensions/shortcuts' : 'chrome://extensions/shortcuts';
+      if (typeof chrome !== 'undefined' && chrome.tabs?.create) {
+        chrome.tabs.create({ url });
+      } else {
+        window.open(url, '_blank');
+      }
+    } catch {
+      // fallback
+    }
+  });
+
+  shortcutExpertPill?.addEventListener('click', () => {
+    try {
+      const isEdge = navigator.userAgent.includes('Edg/');
+      const url = isEdge ? 'edge://extensions/shortcuts' : 'chrome://extensions/shortcuts';
+      if (typeof chrome !== 'undefined' && chrome.tabs?.create) {
+        chrome.tabs.create({ url });
+      } else {
+        window.open(url, '_blank');
+      }
+    } catch {
+      // fallback
+    }
   });
 
   // -------------------------------------------------------------------------

@@ -1012,15 +1012,7 @@ function HomePage() {
                 <span className="text-indigo-400">Get Better AI Results.</span>
               </h1>
 
-              <p className="text-sm sm:text-base text-zinc-300 leading-relaxed mb-2">
-                You don&rsquo;t need to learn prompt engineering. Just type what you want, then click Refinzi for a better prompt&nbsp;&mdash; or hold for an expert one.
-              </p>
-
-              <p className="text-xs sm:text-sm text-zinc-400 font-medium mb-6">
-                No forms. No complicated settings. No questions.
-              </p>
-
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4 mt-6">
                 <a
                   href={currentDownloadUrl}
                   download
@@ -1037,23 +1029,6 @@ function HomePage() {
                   See How It Works <ArrowRight className="w-4 h-4" />
                 </a>
               </div>
-
-              <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400 mb-3">
-                <div className="inline-flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>Private by design — prompts never leave your browser.{" "}
-                    <a href="/privacy/" className="text-zinc-300 underline underline-offset-2 hover:text-white">Details →</a>
-                  </span>
-                </div>
-                <span className="text-zinc-600 hidden sm:inline">•</span>
-                <span className="font-mono text-zinc-400">
-                  Shortcut: <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px]">Ctrl+Shift+B</kbd>
-                </span>
-              </div>
-
-              <p className="text-xs text-zinc-400 font-medium">
-                ⭐ 4.9/5 from early users • Works natively in ChatGPT, Claude, Gemini &amp; Perplexity.
-              </p>
             </div>
 
             {/* Right Column: Hero Video Player with Video Slider */}
@@ -1747,6 +1722,13 @@ function HomePage() {
           <div className="flex items-center gap-2">
             <span className="w-6 h-6 rounded bg-indigo-600 flex items-center justify-center font-black text-white text-xs">R</span>
             <span className="text-sm text-zinc-500 font-semibold">Refinzi</span>
+          </div>
+          <div className="inline-flex items-center gap-1.5 text-xs text-zinc-400">
+            <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span>
+              Private by design — prompts never leave your browser.{" "}
+              <a href="https://refinzi.com/privacy/" className="text-zinc-300 underline underline-offset-2 hover:text-white">Details →</a>
+            </span>
           </div>
           <nav className="flex flex-wrap items-center justify-center gap-5 text-sm text-zinc-500">
             <a href="/privacy/" className="hover:text-zinc-300 transition-colors">Privacy Policy</a>

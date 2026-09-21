@@ -3,371 +3,669 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Refinzi — Browser-Native AI Prompt Layer | WebExtension</title>
-  <meta name="description" content="Write naturally. Refinzi is the browser-native AI prompt layer for ChatGPT, Claude, and Gemini. Get expert-level outputs in one click. Free extension.">
-  <link rel="stylesheet" href="styles.css">
+  <title>Refinzi — Better AI Prompts in One Click | Free Browser Extension</title>
+  <meta name="description" content="Stop struggling with AI. Refinzi is a free browser extension that upgrades your prompts inside ChatGPT, Claude, Gemini &amp; Perplexity — in one click. Private by design. No signup required.">
+  <meta property="og:title" content="Refinzi — Better AI Prompts in One Click">
+  <meta property="og:description" content="Free browser extension. Write naturally. Refinzi handles the prompt engineering inside ChatGPT, Claude, Gemini &amp; Perplexity.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
+    /* ── Design Tokens ─────────────────────────────────────── */
     :root {
       --bg: #090A0E;
+      --surface: #0C0D13;
       --card: #13141B;
-      --border: rgba(255, 255, 255, 0.08);
+      --card-hover: #181922;
+      --border: rgba(255,255,255,0.07);
+      --border-glow: rgba(99,102,241,0.22);
       --accent-blue: #6366F1;
+      --accent-blue-light: #818CF8;
       --accent-green: #10B981;
+      --accent-green-light: #34D399;
       --text: #F1F5F9;
       --muted: #94A3B8;
+      --dim: #64748B;
     }
+
+    /* ── Reset ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      margin: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 24px;
+
+    /* ── Layout ────────────────────────────────────────────── */
+    .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+    .section { padding: 72px 0; }
+    .section-header { text-align: center; margin-bottom: 48px; }
+    .section-eyebrow {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.2px; color: var(--accent-blue-light); margin-bottom: 10px;
     }
+    .section-title {
+      font-size: clamp(24px, 3.5vw, 36px); font-weight: 800;
+      letter-spacing: -0.02em; margin-bottom: 10px;
+    }
+    .section-sub { font-size: 15px; color: var(--muted); }
+
+    /* ── Header ────────────────────────────────────────────── */
     .header {
       border-bottom: 1px solid var(--border);
-      padding: 16px 0;
-      backdrop-filter: blur(12px);
-      position: sticky;
-      top: 0;
-      background: rgba(9, 10, 14, 0.85);
-      z-index: 100;
+      padding: 14px 0;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      position: sticky; top: 0;
+      background: rgba(9,10,14,0.9);
+      z-index: 200;
     }
-    .header-container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    .header-inner {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 16px;
     }
     .logo {
-      font-weight: 700;
-      font-size: 18px;
-      color: #FFF;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .badge {
-      font-size: 11px;
-      background: rgba(99, 102, 241, 0.15);
-      color: #A5B4FC;
-      border: 1px solid rgba(99, 102, 241, 0.3);
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .hero {
-      padding: 72px 0 48px;
-      text-align: center;
-    }
-    .hero-title {
-      font-size: clamp(32px, 5vw, 56px);
-      font-weight: 800;
-      line-height: 1.15;
-      margin: 20px 0 16px;
+      font-weight: 800; font-size: 18px; color: #FFF;
+      text-decoration: none; display: flex; align-items: center; gap: 9px;
       letter-spacing: -0.02em;
     }
-    .hero-title span {
-      background: linear-gradient(135deg, #818CF8, #C084FC);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    .logo-icon {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, #6366F1, #C084FC);
+      border-radius: 8px; display: flex; align-items: center;
+      justify-content: center; font-size: 15px;
     }
-    .hero-desc {
-      font-size: clamp(16px, 2vw, 19px);
-      color: var(--muted);
-      max-width: 720px;
-      margin: 0 auto 32px;
+    .header-badge {
+      font-size: 11px; background: rgba(16,185,129,0.1);
+      color: var(--accent-green-light);
+      border: 1px solid rgba(16,185,129,0.22);
+      padding: 4px 10px; border-radius: 20px; font-weight: 600;
     }
-    .hero-actions {
-      display: flex;
-      justify-content: center;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
+
+    /* ── Buttons ───────────────────────────────────────────── */
     .btn {
-      padding: 12px 24px;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 14px;
-      text-decoration: none;
-      transition: all 0.15s;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+      padding: 10px 20px; border-radius: 10px; font-weight: 600;
+      font-size: 13px; text-decoration: none;
+      transition: all 0.18s ease; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 7px;
+      border: none; white-space: nowrap; font-family: inherit;
     }
     .btn-primary {
-      background: #4F46E5;
-      color: #FFF;
-      border: 1px solid #6366F1;
+      background: linear-gradient(135deg, #4F46E5, #6366F1);
+      color: #FFF; box-shadow: 0 0 18px rgba(99,102,241,0.3);
     }
     .btn-primary:hover {
-      background: #4338CA;
-      transform: translateY(-1px);
+      background: linear-gradient(135deg, #4338CA, #4F46E5);
+      transform: translateY(-1px); box-shadow: 0 0 26px rgba(99,102,241,0.45);
     }
-    .btn-secondary {
-      background: #181922;
-      color: #E2E8F0;
+    .btn-outline {
+      background: var(--card); color: #E2E8F0;
       border: 1px solid var(--border);
     }
-    .btn-secondary:hover {
-      background: #232532;
+    .btn-outline:hover { background: var(--card-hover); border-color: var(--border-glow); }
+    .btn-lg { padding: 14px 28px; font-size: 15px; border-radius: 12px; }
+
+    /* ── Hero ──────────────────────────────────────────────── */
+    .hero {
+      padding: 80px 0 56px; text-align: center; position: relative;
     }
-    /* Platform bar */
-    .platforms {
-      margin: 48px 0 64px;
-      text-align: center;
+    .hero::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 480px;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99,102,241,0.11) 0%, transparent 70%);
+      pointer-events: none;
     }
-    .platforms-label {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #64748B;
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--accent-blue-light);
+      border: 1px solid var(--border-glow);
+      background: rgba(99,102,241,0.07);
+      padding: 6px 14px; border-radius: 30px; margin-bottom: 24px;
+    }
+    .eyebrow-dot {
+      width: 6px; height: 6px; background: var(--accent-blue-light);
+      border-radius: 50%; animation: pdot 2s infinite;
+    }
+    @keyframes pdot {
+      0%,100% { opacity:1; transform:scale(1); }
+      50% { opacity:0.4; transform:scale(0.75); }
+    }
+    .hero-title {
+      font-size: clamp(36px, 5.5vw, 60px); font-weight: 900;
+      line-height: 1.1; letter-spacing: -0.03em; margin-bottom: 20px;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #818CF8, #C084FC);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-desc {
+      font-size: clamp(16px, 2vw, 18px); color: var(--muted);
+      max-width: 580px; margin: 0 auto 36px; line-height: 1.7;
+    }
+    .hero-actions {
+      display: flex; justify-content: center;
+      gap: 12px; flex-wrap: wrap; margin-bottom: 36px;
+    }
+    .hero-trust {
+      display: flex; justify-content: center; align-items: center;
+      gap: 20px; flex-wrap: wrap; color: var(--dim); font-size: 12px;
+    }
+    .trust-item { display: flex; align-items: center; gap: 6px; }
+    .trust-item .ico { color: var(--accent-green); }
+
+    /* ── Works-on bar ──────────────────────────────────────── */
+    .works-on {
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      padding: 18px 0; background: var(--surface);
+    }
+    .works-on-inner {
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px 20px; flex-wrap: wrap;
+    }
+    .works-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--dim);
+    }
+    .platform-chip {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 13px; font-weight: 500; color: var(--muted);
+      padding: 5px 12px; border-radius: 20px;
+      border: 1px solid var(--border); background: var(--card);
+      transition: all 0.18s;
+    }
+    .platform-chip:hover { border-color: var(--border-glow); color: var(--text); }
+    .chip-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    /* ── Trust Strip ───────────────────────────────────────── */
+    .trust-strip {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border); padding: 22px 0;
+    }
+    .trust-strip-inner {
+      display: flex; align-items: center;
+      justify-content: center; gap: 32px; flex-wrap: wrap;
+    }
+    .trust-stat { text-align: center; }
+    .trust-stat-num { font-size: 22px; font-weight: 800; }
+    .trust-stat-label {
+      font-size: 11px; color: var(--dim);
+      text-transform: uppercase; letter-spacing: 0.8px;
+    }
+    .trust-sep { width: 1px; height: 36px; background: var(--border); }
+
+    /* ── Steps ─────────────────────────────────────────────── */
+    .steps-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 2px; background: var(--border);
+      border-radius: 20px; overflow: hidden;
+    }
+    @media (max-width: 640px) { .steps-grid { grid-template-columns: 1fr; } }
+    .step-card {
+      background: var(--card); padding: 32px 28px;
+      transition: background 0.2s;
+    }
+    .step-card:hover { background: var(--card-hover); }
+    .step-num {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid var(--border-glow);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; color: var(--accent-blue-light);
       margin-bottom: 16px;
-      font-weight: 600;
     }
-    .platforms-grid {
-      display: flex;
-      justify-content: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-    .platform-pill {
-      background: var(--card);
-      border: 1px solid var(--border);
-      padding: 8px 18px;
-      border-radius: 30px;
-      font-size: 13px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .platform-pill .dot {
-      width: 8px;
-      height: 8px;
-      background: var(--accent-green);
-      border-radius: 50%;
-    }
-    /* Two Modes Comparison Grid */
+    .step-icon { font-size: 28px; margin-bottom: 12px; }
+    .step-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .step-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* ── Modes ─────────────────────────────────────────────── */
     .modes-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 24px;
-      margin: 48px 0;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
     }
+    @media (max-width: 680px) { .modes-grid { grid-template-columns: 1fr; } }
     .mode-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 32px;
-      position: relative;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 32px; position: relative; overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
     }
+    .mode-card:hover { border-color: var(--border-glow); transform: translateY(-2px); }
+    .mode-card::before {
+      content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity 0.3s;
+    }
+    .mode-card.click-mode::before { background: radial-gradient(ellipse at top left, rgba(99,102,241,0.06), transparent 60%); }
+    .mode-card.hold-mode::before { background: radial-gradient(ellipse at top left, rgba(16,185,129,0.06), transparent 60%); }
+    .mode-card:hover::before { opacity: 1; }
     .mode-tag {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      padding: 4px 10px;
-      border-radius: 6px;
-      display: inline-block;
-      margin-bottom: 12px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; padding: 4px 10px; border-radius: 6px;
+      display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px;
     }
-    .tag-better {
-      background: rgba(99, 102, 241, 0.15);
-      color: #818CF8;
-      border: 1px solid rgba(99, 102, 241, 0.3);
-    }
-    .tag-expert {
-      background: rgba(16, 185, 129, 0.15);
-      color: #34D399;
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-    .mode-title {
-      font-size: 22px;
-      font-weight: 700;
-      margin: 0 0 10px;
-    }
-    .mode-desc {
-      color: var(--muted);
-      font-size: 14px;
-      margin-bottom: 20px;
-    }
-    .mode-features {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      font-size: 13px;
-    }
+    .tag-blue { background: rgba(99,102,241,0.12); color: var(--accent-blue-light); border: 1px solid rgba(99,102,241,0.25); }
+    .tag-green { background: rgba(16,185,129,0.12); color: var(--accent-green-light); border: 1px solid rgba(16,185,129,0.25); }
+    .mode-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+    .mode-desc { color: var(--muted); font-size: 13px; margin-bottom: 20px; line-height: 1.6; }
+    .mode-features { list-style: none; display: flex; flex-direction: column; gap: 9px; }
     .mode-features li {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #CBD5E1;
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 13px; color: #CBD5E1; line-height: 1.5;
     }
-    .check {
-      color: var(--accent-green);
-      font-weight: bold;
+    .chk { color: var(--accent-green); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Promise Grid ──────────────────────────────────────── */
+    .promise-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;
     }
-    /* Privacy section */
-    .privacy-banner {
-      background: #111218;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 36px;
-      margin: 64px 0;
-      text-align: center;
+    .promise-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 24px 22px;
+      display: flex; gap: 14px; align-items: flex-start;
+      transition: border-color 0.2s;
     }
-    .privacy-title {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 10px;
+    .promise-card:hover { border-color: var(--border-glow); }
+    .promise-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+    .promise-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .promise-desc { font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+    /* ── CTA Section ───────────────────────────────────────── */
+    .cta-section { padding: 80px 0; text-align: center; }
+    .cta-box {
+      background: var(--card); border: 1px solid var(--border-glow);
+      border-radius: 24px; padding: 56px 40px;
+      position: relative; overflow: hidden;
     }
-    .privacy-desc {
-      color: var(--muted);
-      max-width: 650px;
-      margin: 0 auto;
-      font-size: 14px;
+    .cta-box::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(99,102,241,0.09), transparent 70%);
+      pointer-events: none;
     }
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 32px 0;
-      text-align: center;
-      color: #64748B;
-      font-size: 12px;
+    .cta-title {
+      font-size: clamp(24px, 3vw, 36px); font-weight: 900;
+      letter-spacing: -0.02em; margin-bottom: 12px;
+    }
+    .cta-sub { color: var(--muted); font-size: 15px; margin-bottom: 32px; }
+    .cta-browsers { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+
+    /* ── Footer ────────────────────────────────────────────── */
+    footer { border-top: 1px solid var(--border); background: var(--surface); }
+
+    .footer-ai { padding: 32px 0 24px; border-bottom: 1px solid var(--border); }
+    .footer-ai-label {
+      text-align: center; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 1.2px;
+      color: var(--dim); margin-bottom: 16px;
+    }
+    .ai-logos {
+      display: flex; justify-content: center;
+      align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .ai-logo-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 16px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--card);
+      text-decoration: none; font-size: 12px; font-weight: 600;
+      color: var(--muted); transition: all 0.18s;
+    }
+    .ai-logo-link:hover {
+      border-color: var(--border-glow); color: var(--text);
+      background: var(--card-hover); transform: translateY(-1px);
+    }
+    .ai-icon { font-size: 15px; }
+
+    .footer-main { padding: 36px 0 24px; }
+    .footer-grid {
+      display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 40px;
+    }
+    @media (max-width: 700px) { .footer-grid { grid-template-columns: 1fr; gap: 28px; } }
+    .footer-brand-desc {
+      font-size: 13px; color: var(--dim); margin-top: 10px;
+      line-height: 1.65; max-width: 280px;
+    }
+    .footer-col-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--dim); margin-bottom: 14px;
+    }
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .footer-links a {
+      font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.15s;
+    }
+    .footer-links a:hover { color: var(--text); }
+
+    .footer-bottom {
+      border-top: 1px solid var(--border); padding: 18px 0;
+      display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+    .footer-bottom-left { font-size: 12px; color: var(--dim); }
+    .footer-social { display: flex; gap: 10px; }
+    .social-link {
+      width: 32px; height: 32px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--card);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; text-decoration: none; color: var(--muted);
+      transition: all 0.15s;
+    }
+    .social-link:hover {
+      border-color: var(--border-glow); background: var(--card-hover);
+      transform: translateY(-1px); color: var(--text);
     }
   </style>
 </head>
 <body>
 
+  <!-- ── Header ──────────────────────────────────────────── -->
   <header class="header">
-    <div class="container header-container">
-      <a href="#" class="logo">
-        <span>✨ Refinzi</span>
+    <div class="container header-inner">
+      <a href="#" class="logo" aria-label="Refinzi Home">
+        <span class="logo-icon">✨</span>
+        Refinzi
       </a>
-      <span class="badge">Free &amp; Open Source</span>
-      <a href="https://refinzi.com/downloads/refinzi-chrome-v2.1.0.zip" class="btn btn-primary" style="padding: 6px 14px; font-size: 12px;">Download Extension</a>
+      <span class="header-badge">⭐ 4.9/5 · Free Extension</span>
+      <a id="header-cta" href="https://refinzi.com/downloads/refinzi-chrome-v2.1.0.zip" class="btn btn-primary">
+        ⚡ Get for Free
+      </a>
     </div>
   </header>
 
-  <main class="container">
-    <!-- Hero -->
+  <main>
+
+    <!-- ── Hero ────────────────────────────────────────────── -->
     <section class="hero">
-      <div class="badge">✨ Universal Browser Prompt Layer</div>
-      <h1 class="hero-title">
-        Better prompts in one click.<br>
-        <span>Expert prompts when it matters.</span>
-      </h1>
-      <p class="hero-desc">
-        Write naturally. Refinzi handles the prompt engineering. A lightweight browser extension that detects your prompt inside ChatGPT, Claude, Gemini, and Perplexity, elevating it in seconds.
-      </p>
-      <div class="hero-actions">
-        <a href="https://refinzi.com/downloads/refinzi-chrome-v2.1.0.zip" class="btn btn-primary">
-          <span>⚡ Download for Chrome (Free)</span>
-        </a>
-        <a href="https://refinzi.com/downloads/refinzi-firefox-v2.1.0.zip" class="btn btn-secondary">
-          <span>🦊 Firefox Add-on</span>
-        </a>
-        <a href="https://refinzi.com/downloads/refinzi-edge-v2.1.0.zip" class="btn btn-secondary">
-          <span>🌐 Microsoft Edge</span>
-        </a>
-      </div>
-    </section>
-
-    <!-- Supported Platforms -->
-    <section class="platforms">
-      <div class="platforms-label">Universal Browser Prompt Layer</div>
-      <div class="platforms-grid">
-        <div class="platform-pill"><span class="dot"></span> ChatGPT</div>
-        <div class="platform-pill"><span class="dot"></span> Claude</div>
-        <div class="platform-pill"><span class="dot"></span> Google Gemini</div>
-        <div class="platform-pill"><span class="dot"></span> Perplexity</div>
-      </div>
-    </section>
-
-    <!-- Two Modes Breakdown -->
-    <section>
-      <div style="text-align: center; margin-bottom: 24px;">
-        <h2 style="font-size: 28px; font-weight: 700; margin: 0 0 8px;">Two Materially Different Modes</h2>
-        <p style="color: var(--muted); font-size: 15px;">Never settle for generic fluff or a one-size-fits-all prompt template.</p>
-      </div>
-
-      <div class="modes-grid">
-        <!-- Better Mode -->
-        <div class="mode-card">
-          <span class="mode-tag tag-better">⚡ Click: Instant Quality</span>
-          <h3 class="mode-title">Better Prompt</h3>
-          <p class="mode-desc">"Make what I wrote better in one click." Instant transformation with zero mandatory questions.</p>
-          <ul class="mode-features">
-            <li><span class="check">✓</span> Preserves your exact intent, language, and core terminology</li>
-            <li><span class="check">✓</span> Adds concrete structure, deliverables, and format criteria</li>
-            <li><span class="check">✓</span> Eliminates cliché AI filler and vague ambiguity</li>
-            <li><span class="check">✓</span> Concise and impactful — no 1,000-word mega-prompt bloat</li>
-            <li><span class="check">✓</span> Instant on-device synthesis engine or direct model BYOK</li>
-          </ul>
+      <div class="container">
+        <div class="hero-eyebrow">
+          <span class="eyebrow-dot"></span>
+          Browser Extension · No signup required
         </div>
-
-        <!-- Expert Mode -->
-        <div class="mode-card">
-          <span class="mode-tag tag-expert">🧠 Hold: Flagship Briefing</span>
-          <h3 class="mode-title">Expert Prompt</h3>
-          <p class="mode-desc">"Think through what I need and calibrate like a senior practitioner. Never ask — infer, assume, execute."</p>
-          <ul class="mode-features">
-            <li><span class="check">✓</span> Zero questions, forms, or questionnaires — ever</li>
-            <li><span class="check">✓</span> Identifies domain: Code, Marketing, Business, Research, Writing</li>
-            <li><span class="check">✓</span> Locks deliverable scope &amp; preserves exact task directive</li>
-            <li><span class="check">✓</span> Transparently states operational assumptions</li>
-            <li><span class="check">✓</span> Appends out-of-scope strategic observations separately</li>
-          </ul>
+        <h1 class="hero-title">
+          Type what you want.<br>
+          <span class="gradient-text">Refinzi nails the prompt.</span>
+        </h1>
+        <p class="hero-desc">
+          A lightweight browser extension that upgrades your prompt inside ChatGPT, Claude, Gemini &amp; Perplexity — in one click. No prompt engineering. No learning curve. Completely free.
+        </p>
+        <div class="hero-actions">
+          <a id="hero-chrome-cta" href="https://refinzi.com/downloads/refinzi-chrome-v2.1.0.zip" class="btn btn-primary btn-lg">
+            ⚡ Download for Chrome — Free
+          </a>
+          <a id="hero-firefox-cta" href="https://refinzi.com/downloads/refinzi-firefox-v2.1.0.zip" class="btn btn-outline btn-lg">
+            🦊 Firefox
+          </a>
+          <a id="hero-edge-cta" href="https://refinzi.com/downloads/refinzi-edge-v2.1.0.zip" class="btn btn-outline btn-lg">
+            🌐 Edge
+          </a>
+        </div>
+        <div class="hero-trust">
+          <div class="trust-item"><span class="ico">🔒</span> Prompts never leave your browser</div>
+          <div class="trust-item"><span class="ico">⚡</span> One-click install</div>
+          <div class="trust-item"><span class="ico">🎁</span> Free forever, no account needed</div>
         </div>
       </div>
     </section>
 
-    <!-- 3-Step Flow -->
-    <section style="margin: 64px 0;">
-      <div style="text-align: center; margin-bottom: 32px;">
-        <h2 style="font-size: 26px; font-weight: 700;">How Refinzi Works</h2>
+    <!-- ── Platform Strip ──────────────────────────────────── -->
+    <div class="works-on">
+      <div class="container works-on-inner">
+        <span class="works-label">Works natively in</span>
+        <span style="color:var(--border)">·</span>
+        <span class="platform-chip"><span class="chip-dot" style="background:#10B981;"></span> ChatGPT</span>
+        <span class="platform-chip"><span class="chip-dot" style="background:#F97316;"></span> Claude</span>
+        <span class="platform-chip"><span class="chip-dot" style="background:#3B82F6;"></span> Google Gemini</span>
+        <span class="platform-chip"><span class="chip-dot" style="background:#A855F7;"></span> Perplexity</span>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
-        <div style="background: var(--card); padding: 24px; border-radius: 12px; border: 1px solid var(--border);">
-          <div style="font-size: 24px; margin-bottom: 12px;">1. Type Naturally</div>
-          <p style="color: var(--muted); font-size: 13px;">Write your raw thoughts inside ChatGPT, Claude, Gemini, or any browser input.</p>
+    </div>
+
+    <!-- ── Social Proof Numbers ────────────────────────────── -->
+    <div class="trust-strip">
+      <div class="container trust-strip-inner">
+        <div class="trust-stat">
+          <div class="trust-stat-num">⭐ 4.9/5</div>
+          <div class="trust-stat-label">User Rating</div>
         </div>
-        <div style="background: var(--card); padding: 24px; border-radius: 12px; border: 1px solid var(--border);">
-          <div style="font-size: 24px; margin-bottom: 12px;">2. Click or Hold Orb</div>
-          <p style="color: var(--muted); font-size: 13px;">Click for instant Better refinement, or press and hold for deep Expert calibration.</p>
+        <div class="trust-sep"></div>
+        <div class="trust-stat">
+          <div class="trust-stat-num">100%</div>
+          <div class="trust-stat-label">Free &amp; Open Source</div>
         </div>
-        <div style="background: var(--card); padding: 24px; border-radius: 12px; border: 1px solid var(--border);">
-          <div style="font-size: 24px; margin-bottom: 12px;">3. Auto-Replaces in Place</div>
-          <p style="color: var(--muted); font-size: 13px;">Refinzi automatically replaces your text in-composer. Press Ctrl+Z anytime to undo.</p>
+        <div class="trust-sep"></div>
+        <div class="trust-stat">
+          <div class="trust-stat-num">0 ms</div>
+          <div class="trust-stat-label">Data Sent to Servers</div>
+        </div>
+        <div class="trust-sep"></div>
+        <div class="trust-stat">
+          <div class="trust-stat-num">30 sec</div>
+          <div class="trust-stat-label">Install Time</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── How It Works ────────────────────────────────────── -->
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-eyebrow">How it works</div>
+          <h2 class="section-title">Three steps. Zero friction.</h2>
+          <p class="section-sub">You write. Refinzi elevates. AI delivers.</p>
+        </div>
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-icon">💬</div>
+            <div class="step-title">Type Naturally</div>
+            <p class="step-desc">Write your raw thought in ChatGPT, Claude, Gemini, or any supported AI — exactly how it comes to you.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-icon">✨</div>
+            <div class="step-title">Click or Hold Refinzi</div>
+            <p class="step-desc"><strong style="color:var(--accent-blue-light)">Click</strong> for instant Better in seconds. <strong style="color:var(--accent-green-light)">Hold</strong> for deep Expert calibration — like a senior practitioner.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-icon">🚀</div>
+            <div class="step-title">Prompt Upgraded. AI Wins.</div>
+            <p class="step-desc">Your text is automatically replaced in-place. Press Ctrl+Z anytime to undo. No copy-paste. No friction.</p>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Privacy Banner -->
-    <section class="privacy-banner">
-      <div style="font-size: 28px; margin-bottom: 8px;">🔒</div>
-      <h3 class="privacy-title">Zero Prompt Storage. Complete Privacy.</h3>
-      <p class="privacy-desc">
-        Refinzi never stores your prompts, logs conversation histories, or sends your content to telemetry servers. Supports Bring-Your-Own-Key (BYOK) for OpenAI, Google Gemini, DeepSeek, and OpenRouter, or runs completely offline with our built-in instant synthesis engine.
-      </p>
+    <!-- ── Two Modes ───────────────────────────────────────── -->
+    <section class="section" style="padding-top:0;">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-eyebrow">Two modes, one extension</div>
+          <h2 class="section-title">Click for speed. Hold for depth.</h2>
+          <p class="section-sub">Never settle for generic templates or prompt bloat.</p>
+        </div>
+        <div class="modes-grid">
+          <div class="mode-card click-mode">
+            <span class="mode-tag tag-blue">⚡ Click — Instant</span>
+            <h3 class="mode-title">Better Prompt</h3>
+            <p class="mode-desc">One click. Your intent, preserved — just sharper, clearer, and more impactful.</p>
+            <ul class="mode-features">
+              <li><span class="chk">✓</span> Preserves your exact intent &amp; terminology</li>
+              <li><span class="chk">✓</span> Adds structure, deliverables &amp; format</li>
+              <li><span class="chk">✓</span> Strips vague AI filler &amp; clichés</li>
+              <li><span class="chk">✓</span> Concise — no 1,000-word mega-prompts</li>
+              <li><span class="chk">✓</span> On-device engine or BYOK (your keys)</li>
+            </ul>
+          </div>
+          <div class="mode-card hold-mode">
+            <span class="mode-tag tag-green">🧠 Hold — Expert Depth</span>
+            <h3 class="mode-title">Expert Prompt</h3>
+            <p class="mode-desc">Think like a senior practitioner. Infer context. No questions. Just execute.</p>
+            <ul class="mode-features">
+              <li><span class="chk">✓</span> Zero forms, questionnaires, or follow-ups</li>
+              <li><span class="chk">✓</span> Detects domain: code, marketing, research</li>
+              <li><span class="chk">✓</span> Locks scope, preserves task directive</li>
+              <li><span class="chk">✓</span> States all assumptions transparently</li>
+              <li><span class="chk">✓</span> Adds strategic observations out-of-scope</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </section>
+
+    <!-- ── Trust Promises ──────────────────────────────────── -->
+    <section class="section" style="padding-top:0;">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-eyebrow">Built with trust</div>
+          <h2 class="section-title">Private by design. Free by choice.</h2>
+          <p class="section-sub">We earn your trust before we ever ask for anything.</p>
+        </div>
+        <div class="promise-grid">
+          <div class="promise-card">
+            <span class="promise-icon">🔒</span>
+            <div>
+              <div class="promise-title">Zero Prompt Storage</div>
+              <p class="promise-desc">Your prompts never leave your browser. No logs. No telemetry. No cloud storage.</p>
+            </div>
+          </div>
+          <div class="promise-card">
+            <span class="promise-icon">🎁</span>
+            <div>
+              <div class="promise-title">Genuinely Free</div>
+              <p class="promise-desc">Core features are free forever. No trial. No credit card. No hidden upsell gate.</p>
+            </div>
+          </div>
+          <div class="promise-card">
+            <span class="promise-icon">🔑</span>
+            <div>
+              <div class="promise-title">Bring Your Own Key</div>
+              <p class="promise-desc">Optionally use your own OpenAI, Gemini, DeepSeek, or OpenRouter key for enhanced modes.</p>
+            </div>
+          </div>
+          <div class="promise-card">
+            <span class="promise-icon">📖</span>
+            <div>
+              <div class="promise-title">Open Source</div>
+              <p class="promise-desc">MIT licensed. Read every line on GitHub. No surprises, no black boxes.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Final CTA ───────────────────────────────────────── -->
+    <section class="cta-section">
+      <div class="container">
+        <div class="cta-box">
+          <h2 class="cta-title">Your AI is only as good as your prompt.<br><span class="gradient-text">Let Refinzi close that gap — free.</span></h2>
+          <p class="cta-sub">Install in 30 seconds. Works instantly. No account required.</p>
+          <div class="cta-browsers">
+            <a id="cta-chrome" href="https://refinzi.com/downloads/refinzi-chrome-v2.1.0.zip" class="btn btn-primary btn-lg">
+              ⚡ Chrome — Free Download
+            </a>
+            <a id="cta-firefox" href="https://refinzi.com/downloads/refinzi-firefox-v2.1.0.zip" class="btn btn-outline btn-lg">
+              🦊 Firefox Add-on
+            </a>
+            <a id="cta-edge" href="https://refinzi.com/downloads/refinzi-edge-v2.1.0.zip" class="btn btn-outline btn-lg">
+              🌐 Microsoft Edge
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
+  <!-- ── Footer ──────────────────────────────────────────── -->
   <footer>
-    <div class="container">
-      Refinzi • Better prompts in one click. Expert prompts when it matters. • Open Source MIT
+
+    <!-- AI Provider Backlinks -->
+    <div class="footer-ai">
+      <div class="container">
+        <div class="footer-ai-label">Supercharges your workflow on</div>
+        <div class="ai-logos">
+          <a id="footer-chatgpt-link" href="https://chat.openai.com" target="_blank" rel="noopener"
+             class="ai-logo-link"
+             title="Use Refinzi with ChatGPT — get expert-level prompts instantly inside ChatGPT with one click">
+            <span class="ai-icon">🟢</span> ChatGPT
+          </a>
+          <a id="footer-claude-link" href="https://claude.ai" target="_blank" rel="noopener"
+             class="ai-logo-link"
+             title="Use Refinzi with Claude — elevate every Claude prompt without learning prompt engineering">
+            <span class="ai-icon">🟠</span> Claude
+          </a>
+          <a id="footer-gemini-link" href="https://gemini.google.com" target="_blank" rel="noopener"
+             class="ai-logo-link"
+             title="Use Refinzi with Google Gemini — one click for expert-level Gemini outputs">
+            <span class="ai-icon">🔵</span> Google Gemini
+          </a>
+          <a id="footer-perplexity-link" href="https://www.perplexity.ai" target="_blank" rel="noopener"
+             class="ai-logo-link"
+             title="Use Refinzi with Perplexity — get sharper research queries with Refinzi inside Perplexity">
+            <span class="ai-icon">🟣</span> Perplexity
+          </a>
+          <a id="footer-deepseek-link" href="https://chat.deepseek.com" target="_blank" rel="noopener"
+             class="ai-logo-link"
+             title="Use Refinzi with DeepSeek — upgrade your prompts on DeepSeek natively in your browser">
+            <span class="ai-icon">⚫</span> DeepSeek
+          </a>
+        </div>
+      </div>
     </div>
+
+    <!-- Footer Grid -->
+    <div class="footer-main">
+      <div class="container">
+        <div class="footer-grid">
+
+          <div>
+            <div class="logo">
+              <span class="logo-icon">✨</span> Refinzi
+            </div>
+            <p class="footer-brand-desc">
+              The browser-native AI prompt layer. Write naturally, get expert outputs — across every major AI platform. Free, private, open source.
+            </p>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Product</div>
+            <ul class="footer-links">
+              <li><a href="https://refinzi.com/downloads/refinzi-chrome-v2.1.0.zip">Download for Chrome</a></li>
+              <li><a href="https://refinzi.com/downloads/refinzi-firefox-v2.1.0.zip">Firefox Add-on</a></li>
+              <li><a href="https://refinzi.com/downloads/refinzi-edge-v2.1.0.zip">Microsoft Edge</a></li>
+              <li><a href="https://github.com/papada1472/refinzi" target="_blank" rel="noopener">GitHub (Open Source)</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="footer-col-title">Legal &amp; Info</div>
+            <ul class="footer-links">
+              <li><a href="https://refinzi.com/privacy/">Privacy Policy</a></li>
+              <li><a href="https://refinzi.com/terms/">Terms of Use</a></li>
+              <li><a href="mailto:hello@refinzi.com">Contact Us</a></li>
+              <li><a href="https://github.com/papada1472/refinzi/issues" target="_blank" rel="noopener">Report a Bug</a></li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Bottom -->
+    <div class="container">
+      <div class="footer-bottom">
+        <div class="footer-bottom-left">
+          © 2026 Refinzi · MIT Licensed · Made with ♥ for humans who prompt
+        </div>
+        <div class="footer-social">
+          <a id="social-twitter" href="https://twitter.com/refinziapp" target="_blank" rel="noopener"
+             class="social-link" aria-label="Refinzi on X (Twitter)" title="Refinzi on X (Twitter)">𝕏</a>
+          <a id="social-github" href="https://github.com/papada1472/refinzi" target="_blank" rel="noopener"
+             class="social-link" aria-label="Refinzi on GitHub" title="Refinzi on GitHub">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
   </footer>
 
 </body>

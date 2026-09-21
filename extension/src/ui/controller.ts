@@ -216,6 +216,18 @@ export class RefinziController {
    * Automatically replaces the prompt in the active surface without opening modals or needing "Apply".
    */
   private async handleTrigger(mode: PromptMode): Promise<void> {
+    // 0. If current document.activeElement is focused and editable, prioritize it
+    const activeEl = document.activeElement;
+    if (activeEl instanceof HTMLElement && isSafeEditableElement(activeEl)) {
+      if (!this.activeSurface || this.activeSurface.element !== activeEl) {
+        const directSurface = SurfaceFactory.createSurface(activeEl);
+        if (directSurface) {
+          this.activeSurface = directSurface;
+          this.ensureOrb().attach(directSurface.element);
+        }
+      }
+    }
+
     // 1. Recover active surface from Orb's currently docked composer if focus shifted
     if (!this.activeSurface) {
       const attached = this.orb?.getAttachedElement();
@@ -224,7 +236,7 @@ export class RefinziController {
       }
     }
 
-    // 2. Check document.activeElement
+    // 2. Fallback check document.activeElement
     if (!this.activeSurface) {
       const active = document.activeElement;
       if (active instanceof HTMLElement && isSafeEditableElement(active)) {
@@ -613,9 +625,30 @@ export class RefinziController {
   }
 
   /**
-   * Intercepts Ctrl+Z / Cmd+Z to restore the prompt after in-place calibration.
+   * Intercepts keyboard shortcuts:
+   * - Ctrl+Shift+B / Cmd+Shift+B: Trigger Better calibration
+   * - Ctrl+Shift+E / Cmd+Shift+E: Trigger Expert calibration
+   * - Ctrl+Z / Cmd+Z: Undo prompt replacement
    */
   private handleGlobalKeyDown(e: KeyboardEvent): void {
+    // 1. In-place keyboard shortcuts: Ctrl+Shift+B (Better) and Ctrl+Shift+E (Expert)
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
+      const key = e.key.toLowerCase();
+      if (key === 'b') {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleTrigger('better');
+        return;
+      }
+      if (key === 'e') {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleTrigger('expert');
+        return;
+      }
+    }
+
+    // 2. Undo shortcut: Ctrl+Z / Cmd+Z
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
       if (this.canUndo && this.activeSurface && this.originalPromptText) {
         const currentVal = this.activeSurface.getValue();

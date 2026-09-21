@@ -5760,6 +5760,16 @@ ${prompt}`;
      * Automatically replaces the prompt in the active surface without opening modals or needing "Apply".
      */
     async handleTrigger(mode) {
+      const activeEl = document.activeElement;
+      if (activeEl instanceof HTMLElement && isSafeEditableElement(activeEl)) {
+        if (!this.activeSurface || this.activeSurface.element !== activeEl) {
+          const directSurface = SurfaceFactory.createSurface(activeEl);
+          if (directSurface) {
+            this.activeSurface = directSurface;
+            this.ensureOrb().attach(directSurface.element);
+          }
+        }
+      }
       if (!this.activeSurface) {
         const attached = this.orb?.getAttachedElement();
         if (attached && isSafeEditableElement(attached) && attached.isConnected) {
@@ -6062,9 +6072,27 @@ ${prompt}`;
       });
     }
     /**
-     * Intercepts Ctrl+Z / Cmd+Z to restore the prompt after in-place calibration.
+     * Intercepts keyboard shortcuts:
+     * - Ctrl+Shift+B / Cmd+Shift+B: Trigger Better calibration
+     * - Ctrl+Shift+E / Cmd+Shift+E: Trigger Expert calibration
+     * - Ctrl+Z / Cmd+Z: Undo prompt replacement
      */
     handleGlobalKeyDown(e) {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
+        const key = e.key.toLowerCase();
+        if (key === "b") {
+          e.preventDefault();
+          e.stopPropagation();
+          this.handleTrigger("better");
+          return;
+        }
+        if (key === "e") {
+          e.preventDefault();
+          e.stopPropagation();
+          this.handleTrigger("expert");
+          return;
+        }
+      }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
         if (this.canUndo && this.activeSurface && this.originalPromptText) {
           const currentVal = this.activeSurface.getValue();

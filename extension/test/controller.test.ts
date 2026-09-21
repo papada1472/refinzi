@@ -268,5 +268,46 @@ describe('Refinzi Controller — Grammarly-Style In-Place Calibration', () => {
     expect(toastText).not.toContain('Gateway server temporarily unavailable');
     expect(toastText).toContain('Instant local calibration applied');
   });
+
+  it('triggers Better mode in-place on Ctrl+Shift+B keyboard shortcut', async () => {
+    await controller.init();
+    textarea.focus();
+
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'b',
+        code: 'KeyB',
+        ctrlKey: true,
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+
+    await new Promise((r) => setTimeout(r, 60));
+
+    expect(textarea.value).toContain('Ultra-wide low-angle cinematic shot');
+  });
+
+  it('triggers Expert mode in-place on Ctrl+Shift+E keyboard shortcut', async () => {
+    await controller.init();
+    textarea.focus();
+
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'e',
+        code: 'KeyE',
+        ctrlKey: true,
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+
+    await new Promise((r) => setTimeout(r, 60));
+
+    expect(textarea.value).toContain('ROLE & PERSPECTIVE');
+    expect(textarea.value).toContain('Master Automotive Cinematographer');
+  });
 });
 
