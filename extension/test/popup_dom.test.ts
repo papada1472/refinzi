@@ -41,7 +41,10 @@ describe('Refinzi Popup UI Controller DOM & User Interactions', () => {
     expect(cardTime).not.toBeNull();
     expect(metricTimeSaved).not.toBeNull();
     expect(metricTimeSub).not.toBeNull();
-    expect(tooltipTimeSaved?.getAttribute('title')).toContain('average time assumed for manually refining a prompt');
+    // Tooltip must describe the ACTUAL calculation (prompts × configurable
+    // minutes-per-prompt, default 2.5) — not the stale "4 min" copy.
+    expect(tooltipTimeSaved?.getAttribute('title')).toContain('minutes-per-prompt');
+    expect(tooltipTimeSaved?.getAttribute('title')).toContain('2.5 min');
 
     // 4. Metric 3: Estimated Cost Saved
     const cardCost = document.getElementById('card-cost-saved');
@@ -51,7 +54,9 @@ describe('Refinzi Popup UI Controller DOM & User Interactions', () => {
     expect(cardCost).not.toBeNull();
     expect(metricCostSaved).not.toBeNull();
     expect(metricCostSub).not.toBeNull();
-    expect(tooltipCostSaved?.getAttribute('title')).toContain('Estimated from AI usage/iteration costs available to Refinzi');
+    // Tooltip must describe the ACTUAL model (per-refinement iteration cost ×
+    // iterations avoided) — not a non-existent "$50/hr" rate.
+    expect(tooltipCostSaved?.getAttribute('title')).toContain('per-refinement AI usage/iteration costs');
 
     // 5. Metric 4: Better / Expert Usage
     const cardUsage = document.getElementById('card-usage-split');

@@ -26,12 +26,36 @@ import {
   getSelectedPeriod,
   saveSelectedPeriod,
   computeMetricsSummary,
+  getLifetimeTotals,
+  TARGET_AI_DEFAULT_MODELS,
 } from './utils/metrics';
 import { ExtensionMessage } from './types';
 import { runInBatch } from './utils/storage-batch';
 
 // In-flight request deduplication map to eliminate duplicate generation & history writes
 const inFlightRequests = new Map<string, Promise<any>>();
+
+// Serializes post-generation persistence so two concurrent generations (e.g. a
+// rapid Better then Expert) never interleave inside the shared storage batch and
+// clobber each other's event write. Each block runs to completion — including its
+// single flush — before the next begins.
+let persistenceChain: Promise<unknown> = Promise.resolve();
+function serializePersistence<T>(fn: () => Promise<T>): Promise<T> {
+  const run = persistenceChain.then(fn, fn);
+  persistenceChain = run.catch(() => undefined);
+  return run;
+}
+
+/**
+ * Determines whether a generation produced a usable calibrated prompt.
+ * A prompt IS the delivered value — including one served by the offline engine
+ * after a cloud fallback — so any non-empty prompt counts as an enhancement.
+ * Provider fallback is tracked separately (response.isFallback) and must NOT
+ * demote a successfully delivered prompt to a failed metric.
+ */
+function producedUsablePrompt(response: any): boolean {
+  return !!(response && typeof response.prompt === 'string' && response.prompt.trim().length > 0);
+}
 
 // Handle Extension Messages
 BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendResponse) => {
@@ -48,12 +72,18 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
         executionPromise = ProviderManager.generateBetter(message.text, targetAi)
           .then(async (response) => {
             // All post-generation persistence is staged and flushed as ONE
-            // storage write instead of four sequential IPC round-trips.
-            await runInBatch(async () => {
+            // storage write instead of four sequential IPC round-trips, and
+            // serialized so concurrent generations never clobber the batch.
+            await serializePersistence(() => runInBatch(async () => {
               const settings = await getSettings();
-              const model = settings.models?.[settings.provider as keyof typeof settings.models];
+              // Fall back to the destination AI's representative model so cost
+              // estimates populate even when no per-provider model is configured.
+              const model = settings.models?.[settings.provider as keyof typeof settings.models]
+                || TARGET_AI_DEFAULT_MODELS[targetAi];
 
-              const isSuccess = !response.isFallback && !response.providerFailure;
+              // A delivered prompt is the value — even an offline-fallback one —
+              // so it counts as an enhancement (see producedUsablePrompt).
+              const isSuccess = producedUsablePrompt(response);
               // 1. Record usage event for metrics (idempotent, safe metadata only)
               await recordUsageEvent({
                 id: eventId,
@@ -78,14 +108,14 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
               if (await isFreeKeyActive()) {
                 await incrementFreeUsage();
               }
-            });
+            }));
 
             return response;
           })
           .catch(async (err) => {
             // Record failed transformation (does not count as successful)
             try {
-              await runInBatch(async () => {
+              await serializePersistence(() => runInBatch(async () => {
                 const settings = await getSettings();
                 await recordUsageEvent({
                   id: eventId,
@@ -94,7 +124,7 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
                   provider: settings.provider,
                   success: false,
                 });
-              });
+              }));
             } catch {
               /* never mask the original error */
             }
@@ -124,11 +154,16 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
         executionPromise = ProviderManager.generateExpert(message.text, targetAi)
           .then(async (response) => {
             // Single batched flush — see GENERATE_BETTER above.
-            await runInBatch(async () => {
+            await serializePersistence(() => runInBatch(async () => {
               const settings = await getSettings();
-              const model = settings.models?.[settings.provider as keyof typeof settings.models];
+              // Fall back to the destination AI's representative model so cost
+              // estimates populate even when no per-provider model is configured.
+              const model = settings.models?.[settings.provider as keyof typeof settings.models]
+                || TARGET_AI_DEFAULT_MODELS[targetAi];
 
-              const isSuccess = !response.isFallback && !response.providerFailure;
+              // A delivered prompt is the value — even an offline-fallback one —
+              // so it counts as an enhancement (see producedUsablePrompt).
+              const isSuccess = producedUsablePrompt(response);
               // 1. Record usage event for metrics (idempotent, safe metadata only)
               await recordUsageEvent({
                 id: eventId,
@@ -153,14 +188,14 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
               if (await isFreeKeyActive()) {
                 await incrementFreeUsage();
               }
-            });
+            }));
 
             return response;
           })
           .catch(async (err) => {
             // Record failed transformation (does not count as successful)
             try {
-              await runInBatch(async () => {
+              await serializePersistence(() => runInBatch(async () => {
                 const settings = await getSettings();
                 await recordUsageEvent({
                   id: eventId,
@@ -169,7 +204,7 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
                   provider: settings.provider,
                   success: false,
                 });
-              });
+              }));
             } catch {
               /* never mask the original error */
             }
@@ -244,7 +279,8 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
         const period = message.period || (await getSelectedPeriod());
         const events = await getUsageEvents();
         const config = await getMetricsConfig();
-        return computeMetricsSummary(events, period, config);
+        const lifetimeTotals = await getLifetimeTotals();
+        return computeMetricsSummary(events, period, config, Date.now(), lifetimeTotals);
       })()
         .then((summary) => sendResponse({ success: true, data: summary }))
         .catch((err) => sendResponse({ success: false, error: err.message }));

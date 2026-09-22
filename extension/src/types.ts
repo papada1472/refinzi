@@ -126,6 +126,8 @@ export interface RefinziStats {
  * Refinzi User Settings
  */
 export interface RefinziSettings {
+  /** Global toggle to enable/disable the extension */
+  enabled: boolean;
   defaultMode: PromptMode;
   provider: AIProviderId;
   apiKeys: {

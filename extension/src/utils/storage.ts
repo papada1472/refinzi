@@ -49,6 +49,7 @@ export const DEFAULT_PROVIDER_MODELS: Required<RefinziSettings['models']> = {
 };
 
 export const DEFAULT_SETTINGS: RefinziSettings = {
+  enabled: true,
   defaultMode: 'better',
   // Default: Refinzi Cloud Gateway (zero client-side credentials, 25/day free tier).
   provider: 'gateway',

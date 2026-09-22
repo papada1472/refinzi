@@ -508,4 +508,61 @@ describe('Refinzi Home Dashboard Metrics & Data Architecture', () => {
     expect(allSummary.weekCount   ).toBe(4);
     expect(allSummary.todayCount  ).toBe(2);
   });
+
+  // TEST 16: Cost saved now populates for the DEFAULT cloud engines (regression).
+  //          Previously 'bai' / 'gateway' / 'groq' were absent from the paid-provider
+  //          fallback list, so the default install showed "—" forever even after
+  //          successful cloud calibrations. 'local' must still resolve to "—".
+  it('16. estimates cost saved for default cloud providers (bai/gateway/groq) while local stays unavailable', () => {
+    for (const provider of ['bai', 'gateway', 'groq'] as const) {
+      const events: RefinziUsageEvent[] = [
+        { id: `cloud_${provider}`, timestamp: Date.now(), mode: 'better', targetAi: 'chatgpt', provider, success: true },
+      ];
+      const res = calculateCostSaved(events, DEFAULT_METRICS_CONFIG);
+      // fallbackCostPerIteration (0.008) × avoidedIterations (1.5) = 0.012 -> ~$0.01
+      expect(res.hasData).toBe(true);
+      expect(res.costUsd).toBeCloseTo(0.012, 4);
+      expect(res.formatted).toBe('~$0.01');
+    }
+
+    // Offline local engine remains honestly "unavailable" (no API cost to save).
+    const localRes = calculateCostSaved(
+      [{ id: 'local_only', timestamp: Date.now(), mode: 'better', targetAi: 'general', provider: 'local', success: true }],
+      DEFAULT_METRICS_CONFIG
+    );
+    expect(localRes.hasData).toBe(false);
+    expect(localRes.formatted).toBe('—');
+  });
+
+  // TEST 17: Lifetime totals override prevents "All Time" undercount once the
+  //          rolling event window is truncated (regression for the 500/1000 cap).
+  it('17. uses authoritative lifetime totals for the All Time view when the event window is truncated', () => {
+    const now = Date.now();
+    // Only a small window of recent events survives in storage...
+    const windowEvents: RefinziUsageEvent[] = Array.from({ length: 3 }, (_, i) => ({
+      id: `win_${i}`,
+      timestamp: now - i * 1000,
+      mode: i % 2 === 0 ? 'better' : 'expert',
+      targetAi: 'chatgpt',
+      provider: 'local',
+      success: true,
+    }));
+
+    // ...but the unbounded lifetime tally knows the user actually did 1,200.
+    const lifetime = { total: 1200, better: 800, expert: 400 };
+
+    const allSummary = computeMetricsSummary(windowEvents, 'All Time', DEFAULT_METRICS_CONFIG, now, lifetime);
+    expect(allSummary.totalPromptsEnhanced).toBe(1200);
+    expect(allSummary.betterCount).toBe(800);
+    expect(allSummary.expertCount).toBe(400);
+    expect(allSummary.allTimeCount).toBe(1200);
+    // Time saved scales with the true lifetime count: 1200 × 2.5 min = 3000 min = 50h
+    expect(allSummary.estimatedTimeSavedFormatted).toBe('~50h');
+
+    // Narrower periods still reflect the actual event window, and the invariant holds.
+    const weekSummary = computeMetricsSummary(windowEvents, 'Week', DEFAULT_METRICS_CONFIG, now, lifetime);
+    expect(weekSummary.totalPromptsEnhanced).toBe(3);
+    expect(weekSummary.allTimeCount).toBe(1200);
+    expect(weekSummary.allTimeCount).toBeGreaterThanOrEqual(weekSummary.totalPromptsEnhanced);
+  });
 });

@@ -1,8 +1,8 @@
 /**
- * REFINZI â€” Master Universal Content Script Controller
+ * REFINZI — Master Universal Content Script Controller
  * 
  * UNIVERSAL BROWSER TEXT LAYER:
- * Root Abstraction: BROWSER â†’ EDITABLE TEXT SURFACE â†’ REFINZI
+ * Root Abstraction: BROWSER → EDITABLE TEXT SURFACE → REFINZI
  * 
  * Works seamlessly across ANY website:
  * - Textareas, standard inputs (text, search, email, url, tel)
@@ -91,7 +91,7 @@ export class RefinziController {
     }
 
     // The Orb's DOM/shadow tree and its window-level listeners are created
-    // LAZILY on first use (see ensureOrb) â€” this script runs in every frame of
+    // LAZILY on first use (see ensureOrb) — this script runs in every frame of
     // every page, and most never show a surface to interact with.
     this.holdThresholdMs = settings.holdThresholdMs || 350;
 
@@ -409,7 +409,7 @@ export class RefinziController {
         const assumedItem = assumptionsList.find((a: string) => a.startsWith('Assumed:')) || assumptionsList[0];
 
         const failureNote = isDefaultFallback
-          ? 'Instant local calibration applied (Zero latency)'
+          ? 'Instant local calibration applied'
           : `Note: ${failureInfo?.reason || 'Offline calibration used'}`;
 
         const checklist = mode === 'expert'
@@ -530,8 +530,8 @@ export class RefinziController {
           }
 
           const summaryLabel = mode === 'better'
-            ? `âš¡ Better calibrated (Offline engine)`
-            : `ðŸ§  Expert briefing applied (Offline engine)`;
+            ? `⚡ Better calibrated (Offline engine)`
+            : `🧠 Expert briefing applied (Offline engine)`;
 
           const fallbackAssumptions = 'assumptions' in fallbackRes && Array.isArray(fallbackRes.assumptions)
             ? fallbackRes.assumptions
@@ -621,7 +621,7 @@ export class RefinziController {
 
     this.canUndo = false;
     this.activeSurface.focus();
-    this.orb?.showUndoToast('â†© Original prompt restored', () => {});
+    this.orb?.showUndoToast('↩ Original prompt restored', () => {});
   }
 
   /**

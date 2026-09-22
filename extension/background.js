@@ -2417,6 +2417,7 @@ var DEFAULT_PROVIDER_MODELS = {
   bai: "qwen3.8-flash"
 };
 var DEFAULT_SETTINGS = {
+  enabled: true,
   defaultMode: "better",
   // Default: Refinzi Cloud Gateway (zero client-side credentials, 25/day free tier).
   provider: "gateway",
@@ -4071,7 +4072,41 @@ var MODEL_PRICING = {
   "qwen3.8-max": { inputPer1k: 16e-4, outputPer1k: 64e-4, averageTurnCost: 592e-5 },
   "qwen3.8-27b": { inputPer1k: 2e-4, outputPer1k: 6e-4, averageTurnCost: 58e-5 }
 };
+var TARGET_AI_DEFAULT_MODELS = {
+  "chatgpt": "gpt-5.6-sol",
+  "claude": "claude-sonnet-5",
+  "gemini": "gemini-3.8-flash",
+  "perplexity": "claude-sonnet-5"
+};
 var inMemoryRecordedIds = /* @__PURE__ */ new Set();
+var LIFETIME_TOTALS_KEY = "refinzi_lifetime_totals";
+var MAX_STORED_EVENTS = 1e3;
+async function getLifetimeTotals() {
+  try {
+    const res = await BrowserAPI.storage.local.get([LIFETIME_TOTALS_KEY]);
+    const t = res?.[LIFETIME_TOTALS_KEY] || {};
+    return {
+      total: typeof t.total === "number" ? t.total : 0,
+      better: typeof t.better === "number" ? t.better : 0,
+      expert: typeof t.expert === "number" ? t.expert : 0
+    };
+  } catch {
+    return { total: 0, better: 0, expert: 0 };
+  }
+}
+async function adjustLifetimeTotals(mode, delta) {
+  try {
+    const current = await getLifetimeTotals();
+    const next = {
+      total: Math.max(0, current.total + delta),
+      better: Math.max(0, current.better + (mode === "better" ? delta : 0)),
+      expert: Math.max(0, current.expert + (mode === "expert" ? delta : 0))
+    };
+    await stageWrite({ [LIFETIME_TOTALS_KEY]: next });
+  } catch (err) {
+    console.error("[Refinzi] Failed to adjust lifetime totals:", err);
+  }
+}
 async function getMetricsConfig() {
   try {
     const res = await BrowserAPI.storage.local.get(["refinzi_metrics_config"]);
@@ -4150,8 +4185,11 @@ async function recordUsageEvent(event) {
       tokenUsage: event.tokenUsage,
       costUsd: event.costUsd
     };
-    const updated = [newEvent, ...events].slice(0, 500);
+    const updated = [newEvent, ...events].slice(0, MAX_STORED_EVENTS);
     await stageWrite({ refinzi_events: updated });
+    if (newEvent.success) {
+      await adjustLifetimeTotals(newEvent.mode, 1);
+    }
     return true;
   } catch (err) {
     console.error("[Refinzi] Failed to record usage event:", err);
@@ -4162,8 +4200,12 @@ async function deleteUsageEvent(id) {
   try {
     inMemoryRecordedIds.delete(id);
     const events = await getUsageEvents();
+    const removed = events.find((e) => e.id === id);
     const updated = events.filter((e) => e.id !== id);
     await stageWrite({ refinzi_events: updated });
+    if (removed && removed.success) {
+      await adjustLifetimeTotals(removed.mode, -1);
+    }
   } catch (err) {
     console.error("[Refinzi] Failed to delete usage event:", err);
   }
@@ -4171,7 +4213,10 @@ async function deleteUsageEvent(id) {
 async function clearUsageEvents() {
   try {
     inMemoryRecordedIds.clear();
-    await stageWrite({ refinzi_events: [] });
+    await stageWrite({
+      refinzi_events: [],
+      [LIFETIME_TOTALS_KEY]: { total: 0, better: 0, expert: 0 }
+    });
   } catch (err) {
     console.error("[Refinzi] Failed to clear usage events:", err);
   }
@@ -4245,7 +4290,7 @@ function calculateCostSaved(events, config = DEFAULT_METRICS_CONFIG) {
       evaluatedEventCount++;
       continue;
     }
-    if (evt.provider && ["openai", "claude", "gemini", "deepseek", "openrouter"].includes(evt.provider)) {
+    if (evt.provider && ["openai", "claude", "gemini", "deepseek", "openrouter", "bai", "groq", "gateway"].includes(evt.provider)) {
       totalEstimatedSavings += (config.fallbackCostPerIteration ?? 8e-3) * avoidedIterations;
       evaluatedEventCount++;
       continue;
@@ -4265,16 +4310,25 @@ function calculateCostSaved(events, config = DEFAULT_METRICS_CONFIG) {
     hasData: true
   };
 }
-function computeMetricsSummary(allEvents, period, config = DEFAULT_METRICS_CONFIG, now = Date.now()) {
+function computeMetricsSummary(allEvents, period, config = DEFAULT_METRICS_CONFIG, now = Date.now(), lifetimeTotals) {
   const todayEvents = filterEventsByPeriod(allEvents, "Today", now).filter((e) => e.success);
   const weekEvents = filterEventsByPeriod(allEvents, "Week", now).filter((e) => e.success);
   const monthEvents = filterEventsByPeriod(allEvents, "Month", now).filter((e) => e.success);
   const allTimeEvents = allEvents.filter((e) => e.success);
   const periodEvents = filterEventsByPeriod(allEvents, period, now);
   const successfulEvents = periodEvents.filter((e) => e.success);
-  const totalPromptsEnhanced = successfulEvents.length;
-  const betterCount = successfulEvents.filter((e) => e.mode === "better").length;
-  const expertCount = successfulEvents.filter((e) => e.mode === "expert").length;
+  let totalPromptsEnhanced = successfulEvents.length;
+  let betterCount = successfulEvents.filter((e) => e.mode === "better").length;
+  let expertCount = successfulEvents.filter((e) => e.mode === "expert").length;
+  let allTimeCount = allTimeEvents.length;
+  if (lifetimeTotals && lifetimeTotals.total > allTimeCount) {
+    allTimeCount = lifetimeTotals.total;
+    if (period === "All Time") {
+      totalPromptsEnhanced = lifetimeTotals.total;
+      betterCount = lifetimeTotals.better;
+      expertCount = lifetimeTotals.expert;
+    }
+  }
   const total = betterCount + expertCount;
   const betterPercentage = total > 0 ? Math.round(betterCount / total * 100) : 0;
   const expertPercentage = total > 0 ? 100 - betterPercentage : 0;
@@ -4310,12 +4364,21 @@ function computeMetricsSummary(allEvents, period, config = DEFAULT_METRICS_CONFI
     todayCount: todayEvents.length,
     weekCount: weekEvents.length,
     monthCount: monthEvents.length,
-    allTimeCount: allTimeEvents.length
+    allTimeCount
   };
 }
 
 // extension/src/background.ts
 var inFlightRequests = /* @__PURE__ */ new Map();
+var persistenceChain = Promise.resolve();
+function serializePersistence(fn) {
+  const run = persistenceChain.then(fn, fn);
+  persistenceChain = run.catch(() => void 0);
+  return run;
+}
+function producedUsablePrompt(response) {
+  return !!(response && typeof response.prompt === "string" && response.prompt.trim().length > 0);
+}
 BrowserAPI.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (!message || typeof message !== "object") return false;
   switch (message.type) {
@@ -4326,10 +4389,10 @@ BrowserAPI.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       let executionPromise = inFlightRequests.get(dedupKey);
       if (!executionPromise) {
         executionPromise = ProviderManager.generateBetter(message.text, targetAi).then(async (response) => {
-          await runInBatch(async () => {
+          await serializePersistence(() => runInBatch(async () => {
             const settings = await getSettings();
-            const model = settings.models?.[settings.provider];
-            const isSuccess = !response.isFallback && !response.providerFailure;
+            const model = settings.models?.[settings.provider] || TARGET_AI_DEFAULT_MODELS[targetAi];
+            const isSuccess = producedUsablePrompt(response);
             await recordUsageEvent({
               id: eventId,
               mode: "better",
@@ -4349,11 +4412,11 @@ BrowserAPI.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             if (await isFreeKeyActive()) {
               await incrementFreeUsage();
             }
-          });
+          }));
           return response;
         }).catch(async (err) => {
           try {
-            await runInBatch(async () => {
+            await serializePersistence(() => runInBatch(async () => {
               const settings = await getSettings();
               await recordUsageEvent({
                 id: eventId,
@@ -4362,7 +4425,7 @@ BrowserAPI.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 provider: settings.provider,
                 success: false
               });
-            });
+            }));
           } catch {
           }
           throw err;
@@ -4383,10 +4446,10 @@ BrowserAPI.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       let executionPromise = inFlightRequests.get(dedupKey);
       if (!executionPromise) {
         executionPromise = ProviderManager.generateExpert(message.text, targetAi).then(async (response) => {
-          await runInBatch(async () => {
+          await serializePersistence(() => runInBatch(async () => {
             const settings = await getSettings();
-            const model = settings.models?.[settings.provider];
-            const isSuccess = !response.isFallback && !response.providerFailure;
+            const model = settings.models?.[settings.provider] || TARGET_AI_DEFAULT_MODELS[targetAi];
+            const isSuccess = producedUsablePrompt(response);
             await recordUsageEvent({
               id: eventId,
               mode: "expert",
@@ -4406,11 +4469,11 @@ BrowserAPI.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             if (await isFreeKeyActive()) {
               await incrementFreeUsage();
             }
-          });
+          }));
           return response;
         }).catch(async (err) => {
           try {
-            await runInBatch(async () => {
+            await serializePersistence(() => runInBatch(async () => {
               const settings = await getSettings();
               await recordUsageEvent({
                 id: eventId,
@@ -4419,7 +4482,7 @@ BrowserAPI.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 provider: settings.provider,
                 success: false
               });
-            });
+            }));
           } catch {
           }
           throw err;
@@ -4466,7 +4529,8 @@ BrowserAPI.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         const period = message.period || await getSelectedPeriod();
         const events = await getUsageEvents();
         const config = await getMetricsConfig();
-        return computeMetricsSummary(events, period, config);
+        const lifetimeTotals = await getLifetimeTotals();
+        return computeMetricsSummary(events, period, config, Date.now(), lifetimeTotals);
       })().then((summary) => sendResponse({ success: true, data: summary })).catch((err) => sendResponse({ success: false, error: err.message }));
       return true;
     }

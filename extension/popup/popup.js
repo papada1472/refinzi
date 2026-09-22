@@ -231,6 +231,7 @@
     bai: "qwen3.8-flash"
   };
   var DEFAULT_SETTINGS = {
+    enabled: true,
     defaultMode: "better",
     // Default: Refinzi Cloud Gateway (zero client-side credentials, 25/day free tier).
     provider: "gateway",

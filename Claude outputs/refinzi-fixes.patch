@@ -1,0 +1,525 @@
+diff --git a/extension/popup/popup.html b/extension/popup/popup.html
+index 2202684..8aa5c33 100644
+--- a/extension/popup/popup.html
++++ b/extension/popup/popup.html
+@@ -69,8 +69,8 @@
+               <span class="dash-card-label">EST. TIME SAVED</span>
+               <span class="info-tooltip-trigger" id="tooltip-time-saved"
+                    tabindex="0" role="button" aria-label="How is time saved calculated?"
+-                   title="Calculated from your configured minutes per prompt (default 4 min) — average time assumed for manually refining a prompt."
+-                   data-tooltip="Calculated from your configured minutes per prompt (default 4 min) — average time assumed for manually refining a prompt.">⏱️</span>
++                   title="Estimated as prompts enhanced × your configured minutes-per-prompt (default 2.5 min) — the time assumed for manually refining a prompt. Adjustable in Settings."
++                   data-tooltip="Estimated as prompts enhanced × your configured minutes-per-prompt (default 2.5 min) — the time assumed for manually refining a prompt. Adjustable in Settings.">⏱️</span>
+             </div>
+             <div class="dash-card-body">
+               <div class="dash-card-val" id="metric-time-saved">~0m</div>
+@@ -84,8 +84,8 @@
+               <span class="dash-card-label">EST. COST SAVED</span>
+               <span class="info-tooltip-trigger" id="tooltip-cost-saved"
+                    tabindex="0" role="button" aria-label="How is cost saved calculated?"
+-                   title="Calculated from your configured value per hour (default $50/hr). Estimated from AI usage/iteration costs available to Refinzi."
+-                   data-tooltip="Calculated from your configured value per hour (default $50/hr). Estimated from AI usage/iteration costs available to Refinzi.">💡</span>
++                   title="Estimated from per-refinement AI usage/iteration costs × iterations avoided (defaults adjustable in Settings). Shows “—” when no priced usage is available. Actual savings vary."
++                   data-tooltip="Estimated from per-refinement AI usage/iteration costs × iterations avoided (defaults adjustable in Settings). Shows “—” when no priced usage is available. Actual savings vary.">💡</span>
+             </div>
+             <div class="dash-card-body">
+               <div class="dash-card-val" id="metric-cost-saved">—</div>
+diff --git a/extension/src/background.ts b/extension/src/background.ts
+index c6a292f..d3c8a1b 100644
+--- a/extension/src/background.ts
++++ b/extension/src/background.ts
+@@ -26,6 +26,8 @@ import {
+   getSelectedPeriod,
+   saveSelectedPeriod,
+   computeMetricsSummary,
++  getLifetimeTotals,
++  TARGET_AI_DEFAULT_MODELS,
+ } from './utils/metrics';
+ import { ExtensionMessage } from './types';
+ import { runInBatch } from './utils/storage-batch';
+@@ -33,6 +35,28 @@ import { runInBatch } from './utils/storage-batch';
+ // In-flight request deduplication map to eliminate duplicate generation & history writes
+ const inFlightRequests = new Map<string, Promise<any>>();
+ 
++// Serializes post-generation persistence so two concurrent generations (e.g. a
++// rapid Better then Expert) never interleave inside the shared storage batch and
++// clobber each other's event write. Each block runs to completion — including its
++// single flush — before the next begins.
++let persistenceChain: Promise<unknown> = Promise.resolve();
++function serializePersistence<T>(fn: () => Promise<T>): Promise<T> {
++  const run = persistenceChain.then(fn, fn);
++  persistenceChain = run.catch(() => undefined);
++  return run;
++}
++
++/**
++ * Determines whether a generation produced a usable calibrated prompt.
++ * A prompt IS the delivered value — including one served by the offline engine
++ * after a cloud fallback — so any non-empty prompt counts as an enhancement.
++ * Provider fallback is tracked separately (response.isFallback) and must NOT
++ * demote a successfully delivered prompt to a failed metric.
++ */
++function producedUsablePrompt(response: any): boolean {
++  return !!(response && typeof response.prompt === 'string' && response.prompt.trim().length > 0);
++}
++
+ // Handle Extension Messages
+ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendResponse) => {
+   if (!message || typeof message !== 'object') return false;
+@@ -48,12 +72,18 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
+         executionPromise = ProviderManager.generateBetter(message.text, targetAi)
+           .then(async (response) => {
+             // All post-generation persistence is staged and flushed as ONE
+-            // storage write instead of four sequential IPC round-trips.
+-            await runInBatch(async () => {
++            // storage write instead of four sequential IPC round-trips, and
++            // serialized so concurrent generations never clobber the batch.
++            await serializePersistence(() => runInBatch(async () => {
+               const settings = await getSettings();
+-              const model = settings.models?.[settings.provider as keyof typeof settings.models];
+-
+-              const isSuccess = !response.isFallback && !response.providerFailure;
++              // Fall back to the destination AI's representative model so cost
++              // estimates populate even when no per-provider model is configured.
++              const model = settings.models?.[settings.provider as keyof typeof settings.models]
++                || TARGET_AI_DEFAULT_MODELS[targetAi];
++
++              // A delivered prompt is the value — even an offline-fallback one —
++              // so it counts as an enhancement (see producedUsablePrompt).
++              const isSuccess = producedUsablePrompt(response);
+               // 1. Record usage event for metrics (idempotent, safe metadata only)
+               await recordUsageEvent({
+                 id: eventId,
+@@ -78,14 +108,14 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
+               if (await isFreeKeyActive()) {
+                 await incrementFreeUsage();
+               }
+-            });
++            }));
+ 
+             return response;
+           })
+           .catch(async (err) => {
+             // Record failed transformation (does not count as successful)
+             try {
+-              await runInBatch(async () => {
++              await serializePersistence(() => runInBatch(async () => {
+                 const settings = await getSettings();
+                 await recordUsageEvent({
+                   id: eventId,
+@@ -94,7 +124,7 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
+                   provider: settings.provider,
+                   success: false,
+                 });
+-              });
++              }));
+             } catch {
+               /* never mask the original error */
+             }
+@@ -124,11 +154,16 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
+         executionPromise = ProviderManager.generateExpert(message.text, targetAi)
+           .then(async (response) => {
+             // Single batched flush — see GENERATE_BETTER above.
+-            await runInBatch(async () => {
++            await serializePersistence(() => runInBatch(async () => {
+               const settings = await getSettings();
+-              const model = settings.models?.[settings.provider as keyof typeof settings.models];
+-
+-              const isSuccess = !response.isFallback && !response.providerFailure;
++              // Fall back to the destination AI's representative model so cost
++              // estimates populate even when no per-provider model is configured.
++              const model = settings.models?.[settings.provider as keyof typeof settings.models]
++                || TARGET_AI_DEFAULT_MODELS[targetAi];
++
++              // A delivered prompt is the value — even an offline-fallback one —
++              // so it counts as an enhancement (see producedUsablePrompt).
++              const isSuccess = producedUsablePrompt(response);
+               // 1. Record usage event for metrics (idempotent, safe metadata only)
+               await recordUsageEvent({
+                 id: eventId,
+@@ -153,14 +188,14 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
+               if (await isFreeKeyActive()) {
+                 await incrementFreeUsage();
+               }
+-            });
++            }));
+ 
+             return response;
+           })
+           .catch(async (err) => {
+             // Record failed transformation (does not count as successful)
+             try {
+-              await runInBatch(async () => {
++              await serializePersistence(() => runInBatch(async () => {
+                 const settings = await getSettings();
+                 await recordUsageEvent({
+                   id: eventId,
+@@ -169,7 +204,7 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
+                   provider: settings.provider,
+                   success: false,
+                 });
+-              });
++              }));
+             } catch {
+               /* never mask the original error */
+             }
+@@ -244,7 +279,8 @@ BrowserAPI.runtime.onMessage.addListener((message: ExtensionMessage, _sender, se
+         const period = message.period || (await getSelectedPeriod());
+         const events = await getUsageEvents();
+         const config = await getMetricsConfig();
+-        return computeMetricsSummary(events, period, config);
++        const lifetimeTotals = await getLifetimeTotals();
++        return computeMetricsSummary(events, period, config, Date.now(), lifetimeTotals);
+       })()
+         .then((summary) => sendResponse({ success: true, data: summary }))
+         .catch((err) => sendResponse({ success: false, error: err.message }));
+diff --git a/extension/src/ui/controller.ts b/extension/src/ui/controller.ts
+index 0e096e2..68ec039 100644
+--- a/extension/src/ui/controller.ts
++++ b/extension/src/ui/controller.ts
+@@ -1,8 +1,8 @@
+ /**
+- * REFINZI â€” Master Universal Content Script Controller
++ * REFINZI — Master Universal Content Script Controller
+  * 
+  * UNIVERSAL BROWSER TEXT LAYER:
+- * Root Abstraction: BROWSER â†’ EDITABLE TEXT SURFACE â†’ REFINZI
++ * Root Abstraction: BROWSER → EDITABLE TEXT SURFACE → REFINZI
+  * 
+  * Works seamlessly across ANY website:
+  * - Textareas, standard inputs (text, search, email, url, tel)
+@@ -91,7 +91,7 @@ export class RefinziController {
+     }
+ 
+     // The Orb's DOM/shadow tree and its window-level listeners are created
+-    // LAZILY on first use (see ensureOrb) â€” this script runs in every frame of
++    // LAZILY on first use (see ensureOrb) — this script runs in every frame of
+     // every page, and most never show a surface to interact with.
+     this.holdThresholdMs = settings.holdThresholdMs || 350;
+ 
+@@ -409,7 +409,7 @@ export class RefinziController {
+         const assumedItem = assumptionsList.find((a: string) => a.startsWith('Assumed:')) || assumptionsList[0];
+ 
+         const failureNote = isDefaultFallback
+-          ? 'Instant local calibration applied (Zero latency)'
++          ? 'Instant local calibration applied'
+           : `Note: ${failureInfo?.reason || 'Offline calibration used'}`;
+ 
+         const checklist = mode === 'expert'
+@@ -530,8 +530,8 @@ export class RefinziController {
+           }
+ 
+           const summaryLabel = mode === 'better'
+-            ? `âš¡ Better calibrated (Offline engine)`
+-            : `ðŸ§  Expert briefing applied (Offline engine)`;
++            ? `⚡ Better calibrated (Offline engine)`
++            : `🧠 Expert briefing applied (Offline engine)`;
+ 
+           const fallbackAssumptions = 'assumptions' in fallbackRes && Array.isArray(fallbackRes.assumptions)
+             ? fallbackRes.assumptions
+@@ -621,7 +621,7 @@ export class RefinziController {
+ 
+     this.canUndo = false;
+     this.activeSurface.focus();
+-    this.orb?.showUndoToast('â†© Original prompt restored', () => {});
++    this.orb?.showUndoToast('↩ Original prompt restored', () => {});
+   }
+ 
+   /**
+diff --git a/extension/src/ui/orb.ts b/extension/src/ui/orb.ts
+index 60e1e05..45a38d4 100644
+--- a/extension/src/ui/orb.ts
++++ b/extension/src/ui/orb.ts
+@@ -63,7 +63,10 @@ export class AmbientOrb {
+   private dragOffsetX: number = 0;
+   private dragOffsetY: number = 0;
+   private customPosition: { x: number; y: number } | null = null;
+-  private readonly DRAG_THRESHOLD = 6;
++  // A deliberate press-and-hold on a trackpad drifts a few pixels; keeping the
++  // drag threshold higher than that jitter stops a held Expert gesture from being
++  // misread as a reposition drag and silently cancelled.
++  private readonly DRAG_THRESHOLD = 12;
+   private lastTriggerTime: number = 0;
+ 
+   // Window event handlers preserved for clean detachment
+@@ -81,7 +84,11 @@ export class AmbientOrb {
+     if (this.customPosition) this.updatePosition();
+   };
+   private boundOnWindowScroll = () => {
+-    if (this.isHolding) this.resetState();
++    // A minor scroll (momentum, a nudge, the page settling) must NOT abort an
++    // active hold — pointer capture keeps events flowing to the orb, and
++    // pointerup/pointercancel already resolve the gesture. Cancelling here turned
++    // deliberate Expert holds into silent no-ops whenever the page scrolled.
++    // Intentionally left as a no-op during interaction.
+   };
+ 
+   constructor(callbacks: AmbientOrbCallbacks, holdThresholdMs: number = 350) {
+diff --git a/extension/src/utils/metrics.ts b/extension/src/utils/metrics.ts
+index ab68c64..e30ac84 100644
+--- a/extension/src/utils/metrics.ts
++++ b/extension/src/utils/metrics.ts
+@@ -123,6 +123,53 @@ export const TARGET_AI_DEFAULT_MODELS: Record<string, string> = {
+ // In-memory set of recorded event IDs to prevent race-condition duplicates across rapid calls
+ const inMemoryRecordedIds = new Set<string>();
+ 
++/**
++ * Unbounded lifetime tallies, kept separately from the rolling event window.
++ *
++ * `refinzi_events` is capped (see MAX_STORED_EVENTS) so period math stays cheap,
++ * but that cap silently truncates "All Time" / "lifetime total" once a heavy user
++ * crosses it. These counters never age out, so lifetime figures keep climbing
++ * accurately for the users who engage most.
++ */
++export interface LifetimeTotals {
++  total: number;
++  better: number;
++  expert: number;
++}
++
++const LIFETIME_TOTALS_KEY = 'refinzi_lifetime_totals';
++
++/** Rolling window kept for period aggregation and per-event cost pricing. */
++export const MAX_STORED_EVENTS = 1000;
++
++export async function getLifetimeTotals(): Promise<LifetimeTotals> {
++  try {
++    const res = await BrowserAPI.storage.local.get([LIFETIME_TOTALS_KEY]);
++    const t = (res?.[LIFETIME_TOTALS_KEY] as Partial<LifetimeTotals>) || {};
++    return {
++      total: typeof t.total === 'number' ? t.total : 0,
++      better: typeof t.better === 'number' ? t.better : 0,
++      expert: typeof t.expert === 'number' ? t.expert : 0,
++    };
++  } catch {
++    return { total: 0, better: 0, expert: 0 };
++  }
++}
++
++async function adjustLifetimeTotals(mode: PromptMode, delta: number): Promise<void> {
++  try {
++    const current = await getLifetimeTotals();
++    const next: LifetimeTotals = {
++      total: Math.max(0, current.total + delta),
++      better: Math.max(0, current.better + (mode === 'better' ? delta : 0)),
++      expert: Math.max(0, current.expert + (mode === 'expert' ? delta : 0)),
++    };
++    await stageWrite({ [LIFETIME_TOTALS_KEY]: next });
++  } catch (err) {
++    console.error('[Refinzi] Failed to adjust lifetime totals:', err);
++  }
++}
++
+ // -----------------------------------------------------------------------------
+ // STORAGE OPERATIONS
+ // -----------------------------------------------------------------------------
+@@ -239,9 +286,15 @@ export async function recordUsageEvent(
+       costUsd: event.costUsd,
+     };
+ 
+-    // Keep up to 500 recent events for rolling calculations
+-    const updated = [newEvent, ...events].slice(0, 500);
++    // Keep a bounded window of recent events for rolling calculations
++    const updated = [newEvent, ...events].slice(0, MAX_STORED_EVENTS);
+     await stageWrite({ refinzi_events: updated });
++
++    // Maintain the unbounded lifetime tally so "All Time" never undercounts once
++    // the rolling window fills. Only successful, newly-recorded events count.
++    if (newEvent.success) {
++      await adjustLifetimeTotals(newEvent.mode, 1);
++    }
+     return true;
+   } catch (err) {
+     console.error('[Refinzi] Failed to record usage event:', err);
+@@ -253,8 +306,13 @@ export async function deleteUsageEvent(id: string): Promise<void> {
+   try {
+     inMemoryRecordedIds.delete(id);
+     const events = await getUsageEvents();
++    const removed = events.find((e) => e.id === id);
+     const updated = events.filter((e) => e.id !== id);
+     await stageWrite({ refinzi_events: updated });
++    // Keep the lifetime tally consistent when a successful event is removed.
++    if (removed && removed.success) {
++      await adjustLifetimeTotals(removed.mode, -1);
++    }
+   } catch (err) {
+     console.error('[Refinzi] Failed to delete usage event:', err);
+   }
+@@ -263,7 +321,10 @@ export async function deleteUsageEvent(id: string): Promise<void> {
+ export async function clearUsageEvents(): Promise<void> {
+   try {
+     inMemoryRecordedIds.clear();
+-    await stageWrite({ refinzi_events: [] });
++    await stageWrite({
++      refinzi_events: [],
++      [LIFETIME_TOTALS_KEY]: { total: 0, better: 0, expert: 0 },
++    });
+   } catch (err) {
+     console.error('[Refinzi] Failed to clear usage events:', err);
+   }
+@@ -397,8 +458,11 @@ export function calculateCostSaved(
+       continue;
+     }
+ 
+-    // Fallback: If provider is a paid BYOK provider but specific model is unlisted
+-    if (evt.provider && ['openai', 'claude', 'gemini', 'deepseek', 'openrouter'].includes(evt.provider)) {
++    // Fallback: If the event was served by any cloud provider (BYOK or the
++    // default Refinzi Cloud engines) but the specific model is unlisted, use the
++    // configurable flat per-iteration estimate. 'local' is intentionally excluded
++    // above (Provenance C) because the offline engine has no API cost to save.
++    if (evt.provider && ['openai', 'claude', 'gemini', 'deepseek', 'openrouter', 'bai', 'groq', 'gateway'].includes(evt.provider)) {
+       totalEstimatedSavings += (config.fallbackCostPerIteration ?? 0.008) * avoidedIterations;
+       evaluatedEventCount++;
+       continue;
+@@ -432,7 +496,8 @@ export function computeMetricsSummary(
+   allEvents: RefinziUsageEvent[],
+   period: PeriodType,
+   config: MetricsConfig = DEFAULT_METRICS_CONFIG,
+-  now: number = Date.now()
++  now: number = Date.now(),
++  lifetimeTotals?: LifetimeTotals
+ ): RefinziMetricsSummary {
+   // All period counts for quick overview
+   const todayEvents = filterEventsByPeriod(allEvents, 'Today', now).filter((e) => e.success);
+@@ -443,11 +508,25 @@ export function computeMetricsSummary(
+   // 1. Filter events by selected period
+   const periodEvents = filterEventsByPeriod(allEvents, period, now);
+   const successfulEvents = periodEvents.filter((e) => e.success);
+-  const totalPromptsEnhanced = successfulEvents.length;
++  let totalPromptsEnhanced = successfulEvents.length;
+ 
+   // 2. Better / Expert counts
+-  const betterCount = successfulEvents.filter((e) => e.mode === 'better').length;
+-  const expertCount = successfulEvents.filter((e) => e.mode === 'expert').length;
++  let betterCount = successfulEvents.filter((e) => e.mode === 'better').length;
++  let expertCount = successfulEvents.filter((e) => e.mode === 'expert').length;
++
++  // Lifetime override: once the rolling event window (MAX_STORED_EVENTS) fills,
++  // the stored array undercounts true lifetime usage. When authoritative lifetime
++  // tallies are supplied and exceed what the window can show, use them for the
++  // "All Time" view so the headline and split never regress for heavy users.
++  let allTimeCount = allTimeEvents.length;
++  if (lifetimeTotals && lifetimeTotals.total > allTimeCount) {
++    allTimeCount = lifetimeTotals.total;
++    if (period === 'All Time') {
++      totalPromptsEnhanced = lifetimeTotals.total;
++      betterCount = lifetimeTotals.better;
++      expertCount = lifetimeTotals.expert;
++    }
++  }
+ 
+   const total = betterCount + expertCount;
+   const betterPercentage = total > 0 ? Math.round((betterCount / total) * 100) : 0;
+@@ -492,6 +571,6 @@ export function computeMetricsSummary(
+     todayCount: todayEvents.length,
+     weekCount: weekEvents.length,
+     monthCount: monthEvents.length,
+-    allTimeCount: allTimeEvents.length,
++    allTimeCount,
+   };
+ }
+diff --git a/extension/src/utils/storage.ts b/extension/src/utils/storage.ts
+index bc939bc..6600017 100644
+--- a/extension/src/utils/storage.ts
++++ b/extension/src/utils/storage.ts
+@@ -49,6 +49,7 @@ export const DEFAULT_PROVIDER_MODELS: Required<RefinziSettings['models']> = {
+ };
+ 
+ export const DEFAULT_SETTINGS: RefinziSettings = {
++  enabled: true,
+   defaultMode: 'better',
+   // Default: Refinzi Cloud Gateway (zero client-side credentials, 25/day free tier).
+   provider: 'gateway',
+diff --git a/extension/test/metrics_dashboard.test.ts b/extension/test/metrics_dashboard.test.ts
+index 6777b99..6c52f61 100644
+--- a/extension/test/metrics_dashboard.test.ts
++++ b/extension/test/metrics_dashboard.test.ts
+@@ -508,4 +508,61 @@ describe('Refinzi Home Dashboard Metrics & Data Architecture', () => {
+     expect(allSummary.weekCount   ).toBe(4);
+     expect(allSummary.todayCount  ).toBe(2);
+   });
++
++  // TEST 16: Cost saved now populates for the DEFAULT cloud engines (regression).
++  //          Previously 'bai' / 'gateway' / 'groq' were absent from the paid-provider
++  //          fallback list, so the default install showed "—" forever even after
++  //          successful cloud calibrations. 'local' must still resolve to "—".
++  it('16. estimates cost saved for default cloud providers (bai/gateway/groq) while local stays unavailable', () => {
++    for (const provider of ['bai', 'gateway', 'groq'] as const) {
++      const events: RefinziUsageEvent[] = [
++        { id: `cloud_${provider}`, timestamp: Date.now(), mode: 'better', targetAi: 'chatgpt', provider, success: true },
++      ];
++      const res = calculateCostSaved(events, DEFAULT_METRICS_CONFIG);
++      // fallbackCostPerIteration (0.008) × avoidedIterations (1.5) = 0.012 -> ~$0.01
++      expect(res.hasData).toBe(true);
++      expect(res.costUsd).toBeCloseTo(0.012, 4);
++      expect(res.formatted).toBe('~$0.01');
++    }
++
++    // Offline local engine remains honestly "unavailable" (no API cost to save).
++    const localRes = calculateCostSaved(
++      [{ id: 'local_only', timestamp: Date.now(), mode: 'better', targetAi: 'general', provider: 'local', success: true }],
++      DEFAULT_METRICS_CONFIG
++    );
++    expect(localRes.hasData).toBe(false);
++    expect(localRes.formatted).toBe('—');
++  });
++
++  // TEST 17: Lifetime totals override prevents "All Time" undercount once the
++  //          rolling event window is truncated (regression for the 500/1000 cap).
++  it('17. uses authoritative lifetime totals for the All Time view when the event window is truncated', () => {
++    const now = Date.now();
++    // Only a small window of recent events survives in storage...
++    const windowEvents: RefinziUsageEvent[] = Array.from({ length: 3 }, (_, i) => ({
++      id: `win_${i}`,
++      timestamp: now - i * 1000,
++      mode: i % 2 === 0 ? 'better' : 'expert',
++      targetAi: 'chatgpt',
++      provider: 'local',
++      success: true,
++    }));
++
++    // ...but the unbounded lifetime tally knows the user actually did 1,200.
++    const lifetime = { total: 1200, better: 800, expert: 400 };
++
++    const allSummary = computeMetricsSummary(windowEvents, 'All Time', DEFAULT_METRICS_CONFIG, now, lifetime);
++    expect(allSummary.totalPromptsEnhanced).toBe(1200);
++    expect(allSummary.betterCount).toBe(800);
++    expect(allSummary.expertCount).toBe(400);
++    expect(allSummary.allTimeCount).toBe(1200);
++    // Time saved scales with the true lifetime count: 1200 × 2.5 min = 3000 min = 50h
++    expect(allSummary.estimatedTimeSavedFormatted).toBe('~50h');
++
++    // Narrower periods still reflect the actual event window, and the invariant holds.
++    const weekSummary = computeMetricsSummary(windowEvents, 'Week', DEFAULT_METRICS_CONFIG, now, lifetime);
++    expect(weekSummary.totalPromptsEnhanced).toBe(3);
++    expect(weekSummary.allTimeCount).toBe(1200);
++    expect(weekSummary.allTimeCount).toBeGreaterThanOrEqual(weekSummary.totalPromptsEnhanced);
++  });
+ });
+diff --git a/extension/test/popup_dom.test.ts b/extension/test/popup_dom.test.ts
+index 9b4d30d..c4c6f98 100644
+--- a/extension/test/popup_dom.test.ts
++++ b/extension/test/popup_dom.test.ts
+@@ -41,7 +41,10 @@ describe('Refinzi Popup UI Controller DOM & User Interactions', () => {
+     expect(cardTime).not.toBeNull();
+     expect(metricTimeSaved).not.toBeNull();
+     expect(metricTimeSub).not.toBeNull();
+-    expect(tooltipTimeSaved?.getAttribute('title')).toContain('average time assumed for manually refining a prompt');
++    // Tooltip must describe the ACTUAL calculation (prompts × configurable
++    // minutes-per-prompt, default 2.5) — not the stale "4 min" copy.
++    expect(tooltipTimeSaved?.getAttribute('title')).toContain('minutes-per-prompt');
++    expect(tooltipTimeSaved?.getAttribute('title')).toContain('2.5 min');
+ 
+     // 4. Metric 3: Estimated Cost Saved
+     const cardCost = document.getElementById('card-cost-saved');
+@@ -51,7 +54,9 @@ describe('Refinzi Popup UI Controller DOM & User Interactions', () => {
+     expect(cardCost).not.toBeNull();
+     expect(metricCostSaved).not.toBeNull();
+     expect(metricCostSub).not.toBeNull();
+-    expect(tooltipCostSaved?.getAttribute('title')).toContain('Estimated from AI usage/iteration costs available to Refinzi');
++    // Tooltip must describe the ACTUAL model (per-refinement iteration cost ×
++    // iterations avoided) — not a non-existent "$50/hr" rate.
++    expect(tooltipCostSaved?.getAttribute('title')).toContain('per-refinement AI usage/iteration costs');
+ 
+     // 5. Metric 4: Better / Expert Usage
+     const cardUsage = document.getElementById('card-usage-split');

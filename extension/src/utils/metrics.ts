@@ -123,6 +123,53 @@ export const TARGET_AI_DEFAULT_MODELS: Record<string, string> = {
 // In-memory set of recorded event IDs to prevent race-condition duplicates across rapid calls
 const inMemoryRecordedIds = new Set<string>();
 
+/**
+ * Unbounded lifetime tallies, kept separately from the rolling event window.
+ *
+ * `refinzi_events` is capped (see MAX_STORED_EVENTS) so period math stays cheap,
+ * but that cap silently truncates "All Time" / "lifetime total" once a heavy user
+ * crosses it. These counters never age out, so lifetime figures keep climbing
+ * accurately for the users who engage most.
+ */
+export interface LifetimeTotals {
+  total: number;
+  better: number;
+  expert: number;
+}
+
+const LIFETIME_TOTALS_KEY = 'refinzi_lifetime_totals';
+
+/** Rolling window kept for period aggregation and per-event cost pricing. */
+export const MAX_STORED_EVENTS = 1000;
+
+export async function getLifetimeTotals(): Promise<LifetimeTotals> {
+  try {
+    const res = await BrowserAPI.storage.local.get([LIFETIME_TOTALS_KEY]);
+    const t = (res?.[LIFETIME_TOTALS_KEY] as Partial<LifetimeTotals>) || {};
+    return {
+      total: typeof t.total === 'number' ? t.total : 0,
+      better: typeof t.better === 'number' ? t.better : 0,
+      expert: typeof t.expert === 'number' ? t.expert : 0,
+    };
+  } catch {
+    return { total: 0, better: 0, expert: 0 };
+  }
+}
+
+async function adjustLifetimeTotals(mode: PromptMode, delta: number): Promise<void> {
+  try {
+    const current = await getLifetimeTotals();
+    const next: LifetimeTotals = {
+      total: Math.max(0, current.total + delta),
+      better: Math.max(0, current.better + (mode === 'better' ? delta : 0)),
+      expert: Math.max(0, current.expert + (mode === 'expert' ? delta : 0)),
+    };
+    await stageWrite({ [LIFETIME_TOTALS_KEY]: next });
+  } catch (err) {
+    console.error('[Refinzi] Failed to adjust lifetime totals:', err);
+  }
+}
+
 // -----------------------------------------------------------------------------
 // STORAGE OPERATIONS
 // -----------------------------------------------------------------------------
@@ -239,9 +286,15 @@ export async function recordUsageEvent(
       costUsd: event.costUsd,
     };
 
-    // Keep up to 500 recent events for rolling calculations
-    const updated = [newEvent, ...events].slice(0, 500);
+    // Keep a bounded window of recent events for rolling calculations
+    const updated = [newEvent, ...events].slice(0, MAX_STORED_EVENTS);
     await stageWrite({ refinzi_events: updated });
+
+    // Maintain the unbounded lifetime tally so "All Time" never undercounts once
+    // the rolling window fills. Only successful, newly-recorded events count.
+    if (newEvent.success) {
+      await adjustLifetimeTotals(newEvent.mode, 1);
+    }
     return true;
   } catch (err) {
     console.error('[Refinzi] Failed to record usage event:', err);
@@ -253,8 +306,13 @@ export async function deleteUsageEvent(id: string): Promise<void> {
   try {
     inMemoryRecordedIds.delete(id);
     const events = await getUsageEvents();
+    const removed = events.find((e) => e.id === id);
     const updated = events.filter((e) => e.id !== id);
     await stageWrite({ refinzi_events: updated });
+    // Keep the lifetime tally consistent when a successful event is removed.
+    if (removed && removed.success) {
+      await adjustLifetimeTotals(removed.mode, -1);
+    }
   } catch (err) {
     console.error('[Refinzi] Failed to delete usage event:', err);
   }
@@ -263,7 +321,10 @@ export async function deleteUsageEvent(id: string): Promise<void> {
 export async function clearUsageEvents(): Promise<void> {
   try {
     inMemoryRecordedIds.clear();
-    await stageWrite({ refinzi_events: [] });
+    await stageWrite({
+      refinzi_events: [],
+      [LIFETIME_TOTALS_KEY]: { total: 0, better: 0, expert: 0 },
+    });
   } catch (err) {
     console.error('[Refinzi] Failed to clear usage events:', err);
   }
@@ -397,8 +458,11 @@ export function calculateCostSaved(
       continue;
     }
 
-    // Fallback: If provider is a paid BYOK provider but specific model is unlisted
-    if (evt.provider && ['openai', 'claude', 'gemini', 'deepseek', 'openrouter'].includes(evt.provider)) {
+    // Fallback: If the event was served by any cloud provider (BYOK or the
+    // default Refinzi Cloud engines) but the specific model is unlisted, use the
+    // configurable flat per-iteration estimate. 'local' is intentionally excluded
+    // above (Provenance C) because the offline engine has no API cost to save.
+    if (evt.provider && ['openai', 'claude', 'gemini', 'deepseek', 'openrouter', 'bai', 'groq', 'gateway'].includes(evt.provider)) {
       totalEstimatedSavings += (config.fallbackCostPerIteration ?? 0.008) * avoidedIterations;
       evaluatedEventCount++;
       continue;
@@ -432,7 +496,8 @@ export function computeMetricsSummary(
   allEvents: RefinziUsageEvent[],
   period: PeriodType,
   config: MetricsConfig = DEFAULT_METRICS_CONFIG,
-  now: number = Date.now()
+  now: number = Date.now(),
+  lifetimeTotals?: LifetimeTotals
 ): RefinziMetricsSummary {
   // All period counts for quick overview
   const todayEvents = filterEventsByPeriod(allEvents, 'Today', now).filter((e) => e.success);
@@ -443,11 +508,25 @@ export function computeMetricsSummary(
   // 1. Filter events by selected period
   const periodEvents = filterEventsByPeriod(allEvents, period, now);
   const successfulEvents = periodEvents.filter((e) => e.success);
-  const totalPromptsEnhanced = successfulEvents.length;
+  let totalPromptsEnhanced = successfulEvents.length;
 
   // 2. Better / Expert counts
-  const betterCount = successfulEvents.filter((e) => e.mode === 'better').length;
-  const expertCount = successfulEvents.filter((e) => e.mode === 'expert').length;
+  let betterCount = successfulEvents.filter((e) => e.mode === 'better').length;
+  let expertCount = successfulEvents.filter((e) => e.mode === 'expert').length;
+
+  // Lifetime override: once the rolling event window (MAX_STORED_EVENTS) fills,
+  // the stored array undercounts true lifetime usage. When authoritative lifetime
+  // tallies are supplied and exceed what the window can show, use them for the
+  // "All Time" view so the headline and split never regress for heavy users.
+  let allTimeCount = allTimeEvents.length;
+  if (lifetimeTotals && lifetimeTotals.total > allTimeCount) {
+    allTimeCount = lifetimeTotals.total;
+    if (period === 'All Time') {
+      totalPromptsEnhanced = lifetimeTotals.total;
+      betterCount = lifetimeTotals.better;
+      expertCount = lifetimeTotals.expert;
+    }
+  }
 
   const total = betterCount + expertCount;
   const betterPercentage = total > 0 ? Math.round((betterCount / total) * 100) : 0;
@@ -492,6 +571,6 @@ export function computeMetricsSummary(
     todayCount: todayEvents.length,
     weekCount: weekEvents.length,
     monthCount: monthEvents.length,
-    allTimeCount: allTimeEvents.length,
+    allTimeCount,
   };
 }

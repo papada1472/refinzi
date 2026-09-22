@@ -63,7 +63,10 @@ export class AmbientOrb {
   private dragOffsetX: number = 0;
   private dragOffsetY: number = 0;
   private customPosition: { x: number; y: number } | null = null;
-  private readonly DRAG_THRESHOLD = 6;
+  // A deliberate press-and-hold on a trackpad drifts a few pixels; keeping the
+  // drag threshold higher than that jitter stops a held Expert gesture from being
+  // misread as a reposition drag and silently cancelled.
+  private readonly DRAG_THRESHOLD = 12;
   private lastTriggerTime: number = 0;
 
   // Window event handlers preserved for clean detachment
@@ -81,7 +84,11 @@ export class AmbientOrb {
     if (this.customPosition) this.updatePosition();
   };
   private boundOnWindowScroll = () => {
-    if (this.isHolding) this.resetState();
+    // A minor scroll (momentum, a nudge, the page settling) must NOT abort an
+    // active hold — pointer capture keeps events flowing to the orb, and
+    // pointerup/pointercancel already resolve the gesture. Cancelling here turned
+    // deliberate Expert holds into silent no-ops whenever the page scrolled.
+    // Intentionally left as a no-op during interaction.
   };
 
   constructor(callbacks: AmbientOrbCallbacks, holdThresholdMs: number = 350) {

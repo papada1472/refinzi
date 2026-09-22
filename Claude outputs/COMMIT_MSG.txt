@@ -1,0 +1,11 @@
+fix: dashboard metric integrity, offline-engine counting, orb hold gesture
+
+- Count offline/local calibrations as enhancements (was recorded as failures)
+- Populate Est. Cost Saved for default cloud providers (bai/gateway/groq)
+- Add unbounded lifetime totals so All Time never undercounts past the window
+- Raise orb drag threshold 6->12 and stop scroll cancelling an active hold
+- Correct Time/Cost tooltips to the real math; drop false "Zero latency" claim
+- Re-encode mojibake in fallback user-facing strings
+- Serialize post-generation storage writes to close a lost-update race
+- Add enabled:true to DEFAULT_SETTINGS (fixes pre-existing tsc failure)
+- Rebuild content/background/popup bundles; +2 regression tests (815 pass)

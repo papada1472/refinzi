@@ -690,7 +690,10 @@
     dragOffsetX = 0;
     dragOffsetY = 0;
     customPosition = null;
-    DRAG_THRESHOLD = 6;
+    // A deliberate press-and-hold on a trackpad drifts a few pixels; keeping the
+    // drag threshold higher than that jitter stops a held Expert gesture from being
+    // misread as a reposition drag and silently cancelled.
+    DRAG_THRESHOLD = 12;
     lastTriggerTime = 0;
     // Window event handlers preserved for clean detachment
     boundOnWindowBlur = () => this.resetState();
@@ -707,7 +710,6 @@
       if (this.customPosition) this.updatePosition();
     };
     boundOnWindowScroll = () => {
-      if (this.isHolding) this.resetState();
     };
     constructor(callbacks, holdThresholdMs = 350) {
       this.callbacks = callbacks;
@@ -1575,6 +1577,7 @@
     bai: "qwen3.8-flash"
   };
   var DEFAULT_SETTINGS = {
+    enabled: true,
     defaultMode: "better",
     // Default: Refinzi Cloud Gateway (zero client-side credentials, 25/day free tier).
     provider: "gateway",
@@ -5903,7 +5906,7 @@ ${prompt}`;
           }
           const assumptionsList = Array.isArray(response.data.assumptions) ? response.data.assumptions : [];
           const assumedItem = assumptionsList.find((a) => a.startsWith("Assumed:")) || assumptionsList[0];
-          const failureNote = isDefaultFallback ? "Instant local calibration applied (Zero latency)" : `Note: ${failureInfo?.reason || "Offline calibration used"}`;
+          const failureNote = isDefaultFallback ? "Instant local calibration applied" : `Note: ${failureInfo?.reason || "Offline calibration used"}`;
           const checklist = mode === "expert" ? [
             "Exact core intent preserved",
             "Scope boundaries locked to task",
@@ -5993,7 +5996,7 @@ ${prompt}`;
                 }
               }
             }
-            const summaryLabel = mode === "better" ? `\xE2\u0161\xA1 Better calibrated (Offline engine)` : `\xF0\u0178\xA7\xA0 Expert briefing applied (Offline engine)`;
+            const summaryLabel = mode === "better" ? `\u26A1 Better calibrated (Offline engine)` : `\u{1F9E0} Expert briefing applied (Offline engine)`;
             const fallbackAssumptions = "assumptions" in fallbackRes && Array.isArray(fallbackRes.assumptions) ? fallbackRes.assumptions : [];
             const fallbackAssumed = fallbackAssumptions.find((a) => a.startsWith("Assumed:")) || fallbackAssumptions[0];
             const checklist = mode === "expert" ? [
@@ -6068,7 +6071,7 @@ ${prompt}`;
       }
       this.canUndo = false;
       this.activeSurface.focus();
-      this.orb?.showUndoToast("\xE2\u2020\xA9 Original prompt restored", () => {
+      this.orb?.showUndoToast("\u21A9 Original prompt restored", () => {
       });
     }
     /**
